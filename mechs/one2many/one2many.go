@@ -209,7 +209,7 @@ func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
 	ss.NInputs = 25
-	ss.NOutputs = 4
+	ss.NOutputs = 2
 	ss.TrnEpcLog = &etable.Table{}
 	ss.TstEpcLog = &etable.Table{}
 	ss.TstTrlLog = &etable.Table{}
