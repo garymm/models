@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// ra25 runs a simple random-associator four-layer axon network
-// that uses the standard supervised learning paradigm to learn
-// mappings between 25 random input / output patterns
-// defined over 5x5 input / output layers (i.e., 25 units)
+// one2many is a copy of ra25, but instead of a single output
+// associated with each input, there are multiple. The Correl
+// metric that's reported is computed based on correlation with
+// the closest found pattern.
 package main
 
 import (
@@ -285,7 +285,7 @@ func (ss *Sim) ConfigEnv() {
 }
 
 func (ss *Sim) ConfigNet(net *axon.Network) {
-	net.InitName(net, "RA25")
+	net.InitName(net, "One2Many")
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
 	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
@@ -1420,10 +1420,10 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	width := 1600
 	height := 1200
 
-	gi.SetAppName("ra25")
+	gi.SetAppName("one2many")
 	gi.SetAppAbout(`This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 
-	win := gi.NewMainWindow("ra25", "Axon Random Associator", width, height)
+	win := gi.NewMainWindow("one2many", "Axon Random Associator", width, height)
 	ss.Win = win
 
 	vp := win.WinViewport2D()
@@ -1603,7 +1603,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 
 	tbar.AddAction(gi.ActOpts{Label: "README", Icon: "file-markdown", Tooltip: "Opens your browser on the README file that contains instructions for how to run this model."}, win.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
-			gi.OpenURL("https://github.com/emer/axon/blob/master/examples/ra25/README.md")
+			gi.OpenURL("https://github.com/emer/axon/blob/master/examples/one2many/README.md")
 		})
 
 	vp.UpdateEndNoSig(updt)
