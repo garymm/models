@@ -318,6 +318,8 @@ var ParamSetsAll = params.Sets{
 type Sim struct {
 	Net            *axon.Network                 `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
 	Pats           *etable.Table                 `view:"no-inline" desc:"the training patterns to use"`
+	NInputs        int                           `desc:"Number of input/output pattern pairs"`
+	NOutputs       int                           `desc:"The number of output patterns potentially associated with each input pattern."`
 	TrnEpcLog      *etable.Table                 `view:"no-inline" desc:"training epoch-level log data"`
 	TstEpcLog      *etable.Table                 `view:"no-inline" desc:"testing epoch-level log data"`
 	TstTrlLog      *etable.Table                 `view:"no-inline" desc:"testing trial-level log data"`
@@ -396,6 +398,8 @@ var TheSim Sim
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
+	ss.NInputs = 25
+	ss.NOutputs = 2
 	ss.TrnEpcLog = &etable.Table{}
 	ss.TstEpcLog = &etable.Table{}
 	ss.TstTrlLog = &etable.Table{}
@@ -424,8 +428,11 @@ func (ss *Sim) New() {
 
 // Config configures all the elements using the standard functions
 func (ss *Sim) Config() {
-	//ss.ConfigPats()
-	ss.OpenPats()
+	// Use this if you want to randomize new patterns.
+	ss.ConfigPats()
+	// Use this if you want to load pre-generated patterns.
+	//ss.OpenPats()
+
 	ss.ConfigEnv()
 	ss.ConfigNet(ss.Net)
 	ss.ConfigTrnEpcLog(ss.TrnEpcLog)
@@ -966,10 +973,15 @@ func (ss *Sim) ConfigPats() {
 		{"Input", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
 		{"Output", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
 	}
-	dt.SetFromSchema(sch, 25)
+	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
 
 	patgen.PermutedBinaryRows(dt.Cols[1], 6, 1, 0)
 	patgen.PermutedBinaryRows(dt.Cols[2], 6, 1, 0)
+	for i := 0; i < ss.NInputs; i++ {
+		for j := 0; j < ss.NOutputs; j++ {
+			dt.SetCellTensor("Input", i*ss.NOutputs+j, dt.CellTensor("Input", i*ss.NOutputs))
+		}
+	}
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
