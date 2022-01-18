@@ -31,6 +31,7 @@ import (
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
 	_ "github.com/emer/etable/etview" // include to get gui views
+	"github.com/emer/etable/metric"
 	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
 	"github.com/goki/gi/gi"
@@ -97,7 +98,7 @@ var ParamSetsMin = params.Sets{
 				}},
 			{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
 				Params: params.Params{
-					"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
+					"Prjn.Learn.Lrate.Base": "0.1", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
 					"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint
 					"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..
 				}},
@@ -108,201 +109,6 @@ var ParamSetsMin = params.Sets{
 		},
 		"Sim": &params.Sheet{ // sim params apply to sim object
 			{Sel: "Sim", Desc: "best params always finish in this time",
-				Params: params.Params{
-					"Sim.MaxEpcs": "100",
-				}},
-		},
-	}},
-}
-
-// ParamSetsAlpha sets the params for trying to learn within an alpha cycle instead of theta
-// Base is always applied, and others can be optionally selected to apply on top of that
-var ParamSetsAlpha = params.Sets{
-	{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
-		"Network": &params.Sheet{
-			{Sel: "Layer", Desc: "all defaults",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":     "1.2",  // 1.2 > 1.3 > (1.1 used in larger models)
-					"Layer.Inhib.ActAvg.Init":  "0.04", // start lower -- 0.04 more reliable than .03
-					"Layer.Inhib.Inhib.AvgTau": "30",   // no diff
-					"Layer.Act.Spike.Tr":       "1",    // no benefit
-					"Layer.Act.Dt.IntTau":      "20",   // no benefit
-					"Layer.Act.Decay.Act":      "0.5",  // more decay is better
-					"Layer.Act.Decay.Glong":    "0.8",  // 0.6
-					"Layer.Act.NMDA.Tau":       "100",  // 100, 50 no diff
-					"Layer.Act.GABAB.RiseTau":  "45",   // 45 def
-					"Layer.Act.GABAB.DecayTau": "50",   // 50 def
-					"Layer.Learn.ActAvg.SSTau": "20",   // 40
-					"Layer.Learn.ActAvg.STau":  "5",    // 10
-					"Layer.Learn.ActAvg.MTau":  "20",   // for 50 cyc qtr, SS = 4, 40 > 50 > 30
-				}},
-			{Sel: "#Input", Desc: "critical now to specify the activity level",
-				Params: params.Params{
-					"Layer.Act.Spike.Tr":      "3",    // 3 def
-					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
-					"Layer.Act.Clamp.Ge":      "0.6",  // 1.0 > 0.6 >= 0.7 == 0.5
-					"Layer.Inhib.ActAvg.Init": "0.15", // .24 nominal, lower to give higher excitation
-				}},
-			{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0 > 0.7 even with adapt -- not beneficial to start low
-					"Layer.Inhib.ActAvg.Init": "0.24", // this has to be exact for adapt
-					"Layer.Act.Spike.Tr":      "0",    // 0 is essential here!
-					"Layer.Act.Clamp.Ge":      "0.5",  // .6 > .5 v94
-					"Layer.Act.Decay.Act":     "1",    //
-					"Layer.Act.Decay.Glong":   "1",    //
-				}},
-			{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
-				Params: params.Params{
-					"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
-					"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more constraint
-					"Prjn.SWt.Init.SPct":    "0.5", // .5 > 1 here, 1 best for larger nets: objrec, lvis
-				}},
-			{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
-				Params: params.Params{
-					"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
-				}},
-		},
-		"Sim": &params.Sheet{ // sim params apply to sim object
-			{Sel: "Sim", Desc: "best params always finish in this time",
-				Params: params.Params{
-					"Sim.MaxEpcs": "100",
-				}},
-		},
-	}},
-}
-
-// ParamSetsAll sets most all params
-// Base is always applied, and others can be optionally selected to apply on top of that
-var ParamSetsAll = params.Sets{
-	{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
-		"Network": &params.Sheet{
-			{Sel: "Layer", Desc: "all defaults",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":               "1.2",  // 1.2 > 1.3 > (1.1 used in larger models)
-					"Layer.Inhib.Layer.Bg":               "0.0",  // new
-					"Layer.Inhib.Layer.FB":               "1.0",  //
-					"Layer.Inhib.Layer.FF0":              "0.1",  // 0.1 def
-					"Layer.Inhib.Pool.FFEx0":             "0.15", // .15 > .18; Ex .05
-					"Layer.Inhib.Pool.FFEx":              "0.0",  // .05 best for lvis
-					"Layer.Inhib.Layer.FFEx0":            "0.15",
-					"Layer.Inhib.Layer.FFEx":             "0.0",   // .05
-					"Layer.Inhib.Inhib.AvgTau":           "30",    // 20 > 30 (small)
-					"Layer.Inhib.ActAvg.Init":            "0.04",  // start lower -- 0.04 more reliable than .03, faster than .05
-					"Layer.Inhib.ActAvg.Targ":            "0.05",  // for adapt, important for this to be accurate
-					"Layer.Inhib.ActAvg.AdaptGi":         "false", // false == true
-					"Layer.Act.Dt.IntTau":                "40",    // 40 > 20 in larger nets
-					"Layer.Act.Spike.Tr":                 "3",     // 3 def
-					"Layer.Act.Spike.VmR":                "0.3",   // 0.3 def
-					"Layer.Act.Decay.Act":                "0.2",   // 0.2
-					"Layer.Act.Decay.Glong":              "0.6",   // 0.6
-					"Layer.Act.Decay.KNa":                "0.0",   // 0 > higher for all other models
-					"Layer.Act.Gbar.L":                   "0.2",   // 0.2 > 0.1
-					"Layer.Act.NMDA.Gbar":                "0.03",  // 0.03 > .04 > .02
-					"Layer.Act.NMDA.Tau":                 "100",   // 100, 50 no diff
-					"Layer.Act.GABAB.Gbar":               "0.2",   // .1 == .2 pretty much
-					"Layer.Act.GABAB.Gbase":              "0.2",   // .1 == .2
-					"Layer.Act.GABAB.GiSpike":            "10",    // 10 > 8 > 15
-					"Layer.Act.GABAB.RiseTau":            "45",    // 45 def
-					"Layer.Act.GABAB.DecayTau":           "50",    // 50 def
-					"Layer.Act.GTarg.GeMax":              "1.2",
-					"Layer.Learn.ActAvg.SpikeG":          "8",
-					"Layer.Learn.ActAvg.MinLrn":          "0.02",
-					"Layer.Learn.ActAvg.SSTau":           "40",   // 40
-					"Layer.Learn.ActAvg.STau":            "10",   // 10
-					"Layer.Learn.ActAvg.MTau":            "40",   // for 50 cyc qtr, SS = 4, 40 > 50 > 30
-					"Layer.Act.KNa.On":                   "true", // on > off
-					"Layer.Act.KNa.Fast.Max":             "0.1",  // 0.2 > 0.1
-					"Layer.Act.KNa.Med.Max":              "0.2",  // 0.2 > 0.1 def
-					"Layer.Act.KNa.Slow.Max":             "0.2",  // 1,2,2 best in larger models
-					"Layer.Act.Noise.On":                 "false",
-					"Layer.Act.Noise.GeHz":               "100",
-					"Layer.Act.Noise.Ge":                 "0.005", // 0.005 has some benefits, 0.01 too high
-					"Layer.Act.Noise.GiHz":               "200",
-					"Layer.Act.Noise.Gi":                 "0.005",
-					"Layer.Act.Dt.LongAvgTau":            "20",   // 20 > higher for objrec, lvis
-					"Layer.Learn.TrgAvgAct.ErrLrate":     "0.02", // 0.01 for lvis, needs faster here
-					"Layer.Learn.TrgAvgAct.SynScaleRate": "0.01", // 0.005 for lvis, needs faster here
-					"Layer.Learn.TrgAvgAct.TrgRange.Min": "0.5",  // .5 best for Lvis, .2 - 2.0 best for objrec
-					"Layer.Learn.TrgAvgAct.TrgRange.Max": "2.0",  // 2.0
-					"Layer.Learn.RLrate.On":              "true",
-					"Layer.Learn.RLrate.ActThr":          "0.1",   // 0.1 > others in larger models
-					"Layer.Learn.RLrate.ActDifThr":       "0.02",  // .02 > .05 best on lvis
-					"Layer.Learn.RLrate.Min":             "0.001", // .01 > .001 best on lvis
-				}},
-			{Sel: "#Input", Desc: "critical now to specify the activity level",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":    "0.9", // 0.9 > 1.0
-					"Layer.Act.Clamp.Ge":      "1.0", // 1.0 > 0.6 >= 0.7 == 0.5
-					"Layer.Inhib.ActAvg.Init": "0.15",
-					"Layer.Inhib.ActAvg.Targ": "0.24",
-					"Layer.Act.Decay.Act":     "0.5", // 0.5 > 1 > 0
-					"Layer.Act.Decay.Glong":   "1",   // LVis .7 best?
-				}},
-			{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0 > 0.7 even with adapt -- not beneficial to start low
-					"Layer.Inhib.ActAvg.Init": "0.24", // this has to be exact for adapt
-					"Layer.Inhib.ActAvg.Targ": "0.24", // this has to be exact for adapt
-					"Layer.Act.Spike.Tr":      "0",    // 0 is essential here!
-					"Layer.Act.Clamp.Ge":      "0.6",  // .5 >= .4 > .6 > 1.0
-				}},
-			{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
-				Params: params.Params{
-					"Prjn.Com.Delay":            "2",   // 1 == 2 = 3
-					"Prjn.Learn.Lrate.Base":     "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
-					"Prjn.SWt.Adapt.Lrate":      "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more constraint
-					"Prjn.SWt.Adapt.SigGain":    "6",
-					"Prjn.SWt.Adapt.DreamVar":   "0.0", // 0.01 is just tolerable -- better with .2 adapt lrate
-					"Prjn.SWt.Init.SPct":        "0.5", // .5 > 1 here, 1 best for larger nets: objrec, lvis
-					"Prjn.SWt.Init.Mean":        "0.5", // 0.5 generally good
-					"Prjn.SWt.Limit.Min":        "0.2",
-					"Prjn.SWt.Limit.Max":        "0.8",
-					"Prjn.PrjnScale.ScaleLrate": "0.5",    // lvis best with .5
-					"Prjn.Learn.XCal.DThr":      "0.0001", // local opt
-					"Prjn.Learn.XCal.DRev":      "0.1",    // local opt
-					"Prjn.Learn.XCal.DWtThr":    "0.0001", // 0.0001 > 0.001 in objrec
-					"Prjn.Learn.XCal.SubMean":   "1",      // 1 > 0.9 now..
-					"Prjn.Com.PFail":            "0.0",    // even .2 fails
-				}},
-			{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
-				Params: params.Params{
-					"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
-				}},
-			{Sel: ".Inhib", Desc: "inhibitory projection -- not useful",
-				Params: params.Params{
-					"Prjn.WtInit.Var":       "0.0",
-					"Prjn.WtInit.Mean":      "0.05",
-					"Prjn.PrjnScale.Abs":    "0.1",
-					"Prjn.PrjnScale.Adapt":  "false",
-					"Prjn.Learn.WtSig.Gain": "6",
-					"Prjn.IncGain":          "0.5",
-				}},
-			// {Sel: "#Hidden2ToOutput", Desc: "to out is special",
-			// 	Params: params.Params{
-			// 	}},
-		},
-		"Sim": &params.Sheet{ // sim params apply to sim object
-			{Sel: "Sim", Desc: "best params always finish in this time",
-				Params: params.Params{
-					"Sim.MaxEpcs": "100",
-				}},
-		},
-	}},
-	{Name: "WtBalNoSubMean", Desc: "original config", Sheets: params.Sheets{
-		"Network": &params.Sheet{
-			{Sel: "Prjn", Desc: "wtbal, no submean",
-				Params: params.Params{
-					"Prjn.Learn.WtBal.On":     "true", // on = much better!
-					"Prjn.Learn.XCal.SubMean": "0",
-				}},
-			{Sel: "Layer", Desc: "go back to default",
-				Params: params.Params{
-					"Layer.Learn.TrgAvgAct.Rate": "0",
-				}},
-		},
-		"Sim": &params.Sheet{ // sim params apply to sim object
-			{Sel: "Sim", Desc: "takes longer -- generally doesn't finish..",
 				Params: params.Params{
 					"Sim.MaxEpcs": "100",
 				}},
@@ -351,12 +157,15 @@ type Sim struct {
 
 	// statistics: note use float64 as that is best for etable.Table
 	TrlErr        float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
+	TrlClosest    string  `inactive:"+" desc:"Name of the pattern with the closest output"`
+	TrlCorrel     float64 `inactive:"+" desc:"Correlation with closest output"`
 	TrlUnitErr    float64 `inactive:"+" desc:"current trial's unit-level pct error"`
 	TrlCosDiff    float64 `inactive:"+" desc:"current trial's cosine difference"`
 	EpcUnitErr    float64 `inactive:"+" desc:"last epoch's total unit-level pct error"`
 	EpcPctErr     float64 `inactive:"+" desc:"last epoch's average TrlErr"`
 	EpcPctCor     float64 `inactive:"+" desc:"1 - last epoch's average TrlErr"`
 	EpcCosDiff    float64 `inactive:"+" desc:"last epoch's average cosine difference for output layer (a normalized error measure, maximum of 1 when the minus phase exactly matches the plus)"`
+	EpcCorrel     float64 `inactive:"+" desc:"last epoch's average correlation for output layer"`
 	EpcPerTrlMSec float64 `inactive:"+" desc:"how long did the epoch take per trial in wall-clock milliseconds"`
 	FirstZero     int     `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
 	NZero         int     `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
@@ -365,6 +174,7 @@ type Sim struct {
 	SumErr       float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
 	SumUnitErr   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
 	SumCosDiff   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
+	SumCorrel    float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
 	Win          *gi.Window                  `view:"-" desc:"main GUI window"`
 	NetView      *netview.NetView            `view:"-" desc:"the network viewer"`
 	ToolBar      *gi.ToolBar                 `view:"-" desc:"the master toolbar"`
@@ -399,7 +209,7 @@ func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
 	ss.NInputs = 25
-	ss.NOutputs = 2
+	ss.NOutputs = 4
 	ss.TrnEpcLog = &etable.Table{}
 	ss.TstEpcLog = &etable.Table{}
 	ss.TstTrlLog = &etable.Table{}
@@ -759,6 +569,7 @@ func (ss *Sim) InitStats() {
 	ss.SumErr = 0
 	ss.SumUnitErr = 0
 	ss.SumCosDiff = 0
+	ss.SumCorrel = 0
 	ss.FirstZero = -1
 	ss.NZero = 0
 	// clear rest just to make Sim look initialized
@@ -777,17 +588,47 @@ func (ss *Sim) InitStats() {
 func (ss *Sim) TrialStats(accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
-	ss.TrlUnitErr = out.PctUnitErr()
-	if ss.TrlUnitErr > 0 {
-		ss.TrlErr = 1
+
+	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
+	ss.TrlClosest = cnm
+	ss.TrlCorrel = float64(cor)
+	tnm := ""
+	if accum { // really train
+		tnm = ss.TrainEnv.TrialName.Cur
 	} else {
-		ss.TrlErr = 0
+		tnm = ss.TestEnv.TrialName.Cur
 	}
+	if cnm == tnm {
+		ss.TrlErr = 0
+	} else {
+		ss.TrlErr = 1
+	}
+
 	if accum {
 		ss.SumErr += ss.TrlErr
 		ss.SumUnitErr += ss.TrlUnitErr
 		ss.SumCosDiff += ss.TrlCosDiff
+		ss.SumCorrel += ss.TrlCorrel
 	}
+}
+
+// ClosestStat finds the closest pattern in given column of given table to
+// given layer activation pattern using given variable.  Returns the row number,
+// correlation value, and value of a column named namecol for that row if non-empty.
+// Column must be etensor.Float32
+func (ss *Sim) ClosestStat(net emer.Network, lnm, varnm string, dt *etable.Table, colnm, namecol string) (int, float32, string) {
+	vt := ss.ValsTsr(lnm)
+	ly := net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
+	ly.UnitValsTensor(vt, varnm)
+	col := dt.ColByName(colnm)
+	// note: requires Increasing metric so using Inv
+	row, cor := metric.ClosestRow32(vt, col.(*etensor.Float32), metric.InvCorrelation32)
+	cor = 1 - cor // convert back to correl
+	nm := ""
+	if namecol != "" {
+		nm = dt.CellString(namecol, row)
+	}
+	return row, cor, nm
 }
 
 // TrainEpoch runs training trials for remainder of this epoch
@@ -980,6 +821,7 @@ func (ss *Sim) ConfigPats() {
 	for i := 0; i < ss.NInputs; i++ {
 		for j := 0; j < ss.NOutputs; j++ {
 			dt.SetCellTensor("Input", i*ss.NOutputs+j, dt.CellTensor("Input", i*ss.NOutputs))
+			dt.SetCellString("Name", i*ss.NOutputs+j, fmt.Sprintf("%d", i))
 		}
 	}
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
@@ -1059,7 +901,9 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	ss.SumErr = 0
 	ss.EpcPctCor = 1 - ss.EpcPctErr
 	ss.EpcCosDiff = ss.SumCosDiff / nt
+	ss.EpcCorrel = ss.SumCorrel / nt
 	ss.SumCosDiff = 0
+	ss.SumCorrel = 0
 	if ss.FirstZero < 0 && ss.EpcPctErr == 0 {
 		ss.FirstZero = epc
 	}
@@ -1083,6 +927,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	dt.SetCellFloat("PctErr", row, ss.EpcPctErr)
 	dt.SetCellFloat("PctCor", row, ss.EpcPctCor)
 	dt.SetCellFloat("CosDiff", row, ss.EpcCosDiff)
+	dt.SetCellFloat("Correl", row, ss.EpcCorrel)
 	dt.SetCellFloat("PerTrlMSec", row, ss.EpcPerTrlMSec)
 
 	for _, lnm := range ss.LayStatNms {
@@ -1131,6 +976,7 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 		{"PctErr", etensor.FLOAT64, nil, nil},
 		{"PctCor", etensor.FLOAT64, nil, nil},
 		{"CosDiff", etensor.FLOAT64, nil, nil},
+		{"Correl", etensor.FLOAT64, nil, nil},
 		{"PerTrlMSec", etensor.FLOAT64, nil, nil},
 	}
 	for _, lnm := range ss.LayStatNms {
@@ -1161,6 +1007,7 @@ func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.SetColParams("PctErr", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1) // default plot
 	plt.SetColParams("PctCor", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)  // default plot
 	plt.SetColParams("CosDiff", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)
+	plt.SetColParams("Correl", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)
 	plt.SetColParams("PerTrlMSec", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
 
 	for _, lnm := range ss.LayStatNms {
@@ -1204,6 +1051,7 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 	dt.SetCellFloat("Err", row, ss.TrlErr)
 	dt.SetCellFloat("UnitErr", row, ss.TrlUnitErr)
 	dt.SetCellFloat("CosDiff", row, ss.TrlCosDiff)
+	dt.SetCellFloat("Correl", row, ss.TrlCosDiff)
 
 	for _, lnm := range ss.LayStatNms {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
@@ -1242,6 +1090,7 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 		{"Err", etensor.FLOAT64, nil, nil},
 		{"UnitErr", etensor.FLOAT64, nil, nil},
 		{"CosDiff", etensor.FLOAT64, nil, nil},
+		{"Correl", etensor.FLOAT64, nil, nil},
 	}
 	for _, lnm := range ss.LayStatNms {
 		sch = append(sch, etable.Column{lnm + " ActM.Avg", etensor.FLOAT64, nil, nil})
@@ -1266,6 +1115,7 @@ func (ss *Sim) ConfigTstTrlPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.SetColParams("Err", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
 	plt.SetColParams("UnitErr", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
 	plt.SetColParams("CosDiff", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)
+	plt.SetColParams("Correl", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)
 
 	for _, lnm := range ss.LayStatNms {
 		plt.SetColParams(lnm+" ActM.Avg", eplot.Off, eplot.FixMin, 0, eplot.FixMax, .5)
@@ -1296,6 +1146,7 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	dt.SetCellFloat("PctErr", row, agg.Mean(tix, "Err")[0])
 	dt.SetCellFloat("PctCor", row, 1-agg.Mean(tix, "Err")[0])
 	dt.SetCellFloat("CosDiff", row, agg.Mean(tix, "CosDiff")[0])
+	dt.SetCellFloat("Correl", row, agg.Mean(tix, "Correl")[0])
 
 	trlix := etable.NewIdxView(trl)
 	trlix.Filter(func(et *etable.Table, row int) bool {
@@ -1330,6 +1181,7 @@ func (ss *Sim) ConfigTstEpcLog(dt *etable.Table) {
 		{"PctErr", etensor.FLOAT64, nil, nil},
 		{"PctCor", etensor.FLOAT64, nil, nil},
 		{"CosDiff", etensor.FLOAT64, nil, nil},
+		{"Correl", etensor.FLOAT64, nil, nil},
 	}
 	dt.SetFromSchema(sch, 0)
 }
@@ -1345,6 +1197,7 @@ func (ss *Sim) ConfigTstEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.SetColParams("PctErr", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1) // default plot
 	plt.SetColParams("PctCor", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1) // default plot
 	plt.SetColParams("CosDiff", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
+	plt.SetColParams("Correl", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
 	return plt
 }
 
@@ -1504,6 +1357,7 @@ func (ss *Sim) LogRun(dt *etable.Table) {
 	dt.SetCellFloat("PctErr", row, agg.Mean(epcix, "PctErr")[0])
 	dt.SetCellFloat("PctCor", row, agg.Mean(epcix, "PctCor")[0])
 	dt.SetCellFloat("CosDiff", row, agg.Mean(epcix, "CosDiff")[0])
+	dt.SetCellFloat("Correl", row, agg.Mean(epcix, "Correl")[0])
 
 	runix := etable.NewIdxView(dt)
 	spl := split.GroupBy(runix, []string{"Params"})
@@ -1537,6 +1391,7 @@ func (ss *Sim) ConfigRunLog(dt *etable.Table) {
 		{"PctErr", etensor.FLOAT64, nil, nil},
 		{"PctCor", etensor.FLOAT64, nil, nil},
 		{"CosDiff", etensor.FLOAT64, nil, nil},
+		{"Correl", etensor.FLOAT64, nil, nil},
 	}
 	dt.SetFromSchema(sch, 0)
 }
@@ -1553,6 +1408,7 @@ func (ss *Sim) ConfigRunPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D 
 	plt.SetColParams("PctErr", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
 	plt.SetColParams("PctCor", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
 	plt.SetColParams("CosDiff", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
+	plt.SetColParams("Correl", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
 	return plt
 }
 
