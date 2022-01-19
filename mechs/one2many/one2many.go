@@ -98,7 +98,7 @@ var ParamSetsMin = params.Sets{
 				}},
 			{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
 				Params: params.Params{
-					"Prjn.Learn.Lrate.Base": "0.1", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
+					"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
 					"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint
 					"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..
 				}},
@@ -514,6 +514,7 @@ func (ss *Sim) TrainTrial() {
 	epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
 	if chg {
 		ss.LogTrnEpc(ss.TrnEpcLog)
+		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 			ss.UpdateView(true)
 		}
@@ -690,6 +691,15 @@ func (ss *Sim) Stopped() {
 // it will auto-prompt for filename
 func (ss *Sim) SaveWeights(filename gi.FileName) {
 	ss.Net.SaveWtsJSON(filename)
+}
+
+// LrateSched implements the learning rate schedule
+func (ss *Sim) LrateSched(epc int) {
+	switch epc {
+	case 40:
+		ss.Net.LrateMod(0.5)
+		fmt.Printf("dropped lrate 0.5 at epoch: %d\n", epc)
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
