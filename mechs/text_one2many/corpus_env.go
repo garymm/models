@@ -160,6 +160,7 @@ func (ev *CorpusEnv) Config(inputfile string, inputsize evec.Vec2i, localist boo
 	ev.LoadFmFile(inputfile) // load the corpus
 
 	ev.Input.SetShape([]int{ev.InputSize.Y, ev.InputSize.X}, nil, []string{"Y", "X"})
+	ev.Output.SetShape([]int{ev.InputSize.Y, ev.InputSize.X}, nil, []string{"Y", "X"})
 	ev.CurWords = make([]string, ev.NContext)
 
 	if !ev.Localist {
@@ -349,7 +350,7 @@ func (ev *CorpusEnv) ConfigWordReps() {
 		fmt.Printf("ConfigWordReps: nwords: %d  nin: %d  nper: %d  minDif: %d\n", nwords, nin, nper, mindif)
 
 		patgen.MinDiffPrintIters = true
-		patgen.PermutedBinaryMinDiff(&ev.WordReps, nper, 1, 0, mindif)
+		patgen.PermutedBinaryMinDiff(&ev.WordReps, 6, 1, 0, mindif)
 		jenc, _ := json.Marshal(ev.WordReps.Values)
 		_ = ioutil.WriteFile(fname, jenc, 0644)
 	} else {
@@ -411,16 +412,16 @@ func (ev *CorpusEnv) AddWordRep(inputoroutput *etensor.Float32, word string) {
 
 	widx := ev.WordMap[word]
 	if ev.Localist {
-		ev.Input.SetFloat1D(widx, 1)
+		inputoroutput.SetFloat1D(widx, 1)
 	} else {
 		wp := ev.WordReps.SubSpace([]int{widx})
 		idx := 0
 		for y := 0; y < ev.InputSize.Y; y++ {
 			for x := 0; x < ev.InputSize.X; x++ {
 				wv := wp.FloatVal1D(idx)
-				cv := ev.Input.FloatVal1D(idx)
+				cv := inputoroutput.FloatVal1D(idx)
 				nv := math.Max(wv, cv)
-				ev.Input.SetFloat1D(idx, nv)
+				inputoroutput.SetFloat1D(idx, nv)
 				idx++
 			}
 		}
@@ -500,6 +501,7 @@ func (ev *CorpusEnv) Step() bool {
 	}
 	if ev.CurNextWord == "" {
 		// OH NO ERROR! TODO HOW DO WE ERROR??! :( this should never happen
+		return false
 	}
 
 	ev.RenderWords()
