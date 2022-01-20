@@ -39,7 +39,6 @@ import (
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
 	"github.com/goki/mat32"
 )
 
@@ -199,10 +198,6 @@ type Sim struct {
 	LastEpcTime  time.Time                   `view:"-" desc:"timer for last epoch"`
 }
 
-// this registers this Sim Type and gives it properties that e.g.,
-// prompt for filename for save methods.
-var KiT_Sim = kit.Types.AddType(&Sim{}, SimProps)
-
 // TheSim is the overall state for this simulation
 var TheSim Sim
 
@@ -271,11 +266,16 @@ func (ss *Sim) ConfigEnv() {
 	ss.TrainEnv.Validate()
 	ss.TrainEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
 	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	ss.TrainEnv.Trial.Max = len(ss.TrainEnv.NGrams)
+	ss.TrainEnv.Epoch.Max = ss.MaxEpcs
 
 	ss.TestEnv.Nm = "TestEnv"
 	ss.TestEnv.Dsc = "testing params and state"
 	ss.TestEnv.Validate()
-
+	ss.TestEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
+	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	ss.TestEnv.Trial.Max = len(ss.TestEnv.NGrams)
+	ss.TestEnv.Epoch.Max = ss.MaxEpcs
 	// note: to create a train / test split of pats, do this:
 	// all := etable.NewIdxView(ss.Pats)
 	// splits, _ := split.Permuted(all, []float64{.8, .2}, []string{"Train", "Test"})
@@ -364,9 +364,10 @@ func (ss *Sim) NewRndSeed() {
 // and add a few tabs at the end to allow for expansion.
 func (ss *Sim) Counters(train bool) string {
 	if train {
-		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\tName:\t%s\t\t\t", ss.TrainEnv.Run.Cur, ss.TrainEnv.Epoch.Cur, ss.TrainEnv.Trial.Cur, ss.Time.Cycle, ss.TrainEnv.TrialName.Cur)
+
+		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t\t\t", ss.TrainEnv.Run.Cur, ss.TrainEnv.Epoch.Cur, ss.TrainEnv.Trial.Cur, ss.Time.Cycle)
 	} else {
-		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\tName:\t%s\t\t\t", ss.TrainEnv.Run.Cur, ss.TrainEnv.Epoch.Cur, ss.TestEnv.Trial.Cur, ss.Time.Cycle, ss.TestEnv.TrialName.Cur)
+		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t\t\t", ss.TrainEnv.Run.Cur, ss.TrainEnv.Epoch.Cur, ss.TestEnv.Trial.Cur, ss.Time.Cycle)
 	}
 }
 
@@ -595,12 +596,8 @@ func (ss *Sim) TrialStats(accum bool) {
 	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
 	ss.TrlClosest = cnm
 	ss.TrlCorrel = float64(cor)
-	tnm := ""
-	if accum { // really train
-		tnm = ss.TrainEnv.TrialName.Cur
-	} else {
-		tnm = ss.TestEnv.TrialName.Cur
-	}
+	tnm := strings.Join(ss.TrainEnv.CurWords, " ")
+
 	if cnm == tnm {
 		ss.TrlErr = 0
 	} else {
@@ -735,7 +732,6 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 func (ss *Sim) TestItem(idx int) {
 	cur := ss.TestEnv.Trial.Cur
 	ss.TestEnv.Trial.Cur = idx
-	ss.TestEnv.SetTrialName()
 	ss.ApplyInputs(&ss.TestEnv)
 	ss.ThetaCyc(false) // !train
 	ss.TestEnv.Trial.Cur = cur
@@ -904,9 +900,9 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	row := dt.Rows
 	dt.SetNumRows(row + 1)
 
-	epc := ss.TrainEnv.Epoch.Prv          // this is triggered by increment so use previous value
-	nt := float64(len(ss.TrainEnv.Order)) // number of trials in view
-
+	epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
+	//nt := float64(len(ss.TrainEnv.Order)) // number of trials in view
+	nt := 1.0 //TODO: figure out the appropriate normalization term for the loss
 	ss.EpcUnitErr = ss.SumUnitErr / nt
 	ss.SumUnitErr = 0
 	ss.EpcPctErr = float64(ss.SumErr) / nt
@@ -1059,7 +1055,7 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 	dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
 	dt.SetCellFloat("Epoch", row, float64(epc))
 	dt.SetCellFloat("Trial", row, float64(trl))
-	dt.SetCellString("TrialName", row, ss.TestEnv.TrialName.Cur)
+	dt.SetCellString("TrialName", row, strings.Join(ss.TestEnv.CurWords, " "))
 	dt.SetCellFloat("Err", row, ss.TrlErr)
 	dt.SetCellFloat("UnitErr", row, ss.TrlUnitErr)
 	dt.SetCellFloat("CosDiff", row, ss.TrlCosDiff)
@@ -1093,7 +1089,7 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
-	nt := ss.TestEnv.Table.Len() // number in view
+	nt := len(ss.TestEnv.NGrams) // 1 //ss.TestEnv.Table.Len() // number in view
 	sch := etable.Schema{
 		{"Run", etensor.INT64, nil, nil},
 		{"Epoch", etensor.INT64, nil, nil},
@@ -1572,7 +1568,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 				dlg := send.(*gi.Dialog)
 				if sig == int64(gi.DialogAccepted) {
 					val := gi.StringPromptDialogValue(dlg)
-					idxs := ss.TestEnv.Table.RowsByString("Name", val, etable.Contains, etable.IgnoreCase)
+					idxs := []int{0} //TODO: //ss.TestEnv.Table.RowsByString("Name", val, etable.Contains, etable.IgnoreCase)
 					if len(idxs) == 0 {
 						gi.PromptDialog(nil, gi.DlgOpts{Title: "Name Not Found", Prompt: "No patterns found containing: " + val}, gi.AddOk, gi.NoCancel, nil, nil)
 					} else {
@@ -1692,7 +1688,8 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	return win
 }
 
-// These props register Save methods so they can be used
+// SimProps  register Save methods so they can be used
+/**
 var SimProps = ki.Props{
 	"CallMethods": ki.PropSlice{
 		{"SaveWeights", ki.Props{
@@ -1706,6 +1703,7 @@ var SimProps = ki.Props{
 		}},
 	},
 }
+**/
 
 func (ss *Sim) CmdArgs() {
 	ss.NoGui = true

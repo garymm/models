@@ -410,6 +410,7 @@ func (ev *CorpusEnv) AddWordRep(inputoroutput *etensor.Float32, word string) {
 	if word == "" {
 		return
 	}
+
 	widx := ev.WordMap[word]
 	if ev.Localist {
 		ev.Input.SetFloat1D(widx, 1)
