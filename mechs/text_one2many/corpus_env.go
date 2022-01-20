@@ -44,7 +44,6 @@ type CorpusEnv struct {
 
 	NContext       int `desc:"number of words in context (ngram -1)"`
 	NSuccessor     int `desc:"max number of successors in the ngram map"`
-	NVocabSize     int `desc:"Overall size of vocabulary to consider, before NSuccessor cutoffs"`
 	NRandomizeWord int `desc:"Every this many ticks, reseed the current word"`
 
 	Localist   bool       `desc:"use localist 1-hot encoding of words -- else random dist vectors"`
@@ -94,7 +93,7 @@ func (ngm *NGramMap) TopNSuccessors(n int) {
 			idx++
 		}
 
-		sort.Float64s(freqs)
+		sort.Sort(sort.Reverse(sort.Float64Slice(freqs)))
 		var threshold = freqs[n]
 		for successor, freq := range freqmap {
 			if freq < threshold {
@@ -150,7 +149,8 @@ func (ev *CorpusEnv) Init(run int) {
 func (ev *CorpusEnv) Config(inputfile string, inputsize evec.Vec2i, localist bool, ncontext, ntopsuccessors, nrandomizeword int) {
 	ev.InputSize = inputsize //the shape of the tensor
 	ev.Localist = localist
-	ev.MaxVocab = ev.InputSize.X * ev.InputSize.Y
+	//ev.MaxVocab = ev.InputSize.X * ev.InputSize.Y
+	ev.MaxVocab = 25 //TODO: make this logical
 	ev.UseUNK = false
 	ev.VocabFile = "stored_vocab_cbt_train.json" //subset of words
 	ev.NContext = ncontext
@@ -199,15 +199,17 @@ func (ev *CorpusEnv) LimitVocabulary() {
 		freqs[idx] = freq
 		idx++
 	}
-	sort.Float64s(freqs)
-	if len(freqs) >= ev.MaxVocab {
+
+	sort.Sort(sort.Reverse(sort.Float64Slice(freqs)))
+
+	if len(freqs) <= ev.MaxVocab {
 		return
 	}
 	threshold := freqs[ev.MaxVocab]
 
 	newWords := make([]string, 0)
 	for _, word := range ev.Words {
-		if ev.FreqMap[word] >= threshold {
+		if ev.FreqMap[word] > threshold {
 			newWords = append(newWords, word)
 		}
 	}
@@ -222,7 +224,9 @@ func (ev *CorpusEnv) LimitVocabulary() {
 			}
 		}
 		if len(newSent) >= ev.NContext+1 {
-			newSentences = append(newSentences, newSent)
+			if len(newSent) >= ev.NContext+1 {
+				newSentences = append(newSentences, newSent)
+			}
 		}
 	}
 	ev.Sentences = newSentences
@@ -282,12 +286,6 @@ func (ev *CorpusEnv) LoadFmFile(filename string) error {
 			ev.FreqMap[w] = float64(data.Freqs[i])
 		}
 		ev.NormalizeFreqs()
-
-		if len(ev.WordMap) > ev.MaxVocab {
-			err := fmt.Errorf("Vocab size read %d out of bounds.", len(ev.WordMap))
-			fmt.Println(err.Error())
-			return err
-		}
 
 		var jobj JsonVocab
 		jobj.Vocab = ev.WordMap
