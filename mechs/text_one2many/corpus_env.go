@@ -466,6 +466,42 @@ func (ev *CorpusEnv) Step() bool {
 	}
 
 	// TODO randomly walk words
+	// if cur words are empty, pick a random one from the ngrams keys
+	// if tick % 100 is 0, pick a random one
+	// if the current words do not appear in ngram map, pick a random one
+	_, ok := ev.NGrams[strings.Join(ev.CurWords, " ")]
+	if len(ev.CurWords) == 0 || ev.Tick.Cur%ev.NRandomizeWord == 0 || !ok {
+		// TODO Optimize this
+		ridx := rand.Intn(len(ev.NGrams))
+		idx := 0
+		for context, _ := range ev.NGrams {
+			if idx == ridx {
+				ev.CurWords = strings.Split(context, " ")
+				break
+			}
+			idx++
+		}
+		ev.CurNextWord = ""
+	}
+	// cycle the current words
+	if ev.CurNextWord != "" {
+		ev.CurWords = append(ev.CurWords[1:], ev.CurNextWord)
+		ev.CurNextWord = ""
+	}
+	// pick a random successor from the ngram map, using weighted random
+	possiblechoices := ev.NGrams[strings.Join(ev.CurWords, " ")]
+	rando := rand.Float64()
+	summo := 0.0
+	for word, freq := range possiblechoices {
+		summo += freq
+		if summo >= rando {
+			ev.CurNextWord = word
+			break
+		}
+	}
+	if ev.CurNextWord == "" {
+		// OH NO ERROR! TODO HOW DO WE ERROR??! :( this should never happen
+	}
 
 	ev.RenderWords()
 	return true
