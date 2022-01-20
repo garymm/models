@@ -11,6 +11,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/emer/emergent/evec"
 	"log"
 	"math/rand"
 	"os"
@@ -92,7 +93,7 @@ var ParamSetsMin = params.Sets{
 				Params: params.Params{
 					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 >= 0.8 > 1.0 > 0.7 even with adapt -- not beneficial to start low
 					"Layer.Inhib.ActAvg.Init": "0.24", // this has to be exact for adapt
-					"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum..
+					"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum.
 					"Layer.Act.Clamp.Ge":      "0.6",  // .6 > .5 v94
 					// "Layer.Act.NMDA.Gbar":     "0.3",  // higher not better
 				}},
@@ -269,11 +270,10 @@ func (ss *Sim) ConfigEnv() {
 	//ss.TrainEnv.Con
 	ss.TrainEnv.Validate()
 	ss.TrainEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
+	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 
 	ss.TestEnv.Nm = "TestEnv"
 	ss.TestEnv.Dsc = "testing params and state"
-	ss.TestEnv.Table = etable.NewIdxView(ss.Pats)
-	ss.TestEnv.Sequential = true
 	ss.TestEnv.Validate()
 
 	// note: to create a train / test split of pats, do this:
@@ -361,7 +361,7 @@ func (ss *Sim) NewRndSeed() {
 
 // Counters returns a string of the current counter state
 // use tabs to achieve a reasonable formatting overall
-// and add a few tabs at the end to allow for expansion..
+// and add a few tabs at the end to allow for expansion.
 func (ss *Sim) Counters(train bool) string {
 	if train {
 		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\tName:\t%s\t\t\t", ss.TrainEnv.Run.Cur, ss.TrainEnv.Epoch.Cur, ss.TrainEnv.Trial.Cur, ss.Time.Cycle, ss.TrainEnv.TrialName.Cur)

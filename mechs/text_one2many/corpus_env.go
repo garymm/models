@@ -17,8 +17,6 @@ import (
 	"github.com/emer/emergent/env"
 	"github.com/emer/emergent/evec"
 	"github.com/emer/emergent/patgen"
-	"github.com/emer/empi/empi"
-	"github.com/emer/empi/mpi"
 	"github.com/emer/etable/etensor"
 )
 
@@ -29,23 +27,25 @@ import (
 // units (requiring a large input layer) or using random distributed vectors in a
 // lower-dimensional space.
 type CorpusEnv struct {
-	Nm         string             `desc:"name of this environment"`
-	Dsc        string             `desc:"description of this environment"`
-	Words      []string           `desc:"full list of words used for activating state units according to index"`
-	WordMap    map[string]int     `desc:"map of words onto index in Words list"`
-	FreqMap    map[string]float64 `desc:"map of words onto frequency in entire corpus, normalized"`
-	Corpus     []string           `desc:"entire corpus as one long list of words"`
-	Sentences  [][]string         `desc:"full list of sentences"`
-	SentOffs   []int              `desc:"offsets into corpus for each sentence"`
-	NGrams     NGramMap           `desc:"normalized frequency of a word given n-words-1 of context"`
-	WordReps   etensor.Float32    `desc:"map of words into random distributed vector encodings"`
-	InputWords []string           `desc:"list of words in the current window"`
-	Input      etensor.Float32    `desc:"current window activation state"`
+	Nm          string             `desc:"name of this environment"`
+	Dsc         string             `desc:"description of this environment"`
+	Words       []string           `desc:"full list of words used for activating state units according to index"`
+	WordMap     map[string]int     `desc:"map of words onto index in Words list"`
+	FreqMap     map[string]float64 `desc:"map of words onto frequency in entire corpus, normalized"`
+	Corpus      []string           `desc:"entire corpus as one long list of words"`
+	Sentences   [][]string         `desc:"full list of sentences"`
+	SentOffs    []int              `desc:"offsets into corpus for each sentence"`
+	NGrams      NGramMap           `desc:"normalized frequency of a word given n-words-1 of context"`
+	WordReps    etensor.Float32    `desc:"map of words into random distributed vector encodings"`
+	CurWords    []string           `desc:"The current words of context"`
+	CurNextWord string             `desc:"The current successor word"`
+	Input       etensor.Float32    `desc:"current window activation state"`
+	Output      etensor.Float32    `desc:"successor word target activation state"`
 
-	ProbeMode  bool `desc:"instead of presenting full sentences, this env just probes each word in turn"`
-	WindowSize int  `desc:"size of sliding window of words to show in input"`
-	NContext   int  `desc:"number of words in context (ngram -1)"`
-	NSuccessor int  `desc:"max number of successors in the ngram map"`
+	NContext       int `desc:"number of words in context (ngram -1)"`
+	NSuccessor     int `desc:"max number of successors in the ngram map"`
+	NVocabSize     int `desc:"Overall size of vocabulary to consider, before NSuccessor cutoffs"`
+	NRandomizeWord int `desc:"Every this many ticks, reseed the current word"`
 
 	Localist   bool       `desc:"use localist 1-hot encoding of words -- else random dist vectors"`
 	DistPctAct float64    `desc:"distributed representations of words: target percent activity total for WindowSize words all on at same time"`
@@ -78,11 +78,11 @@ func (ngm *NGramMap) Add(context, successor string) {
 	freqmap[successor] = freq + 1
 	(*ngm)[context] = freqmap
 }
+
 func (ngm *NGramMap) TopNSuccessors(n int) {
 	var freqs []float64
 
-	for context, freqmap := range *ngm {
-		sum := 0.0
+	for _, freqmap := range *ngm {
 		if cap(freqs) < len(freqmap) {
 			freqs = make([]float64, len(freqmap))
 		} else {
@@ -103,8 +103,9 @@ func (ngm *NGramMap) TopNSuccessors(n int) {
 		}
 	}
 }
+
 func (ngm *NGramMap) Normalize() {
-	for context, freqmap := range *ngm {
+	for _, freqmap := range *ngm {
 		sum := 0.0
 		for _, freq := range freqmap {
 			sum += freq
@@ -129,6 +130,8 @@ func (ev *CorpusEnv) State(element string) etensor.Tensor {
 	switch element {
 	case "Input":
 		return &ev.Input
+	case "Output":
+		return &ev.Output
 	}
 	return nil
 }
@@ -144,39 +147,24 @@ func (ev *CorpusEnv) Init(run int) {
 	ev.Trial.Cur = -1 // init state -- key so that first Step() = 0
 }
 
-func (ev *CorpusEnv) Config(probe bool, inputfile string, windowsize int, inputsize evec.Vec2i, localist, dropout bool, distPctAct float64) {
-	ev.ProbeMode = probe
-	ev.WindowSize = windowsize
+func (ev *CorpusEnv) Config(inputfile string, inputsize evec.Vec2i, localist bool, ncontext, ntopsuccessors, nrandomizeword int) {
 	ev.InputSize = inputsize //the shape of the tensor
 	ev.Localist = localist
-	ev.DistPctAct = distPctAct
 	ev.MaxVocab = ev.InputSize.X * ev.InputSize.Y
-	ev.DropOut = dropout
 	ev.UseUNK = false
 	ev.VocabFile = "stored_vocab_cbt_train.json" //subset of words
+	ev.NContext = ncontext
+	ev.NSuccessor = ntopsuccessors
+	ev.NRandomizeWord = nrandomizeword
 
 	ev.LoadFmFile(inputfile) // load the corpus
-	ev.SentToCorpus()
 
 	ev.Input.SetShape([]int{ev.InputSize.Y, ev.InputSize.X}, nil, []string{"Y", "X"})
-	ev.InputWords = make([]string, ev.WindowSize)
+	ev.CurWords = make([]string, ev.NContext)
 
 	if !ev.Localist {
 		ev.ConfigWordReps() //pattern for each word
 	}
-
-	if ev.ProbeMode {
-		nwords := len(ev.Words)
-		cmodn := nwords / mpi.WorldSize()
-		cmodn *= mpi.WorldSize() // actual number we can process under mpi
-		ev.CorpStart, ev.CorpEnd, _ = empi.AllocN(cmodn)
-	} else {
-		corpn := len(ev.Corpus)
-		cmodn := corpn / mpi.WorldSize()
-		cmodn *= mpi.WorldSize() // actual number we can process under mpi
-		ev.CorpStart, ev.CorpEnd, _ = empi.AllocN(cmodn)
-	}
-	ev.Tick.Max = ev.CorpEnd - ev.CorpStart
 }
 
 // JsonData is the full original corpus, in sentence form
@@ -202,6 +190,42 @@ func (ev *CorpusEnv) NormalizeFreqs() {
 	for w, _ := range ev.FreqMap {
 		ev.FreqMap[w] /= s
 	}
+}
+
+func (ev *CorpusEnv) LimitVocabulary() {
+	freqs := make([]float64, len(ev.FreqMap))
+	idx := 0
+	for _, freq := range ev.FreqMap {
+		freqs[idx] = freq
+		idx++
+	}
+	sort.Float64s(freqs)
+	if len(freqs) >= ev.MaxVocab {
+		return
+	}
+	threshold := freqs[ev.MaxVocab]
+
+	newWords := make([]string, 0)
+	for _, word := range ev.Words {
+		if ev.FreqMap[word] >= threshold {
+			newWords = append(newWords, word)
+		}
+	}
+	ev.Words = newWords
+
+	newSentences := make([][]string, 0)
+	for _, sent := range ev.Sentences {
+		newSent := make([]string, 0)
+		for _, word := range sent {
+			if ev.FreqMap[word] >= threshold {
+				newSent = append(newSent, word)
+			}
+		}
+		if len(newSent) >= ev.NContext+1 {
+			newSentences = append(newSentences, newSent)
+		}
+	}
+	ev.Sentences = newSentences
 }
 
 func (ev *CorpusEnv) CreateNGrams() {
@@ -290,6 +314,9 @@ func (ev *CorpusEnv) LoadFmFile(filename string) error {
 		ev.WordMap = jobj.Vocab
 		ev.FreqMap = jobj.Freqs
 	}
+
+	// Limit the vocabulary before creating the NGrams, so that NGrams will jump over uncommon words
+	ev.LimitVocabulary()
 	ev.CreateNGrams()
 	return nil
 }
@@ -311,7 +338,8 @@ func (ev *CorpusEnv) ConfigWordReps() {
 	nwords := len(ev.Words)
 	nin := ev.InputSize.X * ev.InputSize.Y
 	nun := int(ev.DistPctAct * float64(nin))
-	nper := nun / ev.WindowSize // each word has this many active, assuming no overlap
+	// TODO is this next line correct?
+	nper := nun / (ev.NContext + 1) // each word has this many active, assuming no overlap
 	mindif := nper / 2
 
 	ev.WordReps.SetShape([]int{nwords, ev.InputSize.Y, ev.InputSize.X}, nil, []string{"Y", "X"})
@@ -365,9 +393,9 @@ func (ev *CorpusEnv) CorpusPosToSentIdx(pos int) []int {
 
 // String returns the current state as a string
 func (ev *CorpusEnv) String() string {
-	curr := make([]string, len(ev.InputWords))
-	if ev.InputWords != nil {
-		copy(curr, ev.InputWords)
+	curr := make([]string, len(ev.CurWords))
+	if ev.CurWords != nil {
+		copy(curr, ev.CurWords)
 		for i := 0; i < len(curr); i++ {
 			if curr[i] == "" {
 				curr[i] = "--"
@@ -378,30 +406,36 @@ func (ev *CorpusEnv) String() string {
 	return ""
 }
 
-// RenderWords renders the current list of InputWords to Input state
-func (ev *CorpusEnv) RenderWords() {
-	ev.Input.SetZeros()
-	for i := 0; i < ev.WindowSize; i++ {
-		if ev.InputWords[i] == "" {
-			continue
-		}
-		widx := ev.WordMap[ev.InputWords[i]]
-		if ev.Localist {
-			ev.Input.SetFloat1D(widx, 1)
-		} else {
-			wp := ev.WordReps.SubSpace([]int{widx})
-			idx := 0
-			for y := 0; y < ev.InputSize.Y; y++ {
-				for x := 0; x < ev.InputSize.X; x++ {
-					wv := wp.FloatVal1D(idx)
-					cv := ev.Input.FloatVal1D(idx)
-					nv := math.Max(wv, cv)
-					ev.Input.SetFloat1D(idx, nv)
-					idx++
-				}
+func (ev *CorpusEnv) AddWordRep(inputoroutput *etensor.Float32, word string) {
+	if word == "" {
+		return
+	}
+	widx := ev.WordMap[word]
+	if ev.Localist {
+		ev.Input.SetFloat1D(widx, 1)
+	} else {
+		wp := ev.WordReps.SubSpace([]int{widx})
+		idx := 0
+		for y := 0; y < ev.InputSize.Y; y++ {
+			for x := 0; x < ev.InputSize.X; x++ {
+				wv := wp.FloatVal1D(idx)
+				cv := ev.Input.FloatVal1D(idx)
+				nv := math.Max(wv, cv)
+				ev.Input.SetFloat1D(idx, nv)
+				idx++
 			}
 		}
 	}
+}
+
+// RenderWords renders the current list of CurWords to Input state
+func (ev *CorpusEnv) RenderWords() {
+	ev.Input.SetZeros()
+	for _, word := range ev.CurWords {
+		ev.AddWordRep(&ev.Input, word)
+	}
+	ev.Output.SetZeros()
+	ev.AddWordRep(&ev.Output, ev.CurNextWord)
 }
 
 func (ev *CorpusEnv) LookUpWord(word string) string {
@@ -421,22 +455,6 @@ func (ev *CorpusEnv) LookUpWord(word string) string {
 	return ans
 }
 
-// RenderState renders the current state
-func (ev *CorpusEnv) RenderState() {
-	cur := ev.CorpStart + ev.Tick.Cur
-	if ev.ProbeMode {
-		ev.InputWords[0] = ev.Words[cur]
-		for i := 1; i < ev.WindowSize; i++ {
-			ev.InputWords[i] = ""
-		}
-	} else {
-		for i := 0; i < ev.WindowSize; i++ {
-			ev.InputWords[i] = ev.Corpus[(cur+i)%len(ev.Corpus)]
-		}
-	}
-	ev.RenderWords()
-}
-
 func (ev *CorpusEnv) Step() bool {
 	ev.Epoch.Same() // good idea to just reset all non-inner-most counters at start
 	ev.Block.Same() // good idea to just reset all non-inner-most counters at start
@@ -446,7 +464,10 @@ func (ev *CorpusEnv) Step() bool {
 	if ev.Trial.Incr() {
 		ev.Epoch.Incr()
 	}
-	ev.RenderState()
+
+	// TODO randomly walk words
+
+	ev.RenderWords()
 	return true
 }
 
