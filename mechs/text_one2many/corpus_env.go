@@ -120,7 +120,7 @@ var epsilon = 1e-7
 func (ev *CorpusEnv) Name() string { return ev.Nm }
 func (ev *CorpusEnv) Desc() string { return ev.Dsc }
 
-// InitTMat initializes matrix and labels to given size
+// Validate initializes matrix and labels to given size
 func (ev *CorpusEnv) Validate() error {
 	return nil
 }
@@ -350,7 +350,7 @@ func (ev *CorpusEnv) ConfigWordReps() {
 		fmt.Printf("ConfigWordReps: nwords: %d  nin: %d  nper: %d  minDif: %d\n", nwords, nin, nper, mindif)
 
 		patgen.MinDiffPrintIters = true
-		patgen.PermutedBinaryMinDiff(&ev.WordReps, 6, 1, 0, mindif)
+		patgen.PermutedBinaryMinDiff(&ev.WordReps, 4, 1, 0, mindif)
 		jenc, _ := json.Marshal(ev.WordReps.Values)
 		_ = ioutil.WriteFile(fname, jenc, 0644)
 	} else {

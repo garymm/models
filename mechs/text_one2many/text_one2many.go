@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/emer/emergent/evec"
+	"github.com/emer/emergent/patgen"
 	"log"
 	"math/rand"
 	"os"
@@ -24,7 +25,6 @@ import (
 	"github.com/emer/emergent/env"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
-	"github.com/emer/emergent/patgen"
 	"github.com/emer/emergent/prjn"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/eplot"
@@ -235,10 +235,8 @@ func (ss *Sim) New() {
 
 // Config configures all the elements using the standard functions
 func (ss *Sim) Config() {
-	// Use this if you want to randomize new patterns.
+
 	ss.ConfigPats()
-	// Use this if you want to load pre-generated patterns.
-	//ss.OpenPats()
 
 	ss.ConfigEnv()
 	ss.ConfigNet(ss.Net)
@@ -265,7 +263,7 @@ func (ss *Sim) ConfigEnv() {
 	//ss.TrainEnv.Con
 	ss.TrainEnv.Validate()
 	ss.TrainEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 1, 3, 10)
+	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	ss.TrainEnv.Trial.Max = len(ss.TrainEnv.NGrams)
 	ss.TrainEnv.Epoch.Max = ss.MaxEpcs
 
@@ -813,28 +811,6 @@ func (ss *Sim) SetParamsSet(setNm string, sheet string, setMsg bool) error {
 	return err
 }
 
-func (ss *Sim) ConfigPats() {
-	dt := ss.Pats
-	dt.SetMetaData("name", "TrainPats")
-	dt.SetMetaData("desc", "Training patterns")
-	sch := etable.Schema{
-		{"Name", etensor.STRING, nil, nil},
-		{"Input", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
-		{"Output", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
-	}
-	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
-
-	patgen.PermutedBinaryRows(dt.Cols[1], 6, 1, 0)
-	patgen.PermutedBinaryRows(dt.Cols[2], 6, 1, 0)
-	for i := 0; i < ss.NInputs; i++ {
-		for j := 0; j < ss.NOutputs; j++ {
-			dt.SetCellTensor("Input", i*ss.NOutputs+j, dt.CellTensor("Input", i*ss.NOutputs))
-			dt.SetCellString("Name", i*ss.NOutputs+j, fmt.Sprintf("%d", i))
-		}
-	}
-	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
-}
-
 func (ss *Sim) OpenPats() {
 	dt := ss.Pats
 	dt.SetMetaData("name", "TrainPats")
@@ -1033,6 +1009,28 @@ func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 		plt.SetColParams(lnm+"_AvgDifMax", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, .5)
 	}
 	return plt
+}
+
+func (ss *Sim) ConfigPats() {
+	dt := ss.Pats
+	dt.SetMetaData("name", "TrainPats")
+	dt.SetMetaData("desc", "Training patterns")
+	sch := etable.Schema{
+		{"Name", etensor.STRING, nil, nil},
+		{"Input", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
+		{"Output", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
+	}
+	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
+
+	patgen.PermutedBinaryRows(dt.Cols[1], 9, 1, 0)
+	patgen.PermutedBinaryRows(dt.Cols[2], 2, 1, 0)
+	for i := 0; i < ss.NInputs; i++ {
+		for j := 0; j < ss.NOutputs; j++ {
+			dt.SetCellTensor("Input", i*ss.NOutputs+j, dt.CellTensor("Input", i*ss.NOutputs))
+			dt.SetCellString("Name", i*ss.NOutputs+j, fmt.Sprintf("%d", i))
+		}
+	}
+	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
 //////////////////////////////////////////////
