@@ -591,12 +591,13 @@ func (ss *Sim) TrialStats(accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
 
-	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
-	ss.TrlClosest = cnm
+	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
+	ss.TrlClosest = closestWord
 	ss.TrlCorrel = float64(cor)
-	tnm := strings.Join(ss.TrainEnv.CurWords, " ")
+	//contextWords := strings.Join(ss.TrainEnv.CurWords, " ")
+	trueSuccessor := ss.TrainEnv.CurNextWord
 
-	if cnm == tnm {
+	if closestWord == trueSuccessor {
 		ss.TrlErr = 0
 	} else {
 		ss.TrlErr = 1
@@ -878,7 +879,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 
 	epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
 	//nt := float64(len(ss.TrainEnv.Order)) // number of trials in view
-	nt := 1.0 //TODO: figure out the appropriate normalization term for the loss
+	nt := 100.0 //TODO: figure out the appropriate normalization term for the loss
 	ss.EpcUnitErr = ss.SumUnitErr / nt
 	ss.SumUnitErr = 0
 	ss.EpcPctErr = float64(ss.SumErr) / nt
