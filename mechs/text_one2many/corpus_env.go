@@ -163,9 +163,8 @@ func (ev *CorpusEnv) Config(inputfile string, inputsize evec.Vec2i, localist boo
 	ev.Output.SetShape([]int{ev.InputSize.Y, ev.InputSize.X}, nil, []string{"Y", "X"})
 	ev.CurWords = make([]string, ev.NContext)
 
-	if !ev.Localist {
-		ev.ConfigWordReps() //pattern for each word
-	}
+	ev.ConfigWordReps() //pattern for each word
+
 }
 
 // JsonData is the full original corpus, in sentence form
@@ -343,16 +342,24 @@ func (ev *CorpusEnv) ConfigWordReps() {
 
 	ev.WordReps.SetShape([]int{nwords, ev.InputSize.Y, ev.InputSize.X}, nil, []string{"Y", "X"})
 
-	fname := fmt.Sprintf("word_reps_%dx%d_on%d_mind%d.json", ev.InputSize.Y, ev.InputSize.X, nper, mindif)
+	fname := fmt.Sprintf("word_reps_%dx%d_on%d_mind%d_localist%t.json", ev.InputSize.Y, ev.InputSize.X, nper, mindif, ev.Localist)
 
 	_, err := os.Stat(fname)
 	if os.IsNotExist(err) {
 		fmt.Printf("ConfigWordReps: nwords: %d  nin: %d  nper: %d  minDif: %d\n", nwords, nin, nper, mindif)
 
-		patgen.MinDiffPrintIters = true
-		patgen.PermutedBinaryMinDiff(&ev.WordReps, 4, 1, 0, mindif)
-		jenc, _ := json.Marshal(ev.WordReps.Values)
-		_ = ioutil.WriteFile(fname, jenc, 0644)
+		if ev.Localist {
+			patgen.MinDiffPrintIters = true
+			patgen.PermutedBinaryMinDiff(&ev.WordReps, 1, 1, 0, 1)
+			jenc, _ := json.Marshal(ev.WordReps.Values)
+			_ = ioutil.WriteFile(fname, jenc, 0644)
+		} else {
+			patgen.MinDiffPrintIters = true
+			patgen.PermutedBinaryMinDiff(&ev.WordReps, 4, 1, 0, mindif)
+			jenc, _ := json.Marshal(ev.WordReps.Values)
+			_ = ioutil.WriteFile(fname, jenc, 0644)
+		}
+
 	} else {
 		fmt.Printf("Loading word reps from: %s\n", fname)
 		file, err := os.Open(fname)
@@ -411,19 +418,15 @@ func (ev *CorpusEnv) AddWordRep(inputoroutput *etensor.Float32, word string) {
 	}
 
 	widx := ev.WordMap[word]
-	if ev.Localist {
-		inputoroutput.SetFloat1D(widx, 1)
-	} else {
-		wp := ev.WordReps.SubSpace([]int{widx})
-		idx := 0
-		for y := 0; y < ev.InputSize.Y; y++ {
-			for x := 0; x < ev.InputSize.X; x++ {
-				wv := wp.FloatVal1D(idx)
-				cv := inputoroutput.FloatVal1D(idx)
-				nv := math.Max(wv, cv)
-				inputoroutput.SetFloat1D(idx, nv)
-				idx++
-			}
+	wp := ev.WordReps.SubSpace([]int{widx})
+	idx := 0
+	for y := 0; y < ev.InputSize.Y; y++ {
+		for x := 0; x < ev.InputSize.X; x++ {
+			wv := wp.FloatVal1D(idx)
+			cv := inputoroutput.FloatVal1D(idx)
+			nv := math.Max(wv, cv)
+			inputoroutput.SetFloat1D(idx, nv)
+			idx++
 		}
 	}
 }

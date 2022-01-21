@@ -12,7 +12,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/emer/emergent/evec"
-	"github.com/emer/emergent/patgen"
 	"log"
 	"math/rand"
 	"os"
@@ -237,6 +236,7 @@ func (ss *Sim) New() {
 func (ss *Sim) Config() {
 
 	ss.ConfigEnv()
+
 	ss.ConfigPatsFromEnv()
 
 	ss.ConfigNet(ss.Net)
@@ -263,7 +263,7 @@ func (ss *Sim) ConfigEnv() {
 	//ss.TrainEnv.Con
 	ss.TrainEnv.Validate()
 	ss.TrainEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 1, 3, 10)
 	ss.TrainEnv.Trial.Max = len(ss.TrainEnv.NGrams)
 	ss.TrainEnv.Epoch.Max = ss.MaxEpcs
 
@@ -271,7 +271,7 @@ func (ss *Sim) ConfigEnv() {
 	ss.TestEnv.Dsc = "testing params and state"
 	ss.TestEnv.Validate()
 	ss.TestEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 1, 3, 10)
 	ss.TestEnv.Trial.Max = len(ss.TestEnv.NGrams)
 	ss.TestEnv.Epoch.Max = ss.MaxEpcs
 	// note: to create a train / test split of pats, do this:
@@ -1014,6 +1014,7 @@ func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 }
 
 func (ss *Sim) ConfigPatsFromEnv() {
+
 	dt := ss.Pats
 	dt.SetMetaData("name", "SuccessorPatterns")
 	dt.SetMetaData("desc", "SuccessorPatterns")
@@ -1034,28 +1035,7 @@ func (ss *Sim) ConfigPatsFromEnv() {
 	}
 
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
-}
 
-func (ss *Sim) ConfigPats() {
-	dt := ss.Pats
-	dt.SetMetaData("name", "TrainPats")
-	dt.SetMetaData("desc", "Training patterns")
-	sch := etable.Schema{
-		{"Name", etensor.STRING, nil, nil},
-		{"Input", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
-		{"Output", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
-	}
-	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
-
-	patgen.PermutedBinaryRows(dt.Cols[1], 9, 1, 0)
-	patgen.PermutedBinaryRows(dt.Cols[2], 2, 1, 0)
-	for i := 0; i < ss.NInputs; i++ {
-		for j := 0; j < ss.NOutputs; j++ {
-			dt.SetCellTensor("Input", i*ss.NOutputs+j, dt.CellTensor("Input", i*ss.NOutputs))
-			dt.SetCellString("Name", i*ss.NOutputs+j, fmt.Sprintf("%d", i))
-		}
-	}
-	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
 //////////////////////////////////////////////
