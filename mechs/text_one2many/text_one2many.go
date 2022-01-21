@@ -71,7 +71,7 @@ var ParamSetsMin = params.Sets{
 			{Sel: "Layer", Desc: "all defaults",
 				Params: params.Params{
 					"Layer.Inhib.Layer.Gi":    "1.2",  // 1.2 > 1.1
-					"Layer.Inhib.ActAvg.Init": "0.04", // 0.4 for 1.2, 0.3 for 1.1
+					"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1
 					"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0
 					"Layer.Act.Decay.Glong":   "0.6",  // 0.6
 					"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0
@@ -86,12 +86,12 @@ var ParamSetsMin = params.Sets{
 				Params: params.Params{
 					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
 					"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
-					"Layer.Inhib.ActAvg.Init": "0.15", // .24 nominal, lower to give higher excitation
+					"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
 				}},
 			{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 				Params: params.Params{
 					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 >= 0.8 > 1.0 > 0.7 even with adapt -- not beneficial to start low
-					"Layer.Inhib.ActAvg.Init": "0.24", // this has to be exact for adapt
+					"Layer.Inhib.ActAvg.Init": "0.04", // this has to be exact for adapt
 					"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum.
 					"Layer.Act.Clamp.Ge":      "0.6",  // .6 > .5 v94
 					// "Layer.Act.NMDA.Gbar":     "0.3",  // higher not better
@@ -271,7 +271,7 @@ func (ss *Sim) ConfigEnv() {
 	ss.TestEnv.Dsc = "testing params and state"
 	ss.TestEnv.Validate()
 	ss.TestEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 1, 3, 10)
+	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	ss.TestEnv.Trial.Max = len(ss.TestEnv.NGrams)
 	ss.TestEnv.Epoch.Max = ss.MaxEpcs
 	// note: to create a train / test split of pats, do this:
@@ -594,10 +594,11 @@ func (ss *Sim) TrialStats(accum bool) {
 	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 	ss.TrlClosest = closestWord
 	ss.TrlCorrel = float64(cor)
-	//contextWords := strings.Join(ss.TrainEnv.CurWords, " ")
-	trueSuccessor := ss.TrainEnv.CurNextWord
+	contextWords := strings.Join(ss.TrainEnv.CurWords, " ")
 
-	if closestWord == trueSuccessor {
+	//Check if the closest word that is found is one of the potential following words
+	_, ok := ss.TrainEnv.NGrams[contextWords][closestWord]
+	if ok {
 		ss.TrlErr = 0
 	} else {
 		ss.TrlErr = 1
@@ -879,7 +880,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 
 	epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
 	//nt := float64(len(ss.TrainEnv.Order)) // number of trials in view
-	nt := 100.0 //TODO: figure out the appropriate normalization term for the loss
+	nt := float64(ss.TrainEnv.Trial.Max) //TODO: figure out the appropriate normalization term for the loss
 	ss.EpcUnitErr = ss.SumUnitErr / nt
 	ss.SumUnitErr = 0
 	ss.EpcPctErr = float64(ss.SumErr) / nt
