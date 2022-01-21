@@ -236,9 +236,9 @@ func (ss *Sim) New() {
 // Config configures all the elements using the standard functions
 func (ss *Sim) Config() {
 
-	ss.ConfigPats()
-
 	ss.ConfigEnv()
+	ss.ConfigPatsFromEnv()
+
 	ss.ConfigNet(ss.Net)
 	ss.ConfigTrnEpcLog(ss.TrnEpcLog)
 	ss.ConfigTstEpcLog(ss.TstEpcLog)
@@ -591,7 +591,7 @@ func (ss *Sim) TrialStats(accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
 
-	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
+	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 	ss.TrlClosest = cnm
 	ss.TrlCorrel = float64(cor)
 	tnm := strings.Join(ss.TrainEnv.CurWords, " ")
@@ -1009,6 +1009,29 @@ func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 		plt.SetColParams(lnm+"_AvgDifMax", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, .5)
 	}
 	return plt
+}
+
+func (ss *Sim) ConfigPatsFromEnv() {
+	dt := ss.Pats
+	dt.SetMetaData("name", "SuccessorPatterns")
+	dt.SetMetaData("desc", "SuccessorPatterns")
+	sch := etable.Schema{
+		{"Word", etensor.STRING, nil, nil},
+		{"Pattern", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
+	}
+	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
+
+	i := 0
+	for _, word := range ss.TrainEnv.Words {
+		idx := ss.TrainEnv.WordMap[word]
+		mytensor := ss.TrainEnv.WordReps.SubSpace([]int{idx})
+		dt.SetCellString("Word", i, word)
+		dt.SetCellTensor("Pattern", i, mytensor)
+		i++
+
+	}
+
+	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
 func (ss *Sim) ConfigPats() {
