@@ -220,7 +220,7 @@ func (ev *CorpusEnv) LimitVocabulary() {
 	for _, sent := range ev.Sentences {
 		newSent := make([]string, 0)
 		for _, word := range sent {
-			if ev.FreqMap[word] >= threshold {
+			if ev.FreqMap[word] > threshold {
 				newSent = append(newSent, word)
 			}
 		}
@@ -434,6 +434,10 @@ func (ev *CorpusEnv) RenderWords() {
 	for _, word := range ev.CurWords {
 		ev.AddWordRep(&ev.Input, word)
 	}
+	// DO NOT SUBMIT TODO Remove these
+	//ev.Input.SetFloat1D(1, 1)
+	//ev.Input.SetFloat1D(2, 1)
+	//ev.Input.SetFloat1D(3, 1)
 	ev.Output.SetZeros()
 	ev.AddWordRep(&ev.Output, ev.CurNextWord)
 }
