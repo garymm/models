@@ -263,7 +263,7 @@ func (ss *Sim) ConfigEnv() {
 	//ss.TrainEnv.Con
 	ss.TrainEnv.Validate()
 	ss.TrainEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 1, 3, 10)
+	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 2, 3, 10)
 	ss.TrainEnv.Trial.Max = len(ss.TrainEnv.NGrams)
 	ss.TrainEnv.Epoch.Max = ss.MaxEpcs
 
@@ -271,7 +271,7 @@ func (ss *Sim) ConfigEnv() {
 	ss.TestEnv.Dsc = "testing params and state"
 	ss.TestEnv.Validate()
 	ss.TestEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 1, 3, 10)
+	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, true, 2, 3, 10)
 	ss.TestEnv.Trial.Max = len(ss.TestEnv.NGrams)
 	ss.TestEnv.Epoch.Max = ss.MaxEpcs
 	// note: to create a train / test split of pats, do this:

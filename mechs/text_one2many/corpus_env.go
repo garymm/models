@@ -94,7 +94,10 @@ func (ngm *NGramMap) TopNSuccessors(n int) {
 		}
 
 		sort.Sort(sort.Reverse(sort.Float64Slice(freqs)))
-		var threshold = freqs[n]
+		var threshold float64 = 0
+		if len(freqs) > n {
+			threshold = freqs[n]
+		}
 		for successor, freq := range freqmap {
 			if freq < threshold {
 				delete(freqmap, successor)
