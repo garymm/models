@@ -7,6 +7,9 @@ import (
 	"github.com/goki/gi/gi"
 )
 
+////////////////////////////////////////////////////////////////////////////////
+// 	    Running the Network, starting bottom-up..
+
 // ThetaCyc runs one theta cycle (200 msec) of processing.
 // External inputs must have already been applied prior to calling,
 // using ApplyExt method on relevant layers (see TrainTrial, TestTrial).

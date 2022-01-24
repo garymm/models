@@ -17,7 +17,6 @@ func (ss *Sim) OpenPats() {
 }
 
 func (ss *Sim) ConfigPatsFromEnv() {
-
 	dt := ss.Pats
 	dt.SetMetaData("name", "SuccessorPatterns")
 	dt.SetMetaData("desc", "SuccessorPatterns")

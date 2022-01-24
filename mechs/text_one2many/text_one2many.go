@@ -173,9 +173,6 @@ func (ss *Sim) ConfigNet(net *axon.Network) {
 	net.InitWts()
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// 	    Running the Network, starting bottom-up..
-
 // ClosestStat finds the closest pattern in given column of given table to
 // given layer activation pattern using given variable.  Returns the row number,
 // correlation value, and value of a column named namecol for that row if non-empty.
