@@ -19,6 +19,13 @@ import (
 // LogPrec is precision for saving float values in logs
 const LogPrec = 4
 
+type EvaluationType int64
+
+const (
+	Train EvaluationType = 0
+	Test                 = 1
+)
+
 type LogItem struct {
 	etable.Column                                      // Inherits elements Name, Type, CellShape, DimNames
 	Range         minmax.F32                           `desc:"The minimum and maximum"`
@@ -27,8 +34,7 @@ type LogItem struct {
 	FixMin        bool                                 `desc:"Whether to fix the minimum in the display"`
 	FixMax        bool                                 `desc:"Whether to fix the maximum in the display"`
 	TimeScale     env.TimeScales                       `desc:"What timescale does this log happen at"`
-	// TODO Make this an enum
-	TestOrTrain bool `desc:"True if test, false if train"`
+	EvalType      EvaluationType                       `desc:"Describes what the evaluation of the type"`
 }
 
 type LogSpec struct {
@@ -40,10 +46,90 @@ func (logSpec *LogSpec) AddItem(item *LogItem) {
 	logSpec.Items = append(logSpec.Items, item)
 }
 
-func (ss *Sim) ConfigLogSpec() {
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Run", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+func (logSpec *LogSpec) AddLayerItem(item *LogItem) {
+	logSpec.PerLayerDetails = append(logSpec.PerLayerDetails, item)
+}
+
+func (logSpec *LogSpec) DuplicateForTest() {
+
+	var length = len(logSpec.Items)
+	for i := 0; i < length; i++ {
+		copiedLog := *logSpec.Items[i]
+		copiedLog.EvalType = Test
+		logSpec.AddItem(&copiedLog)
+	}
+
+	var lengthLayer = len(logSpec.PerLayerDetails)
+	for i := 0; i < lengthLayer; i++ {
+		copiedLog := *logSpec.PerLayerDetails[i]
+		copiedLog.EvalType = Test
+		logSpec.AddLayerItem(&copiedLog)
+	}
+}
+
+func (ss *Sim) ConfigLogSpecEpoch() {
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Run", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
 		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, TestOrTrain: true})
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Epoch", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "UnitErr", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "PctErr", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "PctCor", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "CosDiff", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Correl", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "PerTrlMSec", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	//Configure layer wise
+	//
+	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_ActAvg", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_MaxGeM", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_AvgGe", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_MaxGe", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_Gi", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_AvgDifAvg", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_AvgDifMax", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
+
+	ss.LogSpec.DuplicateForTest()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,30 +263,39 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 	dt.SetMetaData("desc", "Record of performance over epochs of training")
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-
-	sch := etable.Schema{
-		{"Run", etensor.INT64, nil, nil},
-		{"Epoch", etensor.INT64, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"PctErr", etensor.FLOAT64, nil, nil},
-		{"PctCor", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
-		{"Correl", etensor.FLOAT64, nil, nil},
-		{"PerTrlMSec", etensor.FLOAT64, nil, nil},
+	sch := etable.Schema{}
+	for _, val := range ss.LogSpec.Items {
+		fmt.Printf(val.Name, val.TimeScale, val.Type)
+		if val.EvalType == Train && env.Epoch == val.TimeScale {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
 	}
+
+	//
+	//sch := etable.Schema{
+	//	{"Run", etensor.INT64, nil, nil},
+	//	{"Epoch", etensor.INT64, nil, nil},
+	//	{"UnitErr", etensor.FLOAT64, nil, nil},
+	//	{"PctErr", etensor.FLOAT64, nil, nil},
+	//	{"PctCor", etensor.FLOAT64, nil, nil},
+	//	{"CosDiff", etensor.FLOAT64, nil, nil},
+	//	{"Correl", etensor.FLOAT64, nil, nil},
+	//	{"PerTrlMSec", etensor.FLOAT64, nil, nil},
+	//}
 	for _, lnm := range ss.LayStatNms {
-		// sch = append(sch, etable.Column{lnm + "_FF_AvgMaxG", etensor.FLOAT64, nil, nil})
-		// sch = append(sch, etable.Column{lnm + "_FF_Scale", etensor.FLOAT64, nil, nil})
-		// sch = append(sch, etable.Column{lnm + "_FB_AvgMaxG", etensor.FLOAT64, nil, nil})
-		// sch = append(sch, etable.Column{lnm + "_FB_Scale", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + "_ActAvg", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + "_MaxGeM", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + "_AvgGe", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + "_MaxGe", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + "_Gi", etensor.FLOAT64, nil, nil})
-		// sch = append(sch, etable.Column{lnm + "_GiMult", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + "_AvgDifAvg", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + "_AvgDifMax", etensor.FLOAT64, nil, nil})
+		for _, val := range ss.LogSpec.PerLayerDetails {
+			if val.EvalType == Train && env.Epoch == val.TimeScale {
+				sch = append(sch, etable.Column{lnm + val.Name, val.Type, nil, nil})
+			}
+		}
+
+		//sch = append(sch, etable.Column{lnm + "_ActAvg", etensor.FLOAT64, nil, nil})
+		//sch = append(sch, etable.Column{lnm + "_MaxGeM", etensor.FLOAT64, nil, nil})
+		//sch = append(sch, etable.Column{lnm + "_AvgGe", etensor.FLOAT64, nil, nil})
+		//sch = append(sch, etable.Column{lnm + "_MaxGe", etensor.FLOAT64, nil, nil})
+		//sch = append(sch, etable.Column{lnm + "_Gi", etensor.FLOAT64, nil, nil})
+		//sch = append(sch, etable.Column{lnm + "_AvgDifAvg", etensor.FLOAT64, nil, nil})
+		//sch = append(sch, etable.Column{lnm + "_AvgDifMax", etensor.FLOAT64, nil, nil})
 	}
 	dt.SetFromSchema(sch, 0)
 }

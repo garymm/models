@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
@@ -134,7 +135,8 @@ func (ss *Sim) Config() {
 	ss.ConfigPatsFromEnv()
 
 	ss.ConfigNet(ss.Net)
-	ss.ConfigLogSpec()
+	ss.ConfigLogSpecEpoch()
+	fmt.Println("What the hell")
 	ss.ConfigTrnEpcLog(ss.TrnEpcLog)
 	ss.ConfigTstEpcLog(ss.TstEpcLog)
 	ss.ConfigTstTrlLog(ss.TstTrlLog)
