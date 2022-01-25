@@ -21,103 +21,56 @@ const LogPrec = 4
 
 type EvaluationType int64
 
+type LogFunc func(ss *Sim, dt *etable.Table, row int, name string)
+type LogFuncLayer func(ss *Sim, dt *etable.Table, row int, name string, layer axon.Layer)
+
 const (
 	Train EvaluationType = 0
 	Test                 = 1
 )
 
 type LogItem struct {
-	etable.Column                                      // Inherits elements Name, Type, CellShape, DimNames
-	Range         minmax.F32                           `desc:"The minimum and maximum"`
-	Compute       func(tensor etensor.Tensor, row int) `desc:"How is this computed?"`
-	Plot          bool                                 `desc:"Whether or not to plot it"`
-	FixMin        bool                                 `desc:"Whether to fix the minimum in the display"`
-	FixMax        bool                                 `desc:"Whether to fix the maximum in the display"`
-	TimeScale     env.TimeScales                       `desc:"What timescale does this log happen at"`
-	EvalType      EvaluationType                       `desc:"Describes what the evaluation of the type"`
+	etable.Column                                 // Inherits elements Name, Type, CellShape, DimNames
+	Range         minmax.F32                      `desc:"The minimum and maximum"`
+	Compute       map[env.TimeScales]LogFunc      `desc:"For each timescale, how is this value computed?"`
+	ComputeLayer  map[env.TimeScales]LogFuncLayer `desc:"For each timescale, how is this value computed? This is for layer specific callbacks."`
+	Plot          bool                            `desc:"Whether or not to plot it"`
+	FixMin        bool                            `desc:"Whether to fix the minimum in the display"`
+	FixMax        bool                            `desc:"Whether to fix the maximum in the display"`
+	//TimeScale     env.TimeScales                                          `desc:"What timescale does this log happen at"` // DO NOT SUBMIT
+	EvalType  EvaluationType `desc:"Describes what the evaluation of the type"`
+	LayerName string         `desc:"The name of the layer that this should apply to. This will only not be empty for items that are logged per layer"`
 }
 
 type LogSpec struct {
-	Items           []*LogItem `desc:""`
-	PerLayerDetails []*LogItem `desc:""`
+	Items []*LogItem `desc:""`
+	//PerLayerDetails []*LogItem `desc:""` // DO NOT SUBMIT delete this
 }
 
 func (logSpec *LogSpec) AddItem(item *LogItem) {
 	logSpec.Items = append(logSpec.Items, item)
 }
 
-func (logSpec *LogSpec) AddLayerItem(item *LogItem) {
-	logSpec.PerLayerDetails = append(logSpec.PerLayerDetails, item)
-}
+//func (logSpec *LogSpec) AddLayerItem(item *LogItem) {
+//	logSpec.PerLayerDetails = append(logSpec.PerLayerDetails, item)
+//}
 
-func (logSpec *LogSpec) DuplicateForTest() {
-
-	var length = len(logSpec.Items)
-	for i := 0; i < length; i++ {
-		copiedLog := *logSpec.Items[i]
-		copiedLog.EvalType = Test
-		logSpec.AddItem(&copiedLog)
-	}
-
-	var lengthLayer = len(logSpec.PerLayerDetails)
-	for i := 0; i < lengthLayer; i++ {
-		copiedLog := *logSpec.PerLayerDetails[i]
-		copiedLog.EvalType = Test
-		logSpec.AddLayerItem(&copiedLog)
-	}
-}
-
-func (ss *Sim) ConfigLogSpecEpoch() {
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Run", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Epoch", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "UnitErr", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "PctErr", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "PctCor", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "CosDiff", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Correl", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "PerTrlMSec", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-
-	//Configure layer wise
-	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_ActAvg", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_MaxGeM", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_AvgGe", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_MaxGe", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_Gi", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_AvgDifAvg", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-	ss.LogSpec.AddLayerItem(&LogItem{Column: etable.Column{Name: "_AvgDifMax", Type: etensor.INT64}, Compute: func(tensor etensor.Tensor, row int) {
-		tensor.SetFloat([]int{row}, 5)
-	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, EvalType: Train})
-
-	ss.LogSpec.DuplicateForTest()
-}
+//func (logSpec *LogSpec) DuplicateForTest() {
+//
+//	var length = len(logSpec.Items)
+//	for i := 0; i < length; i++ {
+//		copiedLog := *logSpec.Items[i]
+//		copiedLog.EvalType = Test
+//		logSpec.AddItem(&copiedLog)
+//	}
+//
+//	//var lengthLayer = len(logSpec.PerLayerDetails)
+//	//for i := 0; i < lengthLayer; i++ {
+//	//	copiedLog := *logSpec.PerLayerDetails[i]
+//	//	copiedLog.EvalType = Test
+//	//	logSpec.AddLayerItem(&copiedLog)
+//	//}
+//}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Logging
@@ -203,33 +156,53 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	}
 	ss.LastEpcTime = time.Now()
 
-	dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	dt.SetCellFloat("Epoch", row, float64(epc))
-	dt.SetCellFloat("UnitErr", row, ss.EpcUnitErr)
-	dt.SetCellFloat("PctErr", row, ss.EpcPctErr)
-	dt.SetCellFloat("PctCor", row, ss.EpcPctCor)
-	dt.SetCellFloat("CosDiff", row, ss.EpcCosDiff)
-	dt.SetCellFloat("Correl", row, ss.EpcCorrel)
-	dt.SetCellFloat("PerTrlMSec", row, ss.EpcPerTrlMSec)
+	for _, item := range ss.LogSpec.Items {
+		if item.EvalType == Train {
+			callback, ok := item.Compute[env.Epoch]
+			if ok {
+				callback(ss, dt, row, item.Name)
+			}
+		}
+	}
+	//// TODO(Logging) Need to get callbacks working.
+	//dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
+	//dt.SetCellFloat("Epoch", row, float64(epc))
+	//dt.SetCellFloat("UnitErr", row, ss.EpcUnitErr)
+	//dt.SetCellFloat("PctErr", row, ss.EpcPctErr)
+	//dt.SetCellFloat("PctCor", row, ss.EpcPctCor)
+	//dt.SetCellFloat("CosDiff", row, ss.EpcCosDiff)
+	//dt.SetCellFloat("Correl", row, ss.EpcCorrel)
+	//dt.SetCellFloat("PerTrlMSec", row, ss.EpcPerTrlMSec)
 
 	for _, lnm := range ss.LayStatNms {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		// ffpj := ly.RecvPrjn(0).(*axon.Prjn)
-		// dt.SetCellFloat(ly.Nm+"_FF_AvgMaxG", row, float64(ffpj.GScale.AvgMax))
-		// dt.SetCellFloat(ly.Nm+"_FF_Scale", row, float64(ffpj.GScale.Scale))
-		// if ly.NRecvPrjns() > 1 {
-		// 	fbpj := ly.RecvPrjn(1).(*axon.Prjn)
-		// 	dt.SetCellFloat(ly.Nm+"_FB_AvgMaxG", row, float64(fbpj.GScale.AvgMax))
-		// 	dt.SetCellFloat(ly.Nm+"_FB_Scale", row, float64(fbpj.GScale.Scale))
-		// }
-		dt.SetCellFloat(ly.Nm+"_ActAvg", row, float64(ly.ActAvg.ActMAvg))
-		dt.SetCellFloat(ly.Nm+"_MaxGeM", row, float64(ly.ActAvg.AvgMaxGeM))
-		dt.SetCellFloat(ly.Nm+"_AvgGe", row, float64(ly.Pools[0].Inhib.Ge.Avg))
-		dt.SetCellFloat(ly.Nm+"_MaxGe", row, float64(ly.Pools[0].Inhib.Ge.Max))
-		dt.SetCellFloat(ly.Nm+"_Gi", row, float64(ly.Pools[0].Inhib.Gi))
-		// dt.SetCellFloat(ly.Nm+"_GiMult", row, float64(ly.ActAvg.GiMult))
-		dt.SetCellFloat(ly.Nm+"_AvgDifAvg", row, float64(ly.Pools[0].AvgDif.Avg))
-		dt.SetCellFloat(ly.Nm+"_AvgDifMax", row, float64(ly.Pools[0].AvgDif.Max))
+		for _, item := range ss.LogSpec.Items {
+			if item.EvalType == Train {
+				callback, ok := item.ComputeLayer[env.Epoch]
+				if ok && item.LayerName == lnm {
+					// TODO(optimize) is this copying ly?
+					callback(ss, dt, row, item.Name, *ly)
+				}
+			}
+		}
+
+		//// DO NOT SUBMIT Delete this stuff
+		//// ffpj := ly.RecvPrjn(0).(*axon.Prjn)
+		//// dt.SetCellFloat(ly.Nm+"_FF_AvgMaxG", row, float64(ffpj.GScale.AvgMax))
+		//// dt.SetCellFloat(ly.Nm+"_FF_Scale", row, float64(ffpj.GScale.Scale))
+		//// if ly.NRecvPrjns() > 1 {
+		//// 	fbpj := ly.RecvPrjn(1).(*axon.Prjn)
+		//// 	dt.SetCellFloat(ly.Nm+"_FB_AvgMaxG", row, float64(fbpj.GScale.AvgMax))
+		//// 	dt.SetCellFloat(ly.Nm+"_FB_Scale", row, float64(fbpj.GScale.Scale))
+		//// }
+		//dt.SetCellFloat(ly.Nm+"_ActAvg", row, float64(ly.ActAvg.ActMAvg))
+		//dt.SetCellFloat(ly.Nm+"_MaxGeM", row, float64(ly.ActAvg.AvgMaxGeM))
+		//dt.SetCellFloat(ly.Nm+"_AvgGe", row, float64(ly.Pools[0].Inhib.Ge.Avg))
+		//dt.SetCellFloat(ly.Nm+"_MaxGe", row, float64(ly.Pools[0].Inhib.Ge.Max))
+		//dt.SetCellFloat(ly.Nm+"_Gi", row, float64(ly.Pools[0].Inhib.Gi))
+		//// dt.SetCellFloat(ly.Nm+"_GiMult", row, float64(ly.ActAvg.GiMult))
+		//dt.SetCellFloat(ly.Nm+"_AvgDifAvg", row, float64(ly.Pools[0].AvgDif.Avg))
+		//dt.SetCellFloat(ly.Nm+"_AvgDifMax", row, float64(ly.Pools[0].AvgDif.Max))
 	}
 
 	// note: essential to use Go version of update when called from another goroutine
@@ -252,8 +225,13 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
-		fmt.Printf(val.Name, val.TimeScale, val.Type)
-		if val.EvalType == Train && env.Epoch == val.TimeScale {
+		// Compute records which timescales are logged. It also records how, but we don't need that here.
+		_, ok := val.Compute[env.Epoch]
+		if ok && val.EvalType == Train {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
+		_, ok = val.ComputeLayer[env.Epoch]
+		if ok && val.EvalType == Train {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
 	}
@@ -269,21 +247,22 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 	//	{"Correl", etensor.FLOAT64, nil, nil},
 	//	{"PerTrlMSec", etensor.FLOAT64, nil, nil},
 	//}
-	for _, lnm := range ss.LayStatNms {
-		for _, val := range ss.LogSpec.PerLayerDetails {
-			if val.EvalType == Train && env.Epoch == val.TimeScale {
-				sch = append(sch, etable.Column{lnm + val.Name, val.Type, nil, nil})
-			}
-		}
-
-		//sch = append(sch, etable.Column{lnm + "_ActAvg", etensor.FLOAT64, nil, nil})
-		//sch = append(sch, etable.Column{lnm + "_MaxGeM", etensor.FLOAT64, nil, nil})
-		//sch = append(sch, etable.Column{lnm + "_AvgGe", etensor.FLOAT64, nil, nil})
-		//sch = append(sch, etable.Column{lnm + "_MaxGe", etensor.FLOAT64, nil, nil})
-		//sch = append(sch, etable.Column{lnm + "_Gi", etensor.FLOAT64, nil, nil})
-		//sch = append(sch, etable.Column{lnm + "_AvgDifAvg", etensor.FLOAT64, nil, nil})
-		//sch = append(sch, etable.Column{lnm + "_AvgDifMax", etensor.FLOAT64, nil, nil})
-	}
+	//for _, lnm := range ss.LayStatNms {
+	//	for _, val := range ss.LogSpec.Items {
+	//		_, ok := val.ComputeLayer[env.Epoch]
+	//		if ok && val.EvalType == Train {
+	//			sch = append(sch, etable.Column{val.Name, val.Type, nil, nil})
+	//		}
+	//	}
+	//
+	//	//sch = append(sch, etable.Column{lnm + "_ActAvg", etensor.FLOAT64, nil, nil})
+	//	//sch = append(sch, etable.Column{lnm + "_MaxGeM", etensor.FLOAT64, nil, nil})
+	//	//sch = append(sch, etable.Column{lnm + "_AvgGe", etensor.FLOAT64, nil, nil})
+	//	//sch = append(sch, etable.Column{lnm + "_MaxGe", etensor.FLOAT64, nil, nil})
+	//	//sch = append(sch, etable.Column{lnm + "_Gi", etensor.FLOAT64, nil, nil})
+	//	//sch = append(sch, etable.Column{lnm + "_AvgDifAvg", etensor.FLOAT64, nil, nil})
+	//	//sch = append(sch, etable.Column{lnm + "_AvgDifMax", etensor.FLOAT64, nil, nil})
+	//}
 	dt.SetFromSchema(sch, 0)
 }
 
@@ -293,38 +272,59 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 // LogTstTrl adds data from current trial to the TstTrlLog table.
 // log always contains number of testing items
 func (ss *Sim) LogTstTrl(dt *etable.Table) {
-	epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
-	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
-	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
+	//epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
 
 	trl := ss.TestEnv.Trial.Cur
-	row := trl
-
+	row := trl // TODO(clean) Is this making a copy? Is it necessary?
 	if dt.Rows <= row {
 		dt.SetNumRows(row + 1)
 	}
 
-	dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	dt.SetCellFloat("Epoch", row, float64(epc))
-	dt.SetCellFloat("Trial", row, float64(trl))
-	dt.SetCellString("TrialName", row, strings.Join(ss.TestEnv.CurWords, " "))
-	dt.SetCellFloat("Err", row, ss.TrlErr)
-	dt.SetCellFloat("UnitErr", row, ss.TrlUnitErr)
-	dt.SetCellFloat("CosDiff", row, ss.TrlCosDiff)
-	dt.SetCellFloat("Correl", row, ss.TrlCosDiff)
+	for _, item := range ss.LogSpec.Items {
+		if item.EvalType == Test {
+			callback, ok := item.Compute[env.Trial]
+			if ok {
+				callback(ss, dt, row, item.Name)
+			}
+		}
+	}
 
 	for _, lnm := range ss.LayStatNms {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		dt.SetCellFloat(ly.Nm+" ActM.Avg", row, float64(ly.Pools[0].ActM.Avg))
+		for _, item := range ss.LogSpec.Items {
+			if item.EvalType == Test {
+				callback, ok := item.ComputeLayer[env.Trial]
+				if ok && item.LayerName == lnm {
+					// TODO(optimize) is this copying ly?
+					callback(ss, dt, row, item.Name, *ly)
+				}
+			}
+		}
 	}
-	ivt := ss.ValsTsr("Input")
-	ovt := ss.ValsTsr("Output")
-	inp.UnitValsTensor(ivt, "Act")
-	dt.SetCellTensor("InAct", row, ivt)
-	out.UnitValsTensor(ovt, "ActM")
-	dt.SetCellTensor("OutActM", row, ovt)
-	out.UnitValsTensor(ovt, "ActP")
-	dt.SetCellTensor("OutActP", row, ovt)
+	//dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
+	//dt.SetCellFloat("Epoch", row, float64(epc))
+	//dt.SetCellFloat("Trial", row, float64(trl))
+	//dt.SetCellString("TrialName", row, strings.Join(ss.TestEnv.CurWords, " "))
+	//dt.SetCellFloat("Err", row, ss.TrlErr)
+	//dt.SetCellFloat("UnitErr", row, ss.TrlUnitErr)
+	//dt.SetCellFloat("CosDiff", row, ss.TrlCosDiff)
+	//dt.SetCellFloat("Correl", row, ss.TrlCosDiff)
+
+	//for _, lnm := range ss.LayStatNms {
+	//	ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
+	//	dt.SetCellFloat(ly.Nm+" ActM.Avg", row, float64(ly.Pools[0].ActM.Avg))
+	//}
+
+	//inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
+	//out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
+	//ivt := ss.ValsTsr("Input")
+	//ovt := ss.ValsTsr("Output")
+	//inp.UnitValsTensor(ivt, "Act")
+	//dt.SetCellTensor("InAct", row, ivt)
+	//out.UnitValsTensor(ovt, "ActM")
+	//dt.SetCellTensor("OutActM", row, ovt)
+	//out.UnitValsTensor(ovt, "ActP")
+	//dt.SetCellTensor("OutActP", row, ovt)
 
 	// note: essential to use Go version of update when called from another goroutine
 	if ss.TstTrlPlot != nil {
@@ -333,8 +333,8 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 }
 
 func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
-	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
-	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
+	//inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
+	//out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
 	dt.SetMetaData("name", "TstTrlLog")
 	dt.SetMetaData("desc", "Record of testing per input pattern")
@@ -342,24 +342,36 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
 	nt := len(ss.TestEnv.NGrams) // 1 //ss.TestEnv.Table.Len() // number in view
-	sch := etable.Schema{
-		{"Run", etensor.INT64, nil, nil},
-		{"Epoch", etensor.INT64, nil, nil},
-		{"Trial", etensor.INT64, nil, nil},
-		{"TrialName", etensor.STRING, nil, nil},
-		{"Err", etensor.FLOAT64, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
-		{"Correl", etensor.FLOAT64, nil, nil},
+	//sch := etable.Schema{
+	//	{"Run", etensor.INT64, nil, nil},
+	//	{"Epoch", etensor.INT64, nil, nil},
+	//	{"Trial", etensor.INT64, nil, nil},
+	//	{"TrialName", etensor.STRING, nil, nil},
+	//	{"Err", etensor.FLOAT64, nil, nil},
+	//	{"UnitErr", etensor.FLOAT64, nil, nil},
+	//	{"CosDiff", etensor.FLOAT64, nil, nil},
+	//	{"Correl", etensor.FLOAT64, nil, nil},
+	//}
+	sch := etable.Schema{}
+	for _, val := range ss.LogSpec.Items {
+		// Compute records which timescales are logged. It also records how, but we don't need that here.
+		_, ok := val.Compute[env.Trial]
+		if ok && val.EvalType == Test {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
+		_, ok = val.ComputeLayer[env.Trial]
+		if ok && val.EvalType == Test {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
 	}
-	for _, lnm := range ss.LayStatNms {
-		sch = append(sch, etable.Column{lnm + " ActM.Avg", etensor.FLOAT64, nil, nil})
-	}
-	sch = append(sch, etable.Schema{
-		{"InAct", etensor.FLOAT64, inp.Shp.Shp, nil},
-		{"OutActM", etensor.FLOAT64, out.Shp.Shp, nil},
-		{"OutActP", etensor.FLOAT64, out.Shp.Shp, nil},
-	}...)
+	//for _, lnm := range ss.LayStatNms {
+	//	sch = append(sch, etable.Column{lnm + " ActM.Avg", etensor.FLOAT64, nil, nil})
+	//}
+	//sch = append(sch, etable.Schema{
+	//	{"InAct", etensor.FLOAT64, inp.Shp.Shp, nil},
+	//	{"OutActM", etensor.FLOAT64, out.Shp.Shp, nil},
+	//	{"OutActP", etensor.FLOAT64, out.Shp.Shp, nil},
+	//}...)
 	dt.SetFromSchema(sch, nt)
 }
 
@@ -370,32 +382,55 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	row := dt.Rows
 	dt.SetNumRows(row + 1)
 
+	//trl := ss.TstTrlLog
+	//tix := etable.NewIdxView(trl)
+	//epc := ss.TrainEnv.Epoch.Prv // ?
+
+	//// note: this shows how to use agg methods to compute summary data from another
+	//// data table, instead of incrementing on the Sim
+	//// TODO(Logging) Need to get callbacks working.
+	//dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
+	////dt.SetCellFloat("Epoch", row, float64(epc))
+	//dt.SetCellFloat("UnitErr", row, agg.Sum(tix, "UnitErr")[0])
+	//dt.SetCellFloat("PctErr", row, agg.Mean(tix, "Err")[0])
+	//dt.SetCellFloat("PctCor", row, 1-agg.Mean(tix, "Err")[0])
+	//dt.SetCellFloat("CosDiff", row, agg.Mean(tix, "CosDiff")[0])
+	//dt.SetCellFloat("Correl", row, agg.Mean(tix, "Correl")[0])
+
+	for _, item := range ss.LogSpec.Items {
+		if item.EvalType == Test {
+			callback, ok := item.Compute[env.Epoch]
+			if ok {
+				callback(ss, dt, row, item.Name)
+			}
+		}
+	}
+
+	for _, lnm := range ss.LayStatNms {
+		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
+		for _, item := range ss.LogSpec.Items {
+			if item.EvalType == Test {
+				callback, ok := item.ComputeLayer[env.Epoch]
+				if ok && item.LayerName == lnm {
+					// TODO(optimize) is this copying ly?
+					callback(ss, dt, row, item.Name, *ly)
+				}
+			}
+		}
+	}
+
+	// Record those test trials which had errors
 	trl := ss.TstTrlLog
-	tix := etable.NewIdxView(trl)
-	epc := ss.TrainEnv.Epoch.Prv // ?
-
-	// note: this shows how to use agg methods to compute summary data from another
-	// data table, instead of incrementing on the Sim
-	dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	dt.SetCellFloat("Epoch", row, float64(epc))
-	dt.SetCellFloat("UnitErr", row, agg.Sum(tix, "UnitErr")[0])
-	dt.SetCellFloat("PctErr", row, agg.Mean(tix, "Err")[0])
-	dt.SetCellFloat("PctCor", row, 1-agg.Mean(tix, "Err")[0])
-	dt.SetCellFloat("CosDiff", row, agg.Mean(tix, "CosDiff")[0])
-	dt.SetCellFloat("Correl", row, agg.Mean(tix, "Correl")[0])
-
 	trlix := etable.NewIdxView(trl)
 	trlix.Filter(func(et *etable.Table, row int) bool {
 		return et.CellFloat("UnitErr", row) > 0 // include error trials
 	})
 	ss.TstErrLog = trlix.NewTable()
-
 	allsp := split.All(trlix)
 	split.Agg(allsp, "UnitErr", agg.AggSum)
 	split.Agg(allsp, "InAct", agg.AggMean)
 	split.Agg(allsp, "OutActM", agg.AggMean)
 	split.Agg(allsp, "OutActP", agg.AggMean)
-
 	ss.TstErrStats = allsp.AggsToTable(etable.AddAggName)
 
 	// note: essential to use Go version of update when called from another goroutine
@@ -410,14 +445,27 @@ func (ss *Sim) ConfigTstEpcLog(dt *etable.Table) {
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
-	sch := etable.Schema{
-		{"Run", etensor.INT64, nil, nil},
-		{"Epoch", etensor.INT64, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"PctErr", etensor.FLOAT64, nil, nil},
-		{"PctCor", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
-		{"Correl", etensor.FLOAT64, nil, nil},
+	//sch := etable.Schema{
+	//	{"Run", etensor.INT64, nil, nil},
+	//	{"Epoch", etensor.INT64, nil, nil},
+	//	{"UnitErr", etensor.FLOAT64, nil, nil},
+	//	{"PctErr", etensor.FLOAT64, nil, nil},
+	//	{"PctCor", etensor.FLOAT64, nil, nil},
+	//	{"CosDiff", etensor.FLOAT64, nil, nil},
+	//	{"Correl", etensor.FLOAT64, nil, nil},
+	//}
+
+	sch := etable.Schema{}
+	for _, val := range ss.LogSpec.Items {
+		// Compute records which timescales are logged. It also records how, but we don't need that here.
+		_, ok := val.Compute[env.Epoch]
+		if ok && val.EvalType == Test {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
+		_, ok = val.ComputeLayer[env.Epoch]
+		if ok && val.EvalType == Test {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
 	}
 	dt.SetFromSchema(sch, 0)
 }
