@@ -24,6 +24,7 @@ type Sim struct {
 	Pats           *etable.Table                 `view:"no-inline" desc:"the training patterns to use"`
 	NInputs        int                           `desc:"Number of input/output pattern pairs"`
 	NOutputs       int                           `desc:"The number of output patterns potentially associated with each input pattern."`
+	LogSpec        LogSpec                       `desc:"Specifies which details are to be logged"`
 	TrnEpcLog      *etable.Table                 `view:"no-inline" desc:"training epoch-level log data"`
 	TstEpcLog      *etable.Table                 `view:"no-inline" desc:"testing epoch-level log data"`
 	TstTrlLog      *etable.Table                 `view:"no-inline" desc:"testing trial-level log data"`
@@ -133,6 +134,7 @@ func (ss *Sim) Config() {
 	ss.ConfigPatsFromEnv()
 
 	ss.ConfigNet(ss.Net)
+	ss.ConfigLogSpec()
 	ss.ConfigTrnEpcLog(ss.TrnEpcLog)
 	ss.ConfigTstEpcLog(ss.TstEpcLog)
 	ss.ConfigTstTrlLog(ss.TstTrlLog)

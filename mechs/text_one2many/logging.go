@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/env"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
+	"github.com/emer/etable/minmax"
 	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
 	"strconv"
@@ -16,6 +18,33 @@ import (
 
 // LogPrec is precision for saving float values in logs
 const LogPrec = 4
+
+type LogItem struct {
+	etable.Column                                      // Inherits elements Name, Type, CellShape, DimNames
+	Range         minmax.F32                           `desc:"The minimum and maximum"`
+	Compute       func(tensor etensor.Tensor, row int) `desc:"How is this computed?"`
+	Plot          bool                                 `desc:"Whether or not to plot it"`
+	FixMin        bool                                 `desc:"Whether to fix the minimum in the display"`
+	FixMax        bool                                 `desc:"Whether to fix the maximum in the display"`
+	TimeScale     env.TimeScales                       `desc:"What timescale does this log happen at"`
+	// TODO Make this an enum
+	TestOrTrain bool `desc:"True if test, false if train"`
+}
+
+type LogSpec struct {
+	Items           []*LogItem `desc:""`
+	PerLayerDetails []*LogItem `desc:""`
+}
+
+func (logSpec *LogSpec) AddItem(item *LogItem) {
+	logSpec.Items = append(logSpec.Items, item)
+}
+
+func (ss *Sim) ConfigLogSpec() {
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{Name: "Run", Type: etensor.FLOAT64}, Compute: func(tensor etensor.Tensor, row int) {
+		tensor.SetFloat([]int{row}, 5)
+	}, Plot: true, FixMin: true, FixMax: false, TimeScale: env.Epoch, TestOrTrain: true})
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Logging
