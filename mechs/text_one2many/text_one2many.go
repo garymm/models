@@ -9,7 +9,7 @@
 package main
 
 import (
-	"github.com/Astera-org/models/mechs/sim"
+	"github.com/Astera-org/models/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/evec"
