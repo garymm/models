@@ -1,4 +1,4 @@
-package main
+package sim
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/goki/mat32"
 )
 
-func guirun() {
+func GuiRun(TheSim *Sim) {
 	TheSim.Init()
 	win := TheSim.ConfigGui()
 	win.StartEventLoop()

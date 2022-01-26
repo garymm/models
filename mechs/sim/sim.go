@@ -1,4 +1,4 @@
-package main
+package sim
 
 import (
 	"github.com/emer/axon/axon"
@@ -99,6 +99,7 @@ type Sim struct {
 
 // New creates new blank elements and initializes defaults
 func (ss *Sim) New() {
+
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
 	ss.NInputs = 25
@@ -112,7 +113,6 @@ func (ss *Sim) New() {
 	ss.ErrLrMod.Defaults()
 	ss.ErrLrMod.Base = 0.5 // 0.5 > 0.2 -- not very useful in this model, but key in larger nets
 	ss.ErrLrMod.Range.Set(0, 0.5)
-	ss.Params = ParamSetsMin         // ParamSetsAll
 	ss.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
 		ss.RndSeeds[i] = int64(i) + 1 // exclude 0
@@ -126,29 +126,12 @@ func (ss *Sim) New() {
 	ss.Time.Defaults()
 }
 
-// Config configures all the elements using the standard functions
-func (ss *Sim) Config() {
-
-	ss.ConfigEnv()
-
-	ss.ConfigPatsFromEnv()
-
-	ss.ConfigNet(ss.Net)
-	// LogSpec needs to be configured after Net
-	ss.ConfigLogSpec()
-	ss.ConfigTrnEpcLog(ss.TrnEpcLog)
-	ss.ConfigTstEpcLog(ss.TstEpcLog)
-	ss.ConfigTstTrlLog(ss.TstTrlLog)
-	ss.ConfigTstCycLog(ss.TstCycLog)
-	ss.ConfigSpikeRasts()
-	ss.ConfigRunLog(ss.RunLog)
-}
-
 // Init restarts the run, and initializes everything, including network weights
 // and resets the epoch log table
 func (ss *Sim) Init() {
 	ss.InitRndSeed()
-	ss.ConfigEnv() // re-config env just in case a different set of patterns was
+	//TODO: need to modify such that you can load and update environment without calling
+	//ss.ConfigEnv()  // re-config env just in case a different set of patterns was
 	// selected or patterns have been modified etc
 	ss.StopNow = false
 	ss.SetParams("", ss.LogSetParams) // all sheets

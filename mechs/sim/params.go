@@ -1,6 +1,8 @@
-package main
+package sim
 
-import "strings"
+import (
+	"strings"
+)
 
 /////////////////////////////////////////////////////////////////////////
 //   Params setting

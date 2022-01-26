@@ -9,32 +9,52 @@
 package main
 
 import (
+	"github.com/Astera-org/models/mechs/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/evec"
 	"github.com/emer/emergent/params"
 	"github.com/emer/emergent/prjn"
-	"github.com/emer/etable/etable"
-	"github.com/emer/etable/etensor"
 	_ "github.com/emer/etable/etview" // include to get gui views
-	"github.com/emer/etable/metric"
 	"github.com/goki/gi/gimain"
 	"log"
 	"os"
 )
 
+// TheSim is the overall state for this simulation
+var TheSim sim.Sim
+
 func main() {
 	TheSim.New()
-	TheSim.Config()
+
+	Config(&TheSim)
 
 	if len(os.Args) > 1 {
 		TheSim.CmdArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			guirun()
+			sim.GuiRun(&TheSim)
 		})
 	}
 
+}
+
+// Config configures all the elements using the standard functions
+func Config(ss *sim.Sim) {
+	ss.Params = ParamSetsMin
+	ConfigEnv(ss)
+
+	ss.ConfigPatsFromEnv()
+
+	ConfigNet(ss, ss.Net)
+	// LogSpec needs to be configured after Net
+	ss.ConfigLogSpec()
+	ss.ConfigTrnEpcLog(ss.TrnEpcLog)
+	ss.ConfigTstEpcLog(ss.TstEpcLog)
+	ss.ConfigTstTrlLog(ss.TstTrlLog)
+	ss.ConfigTstCycLog(ss.TstCycLog)
+	ss.ConfigSpikeRasts()
+	ss.ConfigRunLog(ss.RunLog)
 }
 
 // ParamSetsMin sets the minimal non-default params
@@ -90,13 +110,11 @@ var ParamSetsMin = params.Sets{
 	}},
 }
 
-// TheSim is the overall state for this simulation
-var TheSim Sim
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Configs
 
-func (ss *Sim) ConfigEnv() {
+func ConfigEnv(ss *sim.Sim) {
+	//ss = *sim.Sim
 	if ss.MaxRuns == 0 { // allow user override
 		ss.MaxRuns = 5
 	}
@@ -132,7 +150,7 @@ func (ss *Sim) ConfigEnv() {
 	ss.TestEnv.Init(0)
 }
 
-func (ss *Sim) ConfigNet(net *axon.Network) {
+func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	net.InitName(net, "One2Many")
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
@@ -173,23 +191,4 @@ func (ss *Sim) ConfigNet(net *axon.Network) {
 		return
 	}
 	net.InitWts()
-}
-
-// ClosestStat finds the closest pattern in given column of given table to
-// given layer activation pattern using given variable.  Returns the row number,
-// correlation value, and value of a column named namecol for that row if non-empty.
-// Column must be etensor.Float32
-func (ss *Sim) ClosestStat(net emer.Network, lnm, varnm string, dt *etable.Table, colnm, namecol string) (int, float32, string) {
-	vt := ss.ValsTsr(lnm)
-	ly := net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-	ly.UnitValsTensor(vt, varnm)
-	col := dt.ColByName(colnm)
-	// note: requires Increasing metric so using Inv
-	row, cor := metric.ClosestRow32(vt, col.(*etensor.Float32), metric.InvCorrelation32)
-	cor = 1 - cor // convert back to correl
-	nm := ""
-	if namecol != "" {
-		nm = dt.CellString(namecol, row)
-	}
-	return row, cor, nm
 }
