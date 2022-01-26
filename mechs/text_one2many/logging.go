@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/emer/axon/axon"
-	"github.com/emer/emergent/env"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -30,16 +29,15 @@ const (
 )
 
 type LogItem struct {
-	etable.Column                                 // Inherits elements Name, Type, CellShape, DimNames
-	Range         minmax.F32                      `desc:"The minimum and maximum"`
-	Compute       map[env.TimeScales]LogFunc      `desc:"For each timescale, how is this value computed?"`
-	ComputeLayer  map[env.TimeScales]LogFuncLayer `desc:"For each timescale, how is this value computed? This is for layer specific callbacks."`
-	Plot          bool                            `desc:"Whether or not to plot it"`
-	FixMin        bool                            `desc:"Whether to fix the minimum in the display"`
-	FixMax        bool                            `desc:"Whether to fix the maximum in the display"`
-	//TimeScale     env.TimeScales                                          `desc:"What timescale does this log happen at"` // DO NOT SUBMIT
-	EvalType  EvaluationType `desc:"Describes what the evaluation of the type"`
-	LayerName string         `desc:"The name of the layer that this should apply to. This will only not be empty for items that are logged per layer"`
+	etable.Column                                  // Inherits elements Name, Type, CellShape, DimNames
+	Range         minmax.F32                       `desc:"The minimum and maximum"`
+	Compute       map[axon.TimeScales]LogFunc      `desc:"For each timescale, how is this value computed?"`
+	ComputeLayer  map[axon.TimeScales]LogFuncLayer `desc:"For each timescale, how is this value computed? This is for layer specific callbacks."`
+	Plot          bool                             `desc:"Whether or not to plot it"`
+	FixMin        bool                             `desc:"Whether to fix the minimum in the display"`
+	FixMax        bool                             `desc:"Whether to fix the maximum in the display"`
+	EvalType      EvaluationType                   `desc:"Describes what the evaluation of the type"`
+	LayerName     string                           `desc:"The name of the layer that this should apply to. This will only not be empty for items that are logged per layer"`
 }
 
 type LogSpec struct {
@@ -158,7 +156,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 
 	for _, item := range ss.LogSpec.Items {
 		if item.EvalType == Train {
-			callback, ok := item.Compute[env.Epoch]
+			callback, ok := item.Compute[axon.Epoch]
 			if ok {
 				callback(ss, dt, row, item.Name)
 			}
@@ -178,7 +176,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
 		for _, item := range ss.LogSpec.Items {
 			if item.EvalType == Train {
-				callback, ok := item.ComputeLayer[env.Epoch]
+				callback, ok := item.ComputeLayer[axon.Epoch]
 				if ok && item.LayerName == lnm {
 					// TODO(optimize) is this copying ly?
 					callback(ss, dt, row, item.Name, *ly)
@@ -226,11 +224,11 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.Compute[env.Epoch]
+		_, ok := val.Compute[axon.Epoch]
 		if ok && val.EvalType == Train {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
-		_, ok = val.ComputeLayer[env.Epoch]
+		_, ok = val.ComputeLayer[axon.Epoch]
 		if ok && val.EvalType == Train {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
@@ -249,7 +247,7 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 	//}
 	//for _, lnm := range ss.LayStatNms {
 	//	for _, val := range ss.LogSpec.Items {
-	//		_, ok := val.ComputeLayer[env.Epoch]
+	//		_, ok := val.ComputeLayer[axon.Epoch]
 	//		if ok && val.EvalType == Train {
 	//			sch = append(sch, etable.Column{val.Name, val.Type, nil, nil})
 	//		}
@@ -282,7 +280,7 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 
 	for _, item := range ss.LogSpec.Items {
 		if item.EvalType == Test {
-			callback, ok := item.Compute[env.Trial]
+			callback, ok := item.Compute[axon.Trial]
 			if ok {
 				callback(ss, dt, row, item.Name)
 			}
@@ -293,7 +291,7 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
 		for _, item := range ss.LogSpec.Items {
 			if item.EvalType == Test {
-				callback, ok := item.ComputeLayer[env.Trial]
+				callback, ok := item.ComputeLayer[axon.Trial]
 				if ok && item.LayerName == lnm {
 					// TODO(optimize) is this copying ly?
 					callback(ss, dt, row, item.Name, *ly)
@@ -355,11 +353,11 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.Compute[env.Trial]
+		_, ok := val.Compute[axon.Trial]
 		if ok && val.EvalType == Test {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
-		_, ok = val.ComputeLayer[env.Trial]
+		_, ok = val.ComputeLayer[axon.Trial]
 		if ok && val.EvalType == Test {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
@@ -399,7 +397,7 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 
 	for _, item := range ss.LogSpec.Items {
 		if item.EvalType == Test {
-			callback, ok := item.Compute[env.Epoch]
+			callback, ok := item.Compute[axon.Epoch]
 			if ok {
 				callback(ss, dt, row, item.Name)
 			}
@@ -410,7 +408,7 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
 		for _, item := range ss.LogSpec.Items {
 			if item.EvalType == Test {
-				callback, ok := item.ComputeLayer[env.Epoch]
+				callback, ok := item.ComputeLayer[axon.Epoch]
 				if ok && item.LayerName == lnm {
 					// TODO(optimize) is this copying ly?
 					callback(ss, dt, row, item.Name, *ly)
@@ -458,11 +456,11 @@ func (ss *Sim) ConfigTstEpcLog(dt *etable.Table) {
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.Compute[env.Epoch]
+		_, ok := val.Compute[axon.Epoch]
 		if ok && val.EvalType == Test {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
-		_, ok = val.ComputeLayer[env.Epoch]
+		_, ok = val.ComputeLayer[axon.Epoch]
 		if ok && val.EvalType == Test {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
@@ -552,11 +550,33 @@ func (ss *Sim) LogTstCyc(dt *etable.Table, cyc int) {
 		dt.SetNumRows(cyc + 1)
 	}
 
-	dt.SetCellFloat("Cycle", cyc, float64(cyc))
+	//dt.SetCellFloat("Cycle", cyc, float64(cyc))
+	//for _, lnm := range ss.LayStatNms {
+	//	ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
+	//	dt.SetCellFloat(ly.Nm+" Ge.Avg", cyc, float64(ly.Pools[0].Inhib.Ge.Avg))
+	//	dt.SetCellFloat(ly.Nm+" Act.Avg", cyc, float64(ly.Pools[0].Inhib.Act.Avg))
+	//}
+
+	for _, item := range ss.LogSpec.Items {
+		if item.EvalType == Test {
+			callback, ok := item.Compute[axon.Cycle]
+			if ok {
+				callback(ss, dt, cyc, item.Name)
+			}
+		}
+	}
+
 	for _, lnm := range ss.LayStatNms {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		dt.SetCellFloat(ly.Nm+" Ge.Avg", cyc, float64(ly.Pools[0].Inhib.Ge.Avg))
-		dt.SetCellFloat(ly.Nm+" Act.Avg", cyc, float64(ly.Pools[0].Inhib.Act.Avg))
+		for _, item := range ss.LogSpec.Items {
+			if item.EvalType == Test {
+				callback, ok := item.ComputeLayer[axon.Cycle]
+				if ok && item.LayerName == lnm {
+					// TODO(optimize) is this copying ly?
+					callback(ss, dt, cyc, item.Name, *ly)
+				}
+			}
+		}
 	}
 
 	if ss.TstCycPlot != nil && cyc%10 == 0 { // too slow to do every cyc
@@ -572,13 +592,25 @@ func (ss *Sim) ConfigTstCycLog(dt *etable.Table) {
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
 	np := 100 // max cycles
-	sch := etable.Schema{
-		{"Cycle", etensor.INT64, nil, nil},
+	sch := etable.Schema{}
+	for _, val := range ss.LogSpec.Items {
+		// Compute records which timescales are logged. It also records how, but we don't need that here.
+		_, ok := val.Compute[axon.Cycle]
+		if ok && val.EvalType == Test {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
+		_, ok = val.ComputeLayer[axon.Cycle]
+		if ok && val.EvalType == Test {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
 	}
-	for _, lnm := range ss.LayStatNms {
-		sch = append(sch, etable.Column{lnm + " Ge.Avg", etensor.FLOAT64, nil, nil})
-		sch = append(sch, etable.Column{lnm + " Act.Avg", etensor.FLOAT64, nil, nil})
-	}
+	//sch := etable.Schema{
+	//	{"Cycle", etensor.INT64, nil, nil},
+	//}
+	//for _, lnm := range ss.LayStatNms {
+	//	sch = append(sch, etable.Column{lnm + " Ge.Avg", etensor.FLOAT64, nil, nil})
+	//	sch = append(sch, etable.Column{lnm + " Act.Avg", etensor.FLOAT64, nil, nil})
+	//}
 	dt.SetFromSchema(sch, np)
 }
 
