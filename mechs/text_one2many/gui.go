@@ -292,7 +292,7 @@ func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 			_, ok := item.Compute[axon.Epoch]
 			if ok {
 				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Min, item.FixMax, item.Max)
+				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
 			}
 		}
 	}
@@ -325,7 +325,7 @@ func (ss *Sim) ConfigTstTrlPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 			_, ok := item.Compute[axon.Trial]
 			if ok {
 				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Min, item.FixMax, item.Max)
+				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
 			}
 		}
 	}
@@ -341,7 +341,7 @@ func (ss *Sim) ConfigTstEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 			_, ok := item.Compute[axon.Epoch]
 			if ok {
 				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Min, item.FixMax, item.Max)
+				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
 			}
 		}
 	}
@@ -357,7 +357,7 @@ func (ss *Sim) ConfigTstCycPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 			_, ok := item.Compute[axon.Epoch]
 			if ok {
 				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Min, item.FixMax, item.Max)
+				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
 			}
 		}
 	}
@@ -374,7 +374,7 @@ func (ss *Sim) ConfigRunPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D 
 			_, ok := item.Compute[axon.Epoch]
 			if ok {
 				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Min, item.FixMax, item.Max)
+				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
 			}
 		}
 	}

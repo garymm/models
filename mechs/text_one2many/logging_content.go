@@ -6,6 +6,7 @@ import (
 	"github.com/emer/etable/eplot"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
+	"github.com/emer/etable/minmax"
 	"strings"
 )
 
@@ -58,7 +59,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.Off,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FloatMax,
-		Min:      -1,
+		Range:    minmax.F64{Min: -1},
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Epoch",
@@ -95,7 +96,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PctCor",
@@ -109,7 +110,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "CosDiff",
@@ -123,7 +124,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Correl",
@@ -137,7 +138,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PerTrlMSec",
@@ -160,7 +161,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.Off,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FixMax,
-			Max:       0.5,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -172,7 +173,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.Off,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       1,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -184,7 +185,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.Off,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       1,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -196,7 +197,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.Off,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       1,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -208,7 +209,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.Off,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       1,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -220,7 +221,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.Off,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       0.5,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -232,7 +233,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.Off,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       0.5,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
 	}
@@ -317,7 +318,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PctCor",
@@ -330,7 +331,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "CosDiff",
@@ -345,7 +346,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Correl",
@@ -360,7 +361,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Test})
 	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
@@ -376,7 +377,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name:      "OutActM",
@@ -390,7 +391,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name:      "OutActP",
@@ -404,7 +405,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
 		FixMax:   eplot.FixMax,
-		Max:      1,
+		Range:    minmax.F64{Max: 1},
 		EvalType: Test})
 	// Cycle
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -428,7 +429,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.On,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FixMax,
-			Max:       1,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Test,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -440,7 +441,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.On,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       0.5,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Test,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -452,7 +453,7 @@ func (ss *Sim) ConfigLogSpec() {
 			Plot:      eplot.On,
 			FixMin:    eplot.FixMin,
 			FixMax:    eplot.FloatMax,
-			Max:       0.5,
+			Range:     minmax.F64{Max: 1},
 			EvalType:  Test,
 			LayerName: lnm})
 	}
