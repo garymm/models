@@ -30,12 +30,12 @@ const (
 
 type LogItem struct {
 	etable.Column                                  // Inherits elements Name, Type, CellShape, DimNames
-	Range         minmax.F64                       `desc:"The minimum and maximum"`
 	Compute       map[axon.TimeScales]LogFunc      `desc:"For each timescale, how is this value computed?"`
 	ComputeLayer  map[axon.TimeScales]LogFuncLayer `desc:"For each timescale, how is this value computed? This is for layer specific callbacks."`
 	Plot          bool                             `desc:"Whether or not to plot it"`
 	FixMin        bool                             `desc:"Whether to fix the minimum in the display"`
 	FixMax        bool                             `desc:"Whether to fix the maximum in the display"`
+	Range         minmax.F64                       `desc:"The minimum and maximum"`
 	EvalType      EvaluationType                   `desc:"Describes what the evaluation of the type"`
 	LayerName     string                           `desc:"The name of the layer that this should apply to. This will only not be empty for items that are logged per layer"`
 }
