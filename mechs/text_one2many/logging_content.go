@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/agg"
+	"github.com/emer/etable/eplot"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"strings"
@@ -32,9 +33,9 @@ func (ss *Sim) ConfigLogSpec() {
 		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run.Cur))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.Off,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Params",
@@ -43,9 +44,9 @@ func (ss *Sim) ConfigLogSpec() {
 			axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
 				dt.SetCellString(name, row, ss.RunName())
 			}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.Off,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "FirstZero",
@@ -54,9 +55,10 @@ func (ss *Sim) ConfigLogSpec() {
 			axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
 				dt.SetCellFloat(name, row, float64(ss.FirstZero))
 			}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.Off,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
+		Min:      -1,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Epoch",
@@ -64,9 +66,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Epoch.Prv))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.Off,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "UnitErr",
@@ -77,9 +79,9 @@ func (ss *Sim) ConfigLogSpec() {
 			epochWin := ss.GetEpochWindow()
 			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.Off,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PctErr",
@@ -90,9 +92,10 @@ func (ss *Sim) ConfigLogSpec() {
 			epochWin := ss.GetEpochWindow()
 			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PctCor",
@@ -103,9 +106,10 @@ func (ss *Sim) ConfigLogSpec() {
 			epochWin := ss.GetEpochWindow()
 			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "CosDiff",
@@ -116,9 +120,10 @@ func (ss *Sim) ConfigLogSpec() {
 			epochWin := ss.GetEpochWindow()
 			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Correl",
@@ -129,9 +134,10 @@ func (ss *Sim) ConfigLogSpec() {
 			epochWin := ss.GetEpochWindow()
 			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Train})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PerTrlMSec",
@@ -139,9 +145,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, ss.EpcPerTrlMSec)
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.Off,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Train})
 	// Add for each layer
 	for _, lnm := range ss.LayStatNms {
@@ -151,9 +157,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.ActAvg.ActMAvg))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.Off,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FixMax,
+			Max:       0.5,
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -162,9 +169,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.ActAvg.AvgMaxGeM))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.Off,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       1,
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -173,9 +181,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.Pools[0].Inhib.Ge.Avg))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.Off,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       1,
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -184,9 +193,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.Pools[0].Inhib.Ge.Max))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.Off,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       1,
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -195,9 +205,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.Pools[0].Inhib.Gi))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.Off,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       1,
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -206,9 +217,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.Pools[0].AvgDif.Avg))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.Off,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       0.5,
 			EvalType:  Train,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -217,9 +229,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.Pools[0].AvgDif.Max))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.Off,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       0.5,
 			EvalType:  Train,
 			LayerName: lnm})
 	}
@@ -233,9 +246,9 @@ func (ss *Sim) ConfigLogSpec() {
 		}, axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run.Cur))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Epoch",
@@ -245,9 +258,9 @@ func (ss *Sim) ConfigLogSpec() {
 		}, axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Epoch.Prv))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Trial",
@@ -255,9 +268,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Compute: map[axon.TimeScales]LogFunc{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, float64(ss.TestEnv.Trial.Cur))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "TrialName",
@@ -265,9 +278,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Compute: map[axon.TimeScales]LogFunc{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellString(name, row, strings.Join(ss.TestEnv.CurWords, " "))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Err",
@@ -275,9 +288,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Compute: map[axon.TimeScales]LogFunc{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, float64(ss.TrlErr))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "UnitErr",
@@ -289,9 +302,9 @@ func (ss *Sim) ConfigLogSpec() {
 			tix := etable.NewIdxView(trl)
 			dt.SetCellFloat(name, row, agg.Sum(tix, "UnitErr")[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PctErr",
@@ -301,9 +314,10 @@ func (ss *Sim) ConfigLogSpec() {
 			tix := etable.NewIdxView(trl)
 			dt.SetCellFloat(name, row, agg.Mean(tix, "Err")[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "PctCor",
@@ -313,9 +327,10 @@ func (ss *Sim) ConfigLogSpec() {
 			tix := etable.NewIdxView(trl)
 			dt.SetCellFloat(name, row, 1-agg.Mean(tix, "Err")[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "CosDiff",
@@ -327,9 +342,10 @@ func (ss *Sim) ConfigLogSpec() {
 			tix := etable.NewIdxView(trl)
 			dt.SetCellFloat(name, row, agg.Sum(tix, "CosDiff")[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Correl",
@@ -341,9 +357,10 @@ func (ss *Sim) ConfigLogSpec() {
 			tix := etable.NewIdxView(trl)
 			dt.SetCellFloat(name, row, agg.Sum(tix, "Correl")[0])
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Test})
 	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
@@ -356,9 +373,10 @@ func (ss *Sim) ConfigLogSpec() {
 			inp.UnitValsTensor(ivt, "Act")
 			dt.SetCellTensor(name, row, ivt)
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name:      "OutActM",
@@ -369,9 +387,10 @@ func (ss *Sim) ConfigLogSpec() {
 			out.UnitValsTensor(ovt, "ActM")
 			dt.SetCellTensor(name, row, ovt)
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Test})
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name:      "OutActP",
@@ -382,9 +401,10 @@ func (ss *Sim) ConfigLogSpec() {
 			out.UnitValsTensor(ovt, "ActP")
 			dt.SetCellTensor(name, row, ovt)
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FixMax,
+		Max:      1,
 		EvalType: Test})
 	// Cycle
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -393,9 +413,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Compute: map[axon.TimeScales]LogFunc{axon.Cycle: func(ss *Sim, dt *etable.Table, cyc int, name string) {
 			dt.SetCellFloat("Cycle", cyc, float64(cyc))
 		}},
-		Plot:     true,
-		FixMin:   true,
-		FixMax:   false,
+		Plot:     eplot.On,
+		FixMin:   eplot.FixMin,
+		FixMax:   eplot.FloatMax,
 		EvalType: Test})
 	// Add for each layer
 	for _, lnm := range ss.LayStatNms {
@@ -405,9 +425,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, row, float64(ly.ActAvg.ActMAvg))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.On,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FixMax,
+			Max:       1,
 			EvalType:  Test,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -416,9 +437,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Cycle: func(ss *Sim, dt *etable.Table, cyc int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, cyc, float64(ly.Pools[0].Inhib.Ge.Avg))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.On,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       0.5,
 			EvalType:  Test,
 			LayerName: lnm})
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -427,9 +449,10 @@ func (ss *Sim) ConfigLogSpec() {
 			ComputeLayer: map[axon.TimeScales]LogFuncLayer{axon.Cycle: func(ss *Sim, dt *etable.Table, cyc int, name string, ly axon.Layer) {
 				dt.SetCellFloat(name, cyc, float64(ly.Pools[0].Inhib.Act.Avg))
 			}},
-			Plot:      true,
-			FixMin:    true,
-			FixMax:    false,
+			Plot:      eplot.On,
+			FixMin:    eplot.FixMin,
+			FixMax:    eplot.FloatMax,
+			Max:       0.5,
 			EvalType:  Test,
 			LayerName: lnm})
 	}

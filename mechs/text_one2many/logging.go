@@ -36,6 +36,8 @@ type LogItem struct {
 	Plot          bool                             `desc:"Whether or not to plot it"`
 	FixMin        bool                             `desc:"Whether to fix the minimum in the display"`
 	FixMax        bool                             `desc:"Whether to fix the maximum in the display"`
+	Min           float64                          `desc:"If FixMin is true, it's fixed at this value."`
+	Max           float64                          `desc:"If FixMax is true, it's fixed at this value."`
 	EvalType      EvaluationType                   `desc:"Describes what the evaluation of the type"`
 	LayerName     string                           `desc:"The name of the layer that this should apply to. This will only not be empty for items that are logged per layer"`
 }
