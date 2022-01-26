@@ -354,7 +354,7 @@ func (ss *Sim) ConfigTstCycPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.SetTable(dt)
 	for _, item := range ss.LogSpec.Items {
 		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Epoch]
+			_, ok := item.Compute[axon.Cycle]
 			if ok {
 				// order of params: on, fixMin, min, fixMax, max
 				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
@@ -370,8 +370,8 @@ func (ss *Sim) ConfigRunPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D 
 	plt.Params.LegendCol = "Params"
 	plt.SetTable(dt)
 	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Epoch]
+		if item.EvalType == Train {
+			_, ok := item.Compute[axon.Run]
 			if ok {
 				// order of params: on, fixMin, min, fixMax, max
 				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
