@@ -15,16 +15,17 @@ import (
 	"github.com/emer/emergent/evec"
 	"github.com/emer/emergent/params"
 	"github.com/emer/emergent/prjn"
+	"github.com/emer/etable/etable"
+	"github.com/emer/etable/etensor"
 	_ "github.com/emer/etable/etview" // include to get gui views
 	"github.com/goki/gi/gimain"
 	"log"
 	"os"
 )
 
-// TheSim is the overall state for this simulation
-var TheSim sim.Sim
-
 func main() {
+	// TheSim is the overall state for this simulation
+	var TheSim sim.Sim
 	TheSim.New()
 
 	Config(&TheSim)
@@ -41,11 +42,9 @@ func main() {
 
 // Config configures all the elements using the standard functions
 func Config(ss *sim.Sim) {
-	ss.Params = ParamSetsMin
+	ConfigParams(ss)
 	ConfigEnv(ss)
-
-	ss.ConfigPatsFromEnv()
-
+	ConfigPats(ss)
 	ConfigNet(ss, ss.Net)
 	// LogSpec needs to be configured after Net
 	ss.ConfigLogSpec()
@@ -57,57 +56,60 @@ func Config(ss *sim.Sim) {
 	ss.ConfigRunLog(ss.RunLog)
 }
 
-// ParamSetsMin sets the minimal non-default params
-// Base is always applied, and others can be optionally selected to apply on top of that
-var ParamSetsMin = params.Sets{
-	{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
-		"Network": &params.Sheet{
-			{Sel: "Layer", Desc: "all defaults",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":    "1.2",  // 1.2 > 1.1
-					"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1
-					"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0
-					"Layer.Act.Decay.Glong":   "0.6",  // 0.6
-					"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0
-					"Layer.Act.Dend.GbarR":    "3",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels
-					"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect
-					"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better
-					"Layer.Act.Dt.GeTau":      "5",
-					"Layer.Act.NMDA.Gbar":     "0.15", //
-					"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
-				}},
-			{Sel: "#Input", Desc: "critical now to specify the activity level",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
-					"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
-					"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
-				}},
-			{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
-				Params: params.Params{
-					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 >= 0.8 > 1.0 > 0.7 even with adapt -- not beneficial to start low
-					"Layer.Inhib.ActAvg.Init": "0.04", // this has to be exact for adapt
-					"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum.
-					"Layer.Act.Clamp.Ge":      "0.6",  // .6 > .5 v94
-					// "Layer.Act.NMDA.Gbar":     "0.3",  // higher not better
-				}},
-			{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
-				Params: params.Params{
-					"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
-					"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint
-					"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..
-				}},
-			{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
-				Params: params.Params{
-					"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
-				}},
-		},
-		"Sim": &params.Sheet{ // sim params apply to sim object
-			{Sel: "Sim", Desc: "best params always finish in this time",
-				Params: params.Params{
-					"Sim.MaxEpcs": "100",
-				}},
-		},
-	}},
+func ConfigParams(ss *sim.Sim) {
+
+	// ParamSetsMin sets the minimal non-default params
+	// Base is always applied, and others can be optionally selected to apply on top of that
+	ss.Params = params.Sets{
+		{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
+			"Network": &params.Sheet{
+				{Sel: "Layer", Desc: "all defaults",
+					Params: params.Params{
+						"Layer.Inhib.Layer.Gi":    "1.2",  // 1.2 > 1.1
+						"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1
+						"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0
+						"Layer.Act.Decay.Glong":   "0.6",  // 0.6
+						"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0
+						"Layer.Act.Dend.GbarR":    "3",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels
+						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect
+						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better
+						"Layer.Act.Dt.GeTau":      "5",
+						"Layer.Act.NMDA.Gbar":     "0.15", //
+						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
+					}},
+				{Sel: "#Input", Desc: "critical now to specify the activity level",
+					Params: params.Params{
+						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
+						"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
+						"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
+					}},
+				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
+					Params: params.Params{
+						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 >= 0.8 > 1.0 > 0.7 even with adapt -- not beneficial to start low
+						"Layer.Inhib.ActAvg.Init": "0.04", // this has to be exact for adapt
+						"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum.
+						"Layer.Act.Clamp.Ge":      "0.6",  // .6 > .5 v94
+						// "Layer.Act.NMDA.Gbar":     "0.3",  // higher not better
+					}},
+				{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
+					Params: params.Params{
+						"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
+						"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint
+						"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..
+					}},
+				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
+					Params: params.Params{
+						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
+					}},
+			},
+			"Sim": &params.Sheet{ // sim params apply to sim object
+				{Sel: "Sim", Desc: "best params always finish in this time",
+					Params: params.Params{
+						"Sim.MaxEpcs": "100",
+					}},
+			},
+		}},
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -148,6 +150,29 @@ func ConfigEnv(ss *sim.Sim) {
 
 	ss.TrainEnv.Init(0)
 	ss.TestEnv.Init(0)
+}
+
+func ConfigPats(ss *sim.Sim) {
+	dt := ss.Pats
+	dt.SetMetaData("name", "SuccessorPatterns")
+	dt.SetMetaData("desc", "SuccessorPatterns")
+	sch := etable.Schema{
+		{"Word", etensor.STRING, nil, nil},
+		{"Pattern", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
+	}
+	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
+
+	i := 0
+	for _, word := range ss.TrainEnv.Words {
+		idx := ss.TrainEnv.WordMap[word]
+		mytensor := ss.TrainEnv.WordReps.SubSpace([]int{idx})
+		dt.SetCellString("Word", i, word)
+		dt.SetCellTensor("Pattern", i, mytensor)
+		i++
+
+	}
+
+	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
 func ConfigNet(ss *sim.Sim, net *axon.Network) {
