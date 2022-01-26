@@ -465,27 +465,17 @@ func (ss *Sim) LogRun(dt *etable.Table) {
 		return
 	}
 
-	run := ss.TrainEnv.Run.Cur // this is NOT triggered by increment yet -- use Cur
 	row := dt.Rows
 	dt.SetNumRows(row + 1)
 
-	// compute mean over last N epochs for run level
-	nlast := 5
-	if nlast > epcix.Len()-1 {
-		nlast = epcix.Len() - 1
+	for _, item := range ss.LogSpec.Items {
+		if item.EvalType == Train {
+			callback, ok := item.Compute[axon.Run]
+			if ok {
+				callback(ss, dt, row, item.Name)
+			}
+		}
 	}
-	epcix.Idxs = epcix.Idxs[epcix.Len()-nlast:]
-
-	params := ss.RunName() // includes tag
-
-	dt.SetCellFloat("Run", row, float64(run))
-	dt.SetCellString("Params", row, params)
-	dt.SetCellFloat("FirstZero", row, float64(ss.FirstZero))
-	dt.SetCellFloat("UnitErr", row, agg.Mean(epcix, "UnitErr")[0])
-	dt.SetCellFloat("PctErr", row, agg.Mean(epcix, "PctErr")[0])
-	dt.SetCellFloat("PctCor", row, agg.Mean(epcix, "PctCor")[0])
-	dt.SetCellFloat("CosDiff", row, agg.Mean(epcix, "CosDiff")[0])
-	dt.SetCellFloat("Correl", row, agg.Mean(epcix, "Correl")[0])
 
 	runix := etable.NewIdxView(dt)
 	spl := split.GroupBy(runix, []string{"Params"})
@@ -511,16 +501,15 @@ func (ss *Sim) ConfigRunLog(dt *etable.Table) {
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
-	sch := etable.Schema{
-		{"Run", etensor.INT64, nil, nil},
-		{"Params", etensor.STRING, nil, nil},
-		{"FirstZero", etensor.FLOAT64, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"PctErr", etensor.FLOAT64, nil, nil},
-		{"PctCor", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
-		{"Correl", etensor.FLOAT64, nil, nil},
+	sch := etable.Schema{}
+	for _, val := range ss.LogSpec.Items {
+		// Compute records which timescales are logged. It also records how, but we don't need that here.
+		_, ok := val.Compute[axon.Run]
+		if ok && val.EvalType == Train {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
 	}
+
 	dt.SetFromSchema(sch, 0)
 }
 

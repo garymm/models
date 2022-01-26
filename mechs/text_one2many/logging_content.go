@@ -8,6 +8,20 @@ import (
 	"strings"
 )
 
+func (ss *Sim) GetEpochWindow() *etable.IdxView {
+	epochlog := ss.TrnEpcLog
+	epochwindow := etable.NewIdxView(epochlog)
+
+	// compute mean over last N epochs for run level
+	nlast := 5
+	if nlast > epochwindow.Len()-1 {
+		nlast = epochwindow.Len() - 1
+	}
+	epochwindow.Idxs = epochwindow.Idxs[epochwindow.Len()-nlast:]
+
+	return epochwindow
+}
+
 func (ss *Sim) ConfigLogSpec() {
 	// Train epoch
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -15,7 +29,31 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.INT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run.Cur))
+		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run.Cur))
 		}},
+		Plot:     true,
+		FixMin:   true,
+		FixMax:   false,
+		EvalType: Train})
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
+		Name: "Params",
+		Type: etensor.STRING},
+		Compute: map[axon.TimeScales]LogFunc{
+			axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+				dt.SetCellString(name, row, ss.RunName())
+			}},
+		Plot:     true,
+		FixMin:   true,
+		FixMax:   false,
+		EvalType: Train})
+	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
+		Name: "FirstZero",
+		Type: etensor.FLOAT64},
+		Compute: map[axon.TimeScales]LogFunc{
+			axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+				dt.SetCellFloat(name, row, float64(ss.FirstZero))
+			}},
 		Plot:     true,
 		FixMin:   true,
 		FixMax:   false,
@@ -35,6 +73,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.FLOAT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, ss.EpcUnitErr)
+		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+			epochWin := ss.GetEpochWindow()
+			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
 		Plot:     true,
 		FixMin:   true,
@@ -45,6 +86,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.FLOAT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, ss.EpcPctErr)
+		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+			epochWin := ss.GetEpochWindow()
+			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
 		Plot:     true,
 		FixMin:   true,
@@ -55,6 +99,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.FLOAT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, ss.EpcPctCor)
+		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+			epochWin := ss.GetEpochWindow()
+			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
 		Plot:     true,
 		FixMin:   true,
@@ -65,6 +112,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.FLOAT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, ss.EpcCosDiff)
+		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+			epochWin := ss.GetEpochWindow()
+			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
 		Plot:     true,
 		FixMin:   true,
@@ -75,6 +125,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.FLOAT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
 			dt.SetCellFloat(name, row, ss.EpcCorrel)
+		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
+			epochWin := ss.GetEpochWindow()
+			dt.SetCellFloat(name, row, agg.Mean(epochWin, name)[0])
 		}},
 		Plot:     true,
 		FixMin:   true,
