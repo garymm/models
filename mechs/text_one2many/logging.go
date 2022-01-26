@@ -49,27 +49,6 @@ func (logSpec *LogSpec) AddItem(item *LogItem) {
 	logSpec.Items = append(logSpec.Items, item)
 }
 
-//func (logSpec *LogSpec) AddLayerItem(item *LogItem) {
-//	logSpec.PerLayerDetails = append(logSpec.PerLayerDetails, item)
-//}
-
-//func (logSpec *LogSpec) DuplicateForTest() {
-//
-//	var length = len(logSpec.Items)
-//	for i := 0; i < length; i++ {
-//		copiedLog := *logSpec.Items[i]
-//		copiedLog.EvalType = Test
-//		logSpec.AddItem(&copiedLog)
-//	}
-//
-//	//var lengthLayer = len(logSpec.PerLayerDetails)
-//	//for i := 0; i < lengthLayer; i++ {
-//	//	copiedLog := *logSpec.PerLayerDetails[i]
-//	//	copiedLog.EvalType = Test
-//	//	logSpec.AddLayerItem(&copiedLog)
-//	//}
-//}
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Logging
 
@@ -162,15 +141,6 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 			}
 		}
 	}
-	//// TODO(Logging) Need to get callbacks working.
-	//dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	//dt.SetCellFloat("Epoch", row, float64(epc))
-	//dt.SetCellFloat("UnitErr", row, ss.EpcUnitErr)
-	//dt.SetCellFloat("PctErr", row, ss.EpcPctErr)
-	//dt.SetCellFloat("PctCor", row, ss.EpcPctCor)
-	//dt.SetCellFloat("CosDiff", row, ss.EpcCosDiff)
-	//dt.SetCellFloat("Correl", row, ss.EpcCorrel)
-	//dt.SetCellFloat("PerTrlMSec", row, ss.EpcPerTrlMSec)
 
 	for _, lnm := range ss.LayStatNms {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
@@ -183,24 +153,6 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 				}
 			}
 		}
-
-		//// DO NOT SUBMIT Delete this stuff
-		//// ffpj := ly.RecvPrjn(0).(*axon.Prjn)
-		//// dt.SetCellFloat(ly.Nm+"_FF_AvgMaxG", row, float64(ffpj.GScale.AvgMax))
-		//// dt.SetCellFloat(ly.Nm+"_FF_Scale", row, float64(ffpj.GScale.Scale))
-		//// if ly.NRecvPrjns() > 1 {
-		//// 	fbpj := ly.RecvPrjn(1).(*axon.Prjn)
-		//// 	dt.SetCellFloat(ly.Nm+"_FB_AvgMaxG", row, float64(fbpj.GScale.AvgMax))
-		//// 	dt.SetCellFloat(ly.Nm+"_FB_Scale", row, float64(fbpj.GScale.Scale))
-		//// }
-		//dt.SetCellFloat(ly.Nm+"_ActAvg", row, float64(ly.ActAvg.ActMAvg))
-		//dt.SetCellFloat(ly.Nm+"_MaxGeM", row, float64(ly.ActAvg.AvgMaxGeM))
-		//dt.SetCellFloat(ly.Nm+"_AvgGe", row, float64(ly.Pools[0].Inhib.Ge.Avg))
-		//dt.SetCellFloat(ly.Nm+"_MaxGe", row, float64(ly.Pools[0].Inhib.Ge.Max))
-		//dt.SetCellFloat(ly.Nm+"_Gi", row, float64(ly.Pools[0].Inhib.Gi))
-		//// dt.SetCellFloat(ly.Nm+"_GiMult", row, float64(ly.ActAvg.GiMult))
-		//dt.SetCellFloat(ly.Nm+"_AvgDifAvg", row, float64(ly.Pools[0].AvgDif.Avg))
-		//dt.SetCellFloat(ly.Nm+"_AvgDifMax", row, float64(ly.Pools[0].AvgDif.Max))
 	}
 
 	// note: essential to use Go version of update when called from another goroutine
@@ -234,33 +186,6 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 		}
 	}
 
-	//
-	//sch := etable.Schema{
-	//	{"Run", etensor.INT64, nil, nil},
-	//	{"Epoch", etensor.INT64, nil, nil},
-	//	{"UnitErr", etensor.FLOAT64, nil, nil},
-	//	{"PctErr", etensor.FLOAT64, nil, nil},
-	//	{"PctCor", etensor.FLOAT64, nil, nil},
-	//	{"CosDiff", etensor.FLOAT64, nil, nil},
-	//	{"Correl", etensor.FLOAT64, nil, nil},
-	//	{"PerTrlMSec", etensor.FLOAT64, nil, nil},
-	//}
-	//for _, lnm := range ss.LayStatNms {
-	//	for _, val := range ss.LogSpec.Items {
-	//		_, ok := val.ComputeLayer[axon.Epoch]
-	//		if ok && val.EvalType == Train {
-	//			sch = append(sch, etable.Column{val.Name, val.Type, nil, nil})
-	//		}
-	//	}
-	//
-	//	//sch = append(sch, etable.Column{lnm + "_ActAvg", etensor.FLOAT64, nil, nil})
-	//	//sch = append(sch, etable.Column{lnm + "_MaxGeM", etensor.FLOAT64, nil, nil})
-	//	//sch = append(sch, etable.Column{lnm + "_AvgGe", etensor.FLOAT64, nil, nil})
-	//	//sch = append(sch, etable.Column{lnm + "_MaxGe", etensor.FLOAT64, nil, nil})
-	//	//sch = append(sch, etable.Column{lnm + "_Gi", etensor.FLOAT64, nil, nil})
-	//	//sch = append(sch, etable.Column{lnm + "_AvgDifAvg", etensor.FLOAT64, nil, nil})
-	//	//sch = append(sch, etable.Column{lnm + "_AvgDifMax", etensor.FLOAT64, nil, nil})
-	//}
 	dt.SetFromSchema(sch, 0)
 }
 
@@ -299,31 +224,6 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 			}
 		}
 	}
-	//dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	//dt.SetCellFloat("Epoch", row, float64(epc))
-	//dt.SetCellFloat("Trial", row, float64(trl))
-	//dt.SetCellString("TrialName", row, strings.Join(ss.TestEnv.CurWords, " "))
-	//dt.SetCellFloat("Err", row, ss.TrlErr)
-	//dt.SetCellFloat("UnitErr", row, ss.TrlUnitErr)
-	//dt.SetCellFloat("CosDiff", row, ss.TrlCosDiff)
-	//dt.SetCellFloat("Correl", row, ss.TrlCosDiff)
-
-	//for _, lnm := range ss.LayStatNms {
-	//	ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-	//	dt.SetCellFloat(ly.Nm+" ActM.Avg", row, float64(ly.Pools[0].ActM.Avg))
-	//}
-
-	//inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
-	//out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
-	//ivt := ss.ValsTsr("Input")
-	//ovt := ss.ValsTsr("Output")
-	//inp.UnitValsTensor(ivt, "Act")
-	//dt.SetCellTensor("InAct", row, ivt)
-	//out.UnitValsTensor(ovt, "ActM")
-	//dt.SetCellTensor("OutActM", row, ovt)
-	//out.UnitValsTensor(ovt, "ActP")
-	//dt.SetCellTensor("OutActP", row, ovt)
-
 	// note: essential to use Go version of update when called from another goroutine
 	if ss.TstTrlPlot != nil {
 		ss.TstTrlPlot.GoUpdate()
@@ -331,25 +231,12 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 }
 
 func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
-	//inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
-	//out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
-
 	dt.SetMetaData("name", "TstTrlLog")
 	dt.SetMetaData("desc", "Record of testing per input pattern")
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
 	nt := len(ss.TestEnv.NGrams) // 1 //ss.TestEnv.Table.Len() // number in view
-	//sch := etable.Schema{
-	//	{"Run", etensor.INT64, nil, nil},
-	//	{"Epoch", etensor.INT64, nil, nil},
-	//	{"Trial", etensor.INT64, nil, nil},
-	//	{"TrialName", etensor.STRING, nil, nil},
-	//	{"Err", etensor.FLOAT64, nil, nil},
-	//	{"UnitErr", etensor.FLOAT64, nil, nil},
-	//	{"CosDiff", etensor.FLOAT64, nil, nil},
-	//	{"Correl", etensor.FLOAT64, nil, nil},
-	//}
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.
@@ -362,14 +249,6 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
 	}
-	//for _, lnm := range ss.LayStatNms {
-	//	sch = append(sch, etable.Column{lnm + " ActM.Avg", etensor.FLOAT64, nil, nil})
-	//}
-	//sch = append(sch, etable.Schema{
-	//	{"InAct", etensor.FLOAT64, inp.Shp.Shp, nil},
-	//	{"OutActM", etensor.FLOAT64, out.Shp.Shp, nil},
-	//	{"OutActP", etensor.FLOAT64, out.Shp.Shp, nil},
-	//}...)
 	dt.SetFromSchema(sch, nt)
 }
 
@@ -379,21 +258,6 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	row := dt.Rows
 	dt.SetNumRows(row + 1)
-
-	//trl := ss.TstTrlLog
-	//tix := etable.NewIdxView(trl)
-	//epc := ss.TrainEnv.Epoch.Prv // ?
-
-	//// note: this shows how to use agg methods to compute summary data from another
-	//// data table, instead of incrementing on the Sim
-	//// TODO(Logging) Need to get callbacks working.
-	//dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	////dt.SetCellFloat("Epoch", row, float64(epc))
-	//dt.SetCellFloat("UnitErr", row, agg.Sum(tix, "UnitErr")[0])
-	//dt.SetCellFloat("PctErr", row, agg.Mean(tix, "Err")[0])
-	//dt.SetCellFloat("PctCor", row, 1-agg.Mean(tix, "Err")[0])
-	//dt.SetCellFloat("CosDiff", row, agg.Mean(tix, "CosDiff")[0])
-	//dt.SetCellFloat("Correl", row, agg.Mean(tix, "Correl")[0])
 
 	for _, item := range ss.LogSpec.Items {
 		if item.EvalType == Test {
@@ -442,16 +306,6 @@ func (ss *Sim) ConfigTstEpcLog(dt *etable.Table) {
 	dt.SetMetaData("desc", "Summary stats for testing trials")
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-
-	//sch := etable.Schema{
-	//	{"Run", etensor.INT64, nil, nil},
-	//	{"Epoch", etensor.INT64, nil, nil},
-	//	{"UnitErr", etensor.FLOAT64, nil, nil},
-	//	{"PctErr", etensor.FLOAT64, nil, nil},
-	//	{"PctCor", etensor.FLOAT64, nil, nil},
-	//	{"CosDiff", etensor.FLOAT64, nil, nil},
-	//	{"Correl", etensor.FLOAT64, nil, nil},
-	//}
 
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
@@ -550,13 +404,6 @@ func (ss *Sim) LogTstCyc(dt *etable.Table, cyc int) {
 		dt.SetNumRows(cyc + 1)
 	}
 
-	//dt.SetCellFloat("Cycle", cyc, float64(cyc))
-	//for _, lnm := range ss.LayStatNms {
-	//	ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-	//	dt.SetCellFloat(ly.Nm+" Ge.Avg", cyc, float64(ly.Pools[0].Inhib.Ge.Avg))
-	//	dt.SetCellFloat(ly.Nm+" Act.Avg", cyc, float64(ly.Pools[0].Inhib.Act.Avg))
-	//}
-
 	for _, item := range ss.LogSpec.Items {
 		if item.EvalType == Test {
 			callback, ok := item.Compute[axon.Cycle]
@@ -604,13 +451,6 @@ func (ss *Sim) ConfigTstCycLog(dt *etable.Table) {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
 	}
-	//sch := etable.Schema{
-	//	{"Cycle", etensor.INT64, nil, nil},
-	//}
-	//for _, lnm := range ss.LayStatNms {
-	//	sch = append(sch, etable.Column{lnm + " Ge.Avg", etensor.FLOAT64, nil, nil})
-	//	sch = append(sch, etable.Column{lnm + " Act.Avg", etensor.FLOAT64, nil, nil})
-	//}
 	dt.SetFromSchema(sch, np)
 }
 
