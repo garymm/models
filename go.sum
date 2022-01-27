@@ -105,7 +105,6 @@ github.com/emer/axon v1.2.98 h1:XVMKVz/vZZw0wJl+ZREF+xgor/4sk0InCcb63DYpxuo=
 github.com/emer/axon v1.2.98/go.mod h1:kJyY//DFc8owPWhKXYQ12lozLXUKf+uCB94PGDVMszc=
 github.com/emer/emergent v1.1.26/go.mod h1:XhFMJgoZeOYplTDMDUcmGPuthfTqJPbBLmXEPN6uP8Y=
 github.com/emer/emergent v1.1.39/go.mod h1:0pGqRv7IO7aar56qK2ZmuYOQaz1v+HWG+TxEbuVhCyc=
-github.com/emer/emergent v1.1.49 h1:dbtvhEmqlvRZ4K2eMwY/XRrjGlyX5WGB4zeGn6/T4Rs=
 github.com/emer/emergent v1.1.49/go.mod h1:A3go/IZ6Nud5LHUpcy1OfDA7AjZ4H4/3p9crl4rQsH8=
 github.com/emer/emergent v1.1.50-0.20220127004931-4f3b2a27127a h1:k8aZEUsbofd3qr8MI98+6xx530hN62808BVdrjDZP+8=
 github.com/emer/emergent v1.1.50-0.20220127004931-4f3b2a27127a/go.mod h1:A3go/IZ6Nud5LHUpcy1OfDA7AjZ4H4/3p9crl4rQsH8=

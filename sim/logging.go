@@ -11,7 +11,6 @@ import (
 	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -87,7 +86,7 @@ func (ss *Sim) RunEpochName(run, epc int) string {
 
 // WeightsFileName returns default current weights file name
 func (ss *Sim) WeightsFileName() string {
-	return ss.Net.Nm + "_" + ss.RunName() + "_" + ss.RunEpochName(ss.TrainEnv.Run.Cur, ss.TrainEnv.Epoch.Cur) + ".wts"
+	return ss.Net.Nm + "_" + ss.RunName() + "_" + ss.RunEpochName(ss.TrainEnv.Run().Cur, ss.TrainEnv.Epoch().Cur) + ".wts"
 }
 
 // LogFileName returns default log file name
@@ -104,9 +103,9 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	row := dt.Rows
 	dt.SetNumRows(row + 1)
 
-	epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
+	epc := ss.TrainEnv.Epoch().Prv // this is triggered by increment so use previous value
 	//nt := float64(len(ss.TrainEnv.Order)) // number of trials in view
-	nt := float64(ss.TrainEnv.Trial.Max) //TODO: figure out the appropriate normalization term for the loss
+	nt := float64(ss.TrainEnv.Trial().Max) //TODO: figure out the appropriate normalization term for the loss
 	ss.EpcUnitErr = ss.SumUnitErr / nt
 	ss.SumUnitErr = 0
 	ss.EpcPctErr = float64(ss.SumErr) / nt
@@ -160,7 +159,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 		ss.TrnEpcPlot.GoUpdate()
 	}
 	if ss.TrnEpcFile != nil {
-		if ss.TrainEnv.Run.Cur == ss.StartRun && row == 0 {
+		if ss.TrainEnv.Run().Cur == ss.StartRun && row == 0 {
 			// note: can't just use row=0 b/c reset table each run
 			dt.WriteCSVHeaders(ss.TrnEpcFile, etable.Tab)
 		}
@@ -197,7 +196,7 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 func (ss *Sim) LogTstTrl(dt *etable.Table) {
 	//epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
 
-	trl := ss.TestEnv.Trial.Cur
+	trl := ss.TestEnv.Trial().Cur
 	row := trl // TODO(clean) Is this making a copy? Is it necessary?
 	if dt.Rows <= row {
 		dt.SetNumRows(row + 1)
@@ -529,34 +528,4 @@ func (ss *Sim) InitStats() {
 	ss.EpcUnitErr = 0
 	ss.EpcPctErr = 0
 	ss.EpcCosDiff = 0
-}
-
-// TrialStats computes the trial-level statistics and adds them to the epoch accumulators if
-// accum is true.  Note that we're accumulating stats here on the Sim side so the
-// core algorithm side remains as simple as possible, and doesn't need to worry about
-// different time-scales over which stats could be accumulated etc.
-// You can also aggregate directly from log data, as is done for testing stats
-func (ss *Sim) TrialStats(accum bool) {
-	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
-	ss.TrlCosDiff = float64(out.CosDiff.Cos)
-
-	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
-	ss.TrlClosest = closestWord
-	ss.TrlCorrel = float64(cor)
-	contextWords := strings.Join(ss.TrainEnv.CurWords, " ")
-
-	//Check if the closest word that is found is one of the potential following words
-	_, ok := ss.TrainEnv.NGrams[contextWords][closestWord]
-	if ok {
-		ss.TrlErr = 0
-	} else {
-		ss.TrlErr = 1
-	}
-
-	if accum {
-		ss.SumErr += ss.TrlErr
-		ss.SumUnitErr += ss.TrlUnitErr
-		ss.SumCosDiff += ss.TrlCosDiff
-		ss.SumCorrel += ss.TrlCorrel
-	}
 }

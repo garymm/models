@@ -21,6 +21,7 @@ import (
 	"github.com/goki/gi/gimain"
 	"log"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -38,6 +39,39 @@ func main() {
 		})
 	}
 
+}
+
+var TrainEnv = EnvText2Many{}
+var TestEnv = EnvText2Many{}
+
+// TrialStats computes the trial-level statistics and adds them to the epoch accumulators if
+// accum is true.  Note that we're accumulating stats here on the Sim side so the
+// core algorithm side remains as simple as possible, and doesn't need to worry about
+// different time-scales over which stats could be accumulated etc.
+// You can also aggregate directly from log data, as is done for testing stats
+func TrialStats(ss *sim.Sim, accum bool) {
+	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
+	ss.TrlCosDiff = float64(out.CosDiff.Cos)
+
+	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
+	ss.TrlClosest = closestWord
+	ss.TrlCorrel = float64(cor)
+	contextWords := strings.Join(TrainEnv.CurWords, " ")
+
+	//Check if the closest word that is found is one of the potential following words
+	_, ok := TrainEnv.NGrams[contextWords][closestWord]
+	if ok {
+		ss.TrlErr = 0
+	} else {
+		ss.TrlErr = 1
+	}
+
+	if accum {
+		ss.SumErr += ss.TrlErr
+		ss.SumUnitErr += ss.TrlUnitErr
+		ss.SumCosDiff += ss.TrlCosDiff
+		ss.SumCorrel += ss.TrlCorrel
+	}
 }
 
 // Config configures all the elements using the standard functions
@@ -122,6 +156,11 @@ func ConfigParams(ss *sim.Sim) {
 // 		Configs
 
 func ConfigEnv(ss *sim.Sim) {
+
+	ss.TrainEnv = &TrainEnv
+	ss.TestEnv = &TestEnv
+
+	ss.TrialStatsFunc = TrialStats
 	//ss = *sim.Sim
 	if ss.MaxRuns == 0 { // allow user override
 		ss.MaxRuns = 5
@@ -131,31 +170,32 @@ func ConfigEnv(ss *sim.Sim) {
 		ss.NZeroStop = 5
 	}
 
-	ss.TrainEnv.Nm = "TrainEnv"
-	ss.TrainEnv.Dsc = "training params and state"
-	//ss.TrainEnv.Table = etable.NewIdxView(ss.Pats)
-	//ss.TrainEnv.Con
-	ss.TrainEnv.Validate()
-	ss.TrainEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
-	ss.TrainEnv.Trial.Max = len(ss.TrainEnv.NGrams)
-	ss.TrainEnv.Epoch.Max = ss.MaxEpcs
+	TrainEnv.SetName("TrainEnv")
+	TrainEnv.SetDesc("training params and state")
+	//TrainEnv.Table = etable.NewIdxView(ss.Pats)
+	//TrainEnv.Con
+	TrainEnv.Validate()
+	TrainEnv.Run().Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
 
-	ss.TestEnv.Nm = "TestEnv"
-	ss.TestEnv.Dsc = "testing params and state"
-	ss.TestEnv.Validate()
-	ss.TestEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	ss.TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
-	ss.TestEnv.Trial.Max = len(ss.TestEnv.NGrams)
-	ss.TestEnv.Epoch.Max = ss.MaxEpcs
+	TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	TrainEnv.Trial().Max = len(TrainEnv.NGrams)
+	TrainEnv.Epoch().Max = ss.MaxEpcs
+
+	TestEnv.Nm = "TestEnv"
+	TestEnv.Dsc = "testing params and state"
+	TestEnv.Validate()
+	TestEnv.Run().Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
+	TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	TestEnv.Trial().Max = len(TestEnv.NGrams)
+	TestEnv.Epoch().Max = ss.MaxEpcs
 	// note: to create a train / test split of pats, do this:
 	// all := etable.NewIdxView(ss.Pats)
 	// splits, _ := split.Permuted(all, []float64{.8, .2}, []string{"Train", "Test"})
-	// ss.TrainEnv.Table = splits.Splits[0]
-	// ss.TestEnv.Table = splits.Splits[1]
+	// TrainEnv.Table = splits.Splits[0]
+	// TestEnv.Table = splits.Splits[1]
 
-	ss.TrainEnv.Init(0)
-	ss.TestEnv.Init(0)
+	TrainEnv.Init(0)
+	TestEnv.Init(0)
 }
 
 func ConfigPats(ss *sim.Sim) {
@@ -169,9 +209,9 @@ func ConfigPats(ss *sim.Sim) {
 	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
 
 	i := 0
-	for _, word := range ss.TrainEnv.Words {
-		idx := ss.TrainEnv.WordMap[word]
-		mytensor := ss.TrainEnv.WordReps.SubSpace([]int{idx})
+	for _, word := range TrainEnv.Words {
+		idx := TrainEnv.WordMap[word]
+		mytensor := TrainEnv.WordReps.SubSpace([]int{idx})
 		dt.SetCellString("Word", i, word)
 		dt.SetCellTensor("Pattern", i, mytensor)
 		i++

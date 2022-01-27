@@ -79,7 +79,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 			ss.UpdateViewTime(train, viewUpdt)
 		}
 	}
-	ss.TrialStats(train)
+	ss.TrialStatsFunc(ss, train)
 
 	if train {
 		// ss.ErrLrMod.LrateMod(ss.Net, float32(1-ss.TrlCosDiff))
