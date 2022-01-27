@@ -79,9 +79,15 @@ func ConfigParams(ss *sim.Sim) {
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
-						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
-						"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
+						"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0
+						"Layer.Act.Clamp.Ge":   "1.0", // 1.0 > 0.6 >= 0.7 == 0.5
+						// TODO This should vary based on n-hot
 						"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
+					},
+					Hypers: params.Hypers{
+						// TODO Set these numbers to be less random
+						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "Min": "1", "Max": "3", "Sigma": ".45", "Priority": "5"},
+						"Layer.Act.Clamp.Ge":   {"Val": "1.0"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
