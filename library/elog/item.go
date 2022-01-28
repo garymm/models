@@ -36,6 +36,14 @@ func (item *Item) GetComputeFunc(mode Modes, time Times) ComputeFunc {
 	return item.Compute[item.ScopeKey]
 }
 
+func (item *Item) AssignComputeFunc(theFunc ComputeFunc) {
+	for _, mode := range item.Modes {
+		for _, time := range item.Times {
+			item.Compute[item.GetScopeKey(mode, time)] = theFunc
+		}
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ScopeKey the associated string representation of a scope or scopes

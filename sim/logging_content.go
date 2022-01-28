@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/eplot"
@@ -24,44 +25,210 @@ func (ss *Sim) GetEpochWindow() *etable.IdxView {
 	return epochwindow
 }
 
-//
-//func (ss *Sim) ConfigLogger() {
-//	runItem := elog.Item{Name: "Run",
-//		Type:   etensor.INT64,
-//		Plot:   eplot.Off,
-//		FixMin: eplot.FixMin,
-//		FixMax: eplot.FloatMax,
-//		Modes:  []elog.Modes{elog.Train},
-//		Times:  []elog.Times{elog.Epoch, elog.Run}}
-//	runFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-//		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
-//	}
-//	runItem.Compute[runItem.GetScopeKey(elog.Train, elog.Run)] = runFunc
-//	runItem.Compute[runItem.GetScopeKey(elog.Train, elog.Epoch)] = runFunc
-//	ss.Logs.AddItem(&runItem)
-//
-//	for _, lnm := range ss.LayStatNms {
-//		currName := lnm
-//		actAvgItem :=
-//			elog.Item{
-//				Name:   lnm + "_ActAvg",
-//				Type:   etensor.FLOAT64,
-//				Plot:   eplot.Off,
-//				FixMin: eplot.FixMin,
-//				FixMax: eplot.FixMax,
-//				Modes:  []elog.Modes{elog.Train},
-//				Times:  []elog.Times{elog.Epoch},
-//				Range:  minmax.F64{Max: 1}}
-//
-//		//ToDo
-//		runFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-//			ly := axon.AxonLayer(ss.Net.LayerByName(currName))
-//
-//			//dt.SetCellFloat(item.Name, row, float64(ly.ActAvg.ActMAvg))
-//		}
-//	}
-//
-//}
+func (ss *Sim) InitPerLayerDefault(name string) elog.Item {
+	item := elog.Item{Name: name,
+		Type:   etensor.FLOAT64,
+		Plot:   eplot.Off,
+		FixMin: eplot.FixMin,
+		FixMax: eplot.FloatMax,
+		Modes:  []elog.Modes{elog.Train},
+		Times:  []elog.Times{elog.Epoch},
+		Range:  minmax.F64{Max: 1}}
+	return item
+}
+
+func (ss *Sim) InitLogItemDefault(name string, tensorType etensor.Type) elog.Item {
+	item := elog.Item{Name: name,
+		Type:   tensorType,
+		Plot:   eplot.Off,
+		FixMin: eplot.FixMin,
+		FixMax: eplot.FloatMax,
+		Modes:  []elog.Modes{elog.Train},
+		Times:  []elog.Times{elog.Run}}
+	return item
+}
+
+func (ss *Sim) InitLogItemDefaultTest(name string, tensorType etensor.Type) elog.Item {
+	item := elog.Item{Name: name,
+		Type:   tensorType,
+		Plot:   eplot.On,
+		FixMin: eplot.FixMin,
+		FixMax: eplot.FloatMax,
+		Modes:  []elog.Modes{elog.Test},
+		Times:  []elog.Times{elog.Trial}}
+	return item
+}
+
+func (ss *Sim) ConfigLogger() {
+	//A function to calculate mean of epochs
+	meanCalculationFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		epochWin := ss.GetEpochWindow()
+		dt.SetCellFloat(item.Name, row, agg.Mean(epochWin, item.Name)[0])
+	}
+
+	runItem := ss.InitLogItemDefault("Run", etensor.INT64)
+	runItem.Times = append(runItem.Times, elog.Epoch)
+	runFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+	}
+	runItem.AssignComputeFunc(runFunc)
+	ss.Logs.AddItem(&runItem)
+	/////
+	paramsItem := ss.InitLogItemDefault("Params", etensor.STRING)
+	paramsFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellString(item.Name, row, ss.RunName())
+	}
+	paramsItem.AssignComputeFunc(paramsFunc)
+	ss.Logs.AddItem(&paramsItem)
+	////
+	firstZeroItem := ss.InitLogItemDefault("FirstZero", etensor.FLOAT64)
+	firstZeroItem.Range = minmax.F64{Min: -1}
+	firstZeroFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, float64(ss.FirstZero))
+	}
+	firstZeroItem.AssignComputeFunc(firstZeroFunc)
+	ss.Logs.AddItem(&firstZeroItem)
+	/////
+	epochItem := ss.InitLogItemDefault("Epoch", etensor.INT64)
+	epochFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch.Prv))
+	}
+	epochItem.AssignComputeFunc(epochFunc)
+	ss.Logs.AddItem(&epochItem)
+	/////
+	unitErrItem := ss.InitLogItemDefault("UnitErr", etensor.FLOAT64)
+	unitErrItem.Times = append(unitErrItem.Times, elog.Epoch) //add epoch modes
+	unitErrEpochFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, ss.EpcUnitErr)
+	}
+	unitErrItem.Compute[unitErrItem.GetScopeKey(elog.Train, elog.Run)] = meanCalculationFunc
+	unitErrItem.Compute[unitErrItem.GetScopeKey(elog.Train, elog.Epoch)] = unitErrEpochFunc
+	ss.Logs.AddItem(&unitErrItem)
+	/////
+	PctErrItem := ss.InitLogItemDefault("PctErr", etensor.FLOAT64)
+	PctErrItem.Range = minmax.F64{Max: 1}
+	PctErrItem.FixMax = eplot.FixMax
+	PctErrItem.Plot = eplot.On
+	PctErrItem.Times = append(PctErrItem.Times, elog.Epoch) //add epoch modes
+	PctErrEpochFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, ss.EpcPctErr)
+	}
+	PctErrItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Run)] = meanCalculationFunc
+	PctErrItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Epoch)] = PctErrEpochFunc
+	ss.Logs.AddItem(&PctErrItem)
+	/////
+	PctCorItem := ss.InitLogItemDefault("PctCor", etensor.FLOAT64)
+	PctCorItem.Range = minmax.F64{Max: 1}
+	PctCorItem.FixMax = eplot.FixMax
+	PctCorItem.Plot = eplot.On
+	PctCorItem.Times = append(PctCorItem.Times, elog.Epoch) //add epoch modes
+	PctCorEpochFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, ss.EpcPctCor)
+	}
+	PctCorItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Run)] = meanCalculationFunc
+	PctCorItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Epoch)] = PctCorEpochFunc
+	ss.Logs.AddItem(&PctCorItem)
+	/////
+	CosDiffItem := ss.InitLogItemDefault("CosDiff", etensor.FLOAT64)
+	CosDiffItem.Range = minmax.F64{Max: 1}
+	CosDiffItem.FixMax = eplot.FixMax
+	CosDiffItem.Plot = eplot.On
+	CosDiffItem.Times = append(CosDiffItem.Times, elog.Epoch) //add epoch modes
+	CosDiffEpochFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, ss.EpcCosDiff)
+	}
+	CosDiffItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Run)] = meanCalculationFunc
+	CosDiffItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Epoch)] = CosDiffEpochFunc
+	ss.Logs.AddItem(&CosDiffItem)
+	//////
+	CorrelItem := ss.InitLogItemDefault("Correl", etensor.FLOAT64)
+	CorrelItem.Range = minmax.F64{Max: 1}
+	CorrelItem.FixMax = eplot.FixMax
+	CorrelItem.Plot = eplot.On
+	CorrelItem.Times = append(CorrelItem.Times, elog.Epoch) //add epoch modes
+	CorrelEpochFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, ss.EpcCorrel)
+	}
+	CorrelItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Run)] = meanCalculationFunc
+	CorrelItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Epoch)] = CorrelEpochFunc
+	ss.Logs.AddItem(&CorrelItem)
+	///////
+	PerTrlMSecItem := ss.InitLogItemDefault("PerTrlMSec", etensor.FLOAT64)
+	PerTrlMSecItem.Times = append(PerTrlMSecItem.Times, elog.Epoch) //add epoch modes
+	PerTrlMSecEpochFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		dt.SetCellFloat(item.Name, row, ss.EpcPerTrlMSec)
+	}
+	PerTrlMSecItem.Compute[PctErrItem.GetScopeKey(elog.Train, elog.Epoch)] = PerTrlMSecEpochFunc
+	ss.Logs.AddItem(&PerTrlMSecItem)
+
+	for _, lnm := range ss.LayStatNms {
+		currName := lnm
+		///////
+		actAvgFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			ly := ss.Net.LayerByName(currName).(axon.AxonLayer).AsAxon()
+			dt.SetCellFloat(item.Name, row, float64(ly.ActAvg.ActMAvg))
+		}
+		actAvgItem := ss.InitPerLayerDefault(lnm + "_ActAvg")
+		actAvgItem.FixMax = eplot.FixMax //Only one that uses fixmax
+		actAvgItem.AssignComputeFunc(actAvgFunc)
+		ss.Logs.AddItem(&actAvgItem)
+		/////
+		maxGenFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			ly := ss.Net.LayerByName(currName).(axon.AxonLayer).AsAxon()
+			dt.SetCellFloat(item.Name, row, float64(ly.ActAvg.AvgMaxGeM))
+		}
+		maxGenItem := ss.InitPerLayerDefault(lnm + "_MaxGeM")
+		maxGenItem.AssignComputeFunc(maxGenFunc)
+		ss.Logs.AddItem(&maxGenItem)
+		/////
+		avgGeFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			ly := ss.Net.LayerByName(currName).(axon.AxonLayer).AsAxon()
+			dt.SetCellFloat(item.Name, row, float64(ly.Pools[0].Inhib.Ge.Avg))
+		}
+		avgGeItem := ss.InitPerLayerDefault(lnm + "_AvgGeM")
+		actAvgItem.AssignComputeFunc(avgGeFunc)
+		ss.Logs.AddItem(&avgGeItem)
+		/////
+		maxGeFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			ly := ss.Net.LayerByName(currName).(axon.AxonLayer).AsAxon()
+			dt.SetCellFloat(item.Name, row, float64(ly.Pools[0].Inhib.Ge.Max))
+		}
+		maxGeItem := ss.InitPerLayerDefault(lnm + "_MaxGe")
+		maxGeItem.AssignComputeFunc(maxGeFunc)
+		ss.Logs.AddItem(&maxGeItem)
+		//////
+		giFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			ly := ss.Net.LayerByName(currName).(axon.AxonLayer).AsAxon()
+			dt.SetCellFloat(item.Name, row, float64(ly.Pools[0].Inhib.Gi))
+		}
+		giItem := ss.InitPerLayerDefault(lnm + "_Gi")
+		giItem.AssignComputeFunc(giFunc)
+		ss.Logs.AddItem(&giItem)
+		/////
+		avgDiffFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			ly := ss.Net.LayerByName(currName).(axon.AxonLayer).AsAxon()
+			dt.SetCellFloat(item.Name, row, float64(ly.Pools[0].AvgDif.Avg))
+		}
+		avgDiffItem := ss.InitPerLayerDefault(lnm + "_AvgDifAvg")
+		avgDiffItem.Compute[actAvgItem.GetScopeKey(elog.Train, elog.Epoch)] = avgDiffFunc
+		ss.Logs.AddItem(&avgDiffItem)
+		////
+		avgDiffMaxFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			ly := ss.Net.LayerByName(currName).(axon.AxonLayer).AsAxon()
+			dt.SetCellFloat(item.Name, row, float64(ly.Pools[0].AvgDif.Max))
+		}
+		avgDiffMaxItem := ss.InitPerLayerDefault(lnm + "_AvgDifMax")
+		avgDiffMaxItem.AssignComputeFunc(avgDiffMaxFunc)
+		ss.Logs.AddItem(&avgDiffMaxItem)
+		////
+	}
+
+	runItemTest := ss.InitLogItemDefaultTest("Run", etensor.INT64)
+	runItemTest.Times = append(runItemTest.Times, elog.Epoch)
+	runItemTest.AssignComputeFunc(runFunc)
+	ss.Logs.AddItem(&runItemTest)
+
+}
 
 func (ss *Sim) ConfigLogSpec() {
 	// Train epoch
@@ -252,6 +419,8 @@ func (ss *Sim) ConfigLogSpec() {
 			Range:     minmax.F64{Max: 1},
 			EvalType:  Train,
 			LayerName: lnm})
+
+		///
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 			Name: lnm + "_AvgDifAvg",
 			Type: etensor.FLOAT64},
