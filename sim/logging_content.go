@@ -24,6 +24,45 @@ func (ss *Sim) GetEpochWindow() *etable.IdxView {
 	return epochwindow
 }
 
+//
+//func (ss *Sim) ConfigLogger() {
+//	runItem := elog.Item{Name: "Run",
+//		Type:   etensor.INT64,
+//		Plot:   eplot.Off,
+//		FixMin: eplot.FixMin,
+//		FixMax: eplot.FloatMax,
+//		Modes:  []elog.Modes{elog.Train},
+//		Times:  []elog.Times{elog.Epoch, elog.Run}}
+//	runFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+//		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+//	}
+//	runItem.Compute[runItem.GetScopeKey(elog.Train, elog.Run)] = runFunc
+//	runItem.Compute[runItem.GetScopeKey(elog.Train, elog.Epoch)] = runFunc
+//	ss.Logs.AddItem(&runItem)
+//
+//	for _, lnm := range ss.LayStatNms {
+//		currName := lnm
+//		actAvgItem :=
+//			elog.Item{
+//				Name:   lnm + "_ActAvg",
+//				Type:   etensor.FLOAT64,
+//				Plot:   eplot.Off,
+//				FixMin: eplot.FixMin,
+//				FixMax: eplot.FixMax,
+//				Modes:  []elog.Modes{elog.Train},
+//				Times:  []elog.Times{elog.Epoch},
+//				Range:  minmax.F64{Max: 1}}
+//
+//		//ToDo
+//		runFunc := func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+//			ly := axon.AxonLayer(ss.Net.LayerByName(currName))
+//
+//			//dt.SetCellFloat(item.Name, row, float64(ly.ActAvg.ActMAvg))
+//		}
+//	}
+//
+//}
+
 func (ss *Sim) ConfigLogSpec() {
 	// Train epoch
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
@@ -152,6 +191,7 @@ func (ss *Sim) ConfigLogSpec() {
 		EvalType: Train})
 	// Add for each layer
 	for _, lnm := range ss.LayStatNms {
+		//curlname := lnm
 		ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 			Name: lnm + "_ActAvg",
 			Type: etensor.FLOAT64},

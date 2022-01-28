@@ -13,5 +13,6 @@ require (
 	github.com/goki/gi v1.2.15
 	github.com/goki/ki v1.1.4
 	github.com/goki/mat32 v1.0.9
+	github.com/goki/stringer v0.0.0-20210123213256-ccc8dd0b80e5 // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 )

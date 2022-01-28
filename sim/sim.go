@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
@@ -20,11 +21,14 @@ import (
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
 type Sim struct {
-	Net            *axon.Network                 `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
-	Pats           *etable.Table                 `view:"no-inline" desc:"the training patterns to use"`
-	NInputs        int                           `desc:"Number of input/output pattern pairs"`
-	NOutputs       int                           `desc:"The number of output patterns potentially associated with each input pattern."`
-	LogSpec        LogSpec                       `desc:"Specifies which details are to be logged"`
+	Net      *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
+	Pats     *etable.Table `view:"no-inline" desc:"the training patterns to use"`
+	NInputs  int           `desc:"Number of input/output pattern pairs"`
+	NOutputs int           `desc:"The number of output patterns potentially associated with each input pattern."`
+	LogSpec  LogSpec       `desc:"Specifies which details are to be logged"`
+
+	Logs elog.Logs `desc:"In our neverending battle to refactor we've added LOGS'"`
+
 	TrnEpcLog      *etable.Table                 `view:"no-inline" desc:"training epoch-level log data"`
 	TstEpcLog      *etable.Table                 `view:"no-inline" desc:"testing epoch-level log data"`
 	TstTrlLog      *etable.Table                 `view:"no-inline" desc:"testing trial-level log data"`
