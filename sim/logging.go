@@ -235,7 +235,7 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
-	nt := len(ss.TestEnv.NGrams) // 1 //ss.TestEnv.Table.Len() // number in view
+	nt := ss.TestTrialLength // 1 //ss.TestEnv.Table.Len() // number in view
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.

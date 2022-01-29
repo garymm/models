@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/Astera-org/models/sim"
 	"github.com/emer/emergent/env"
+	"github.com/emer/etable/etensor"
+	"strings"
 )
 
 type EnvText2Many struct {
@@ -63,4 +65,18 @@ func (env *EnvText2Many) Validate() error {
 }
 func (env *EnvText2Many) Init(run int) {
 	env.CorpusEnv.Init(run)
+}
+func (env *EnvText2Many) GetCurrentTrialName() string {
+	return strings.Join(env.CorpusEnv.CurWords, " ")
+}
+func (env *EnvText2Many) Step() {
+	env.CorpusEnv.Step()
+}
+
+func (env *EnvText2Many) State(s string) etensor.Tensor {
+	return env.CorpusEnv.State(s)
+}
+
+func (env *EnvText2Many) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
+	return env.CorpusEnv.Counter(scale)
 }

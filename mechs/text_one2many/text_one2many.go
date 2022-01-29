@@ -157,7 +157,7 @@ func ConfigParams(ss *sim.Sim) {
 
 func ConfigEnv(ss *sim.Sim) {
 
-	ss.TrainEnv = &TrainEnv
+	ss.TrainEnv, ok = sim.Environment.(TrainEnv)
 	ss.TestEnv = &TestEnv
 
 	ss.TrialStatsFunc = TrialStats
@@ -196,6 +196,9 @@ func ConfigEnv(ss *sim.Sim) {
 
 	TrainEnv.Init(0)
 	TestEnv.Init(0)
+
+	ss.TestTrialLength = len(TestEnv.NGrams)
+
 }
 
 func ConfigPats(ss *sim.Sim) {

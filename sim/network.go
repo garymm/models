@@ -99,14 +99,14 @@ func (ss *Sim) ThetaCyc(train bool) {
 // It is good practice to have this be a separate method with appropriate
 // args so that it can be used for various different contexts
 // (training, testing, etc).
-func (ss *Sim) ApplyInputs(en env.Env) {
+func (ss *Sim) ApplyInputs(en *Environment) {
 	// ss.Net.InitExt() // clear any existing inputs -- not strictly necessary if always
 	// going to the same layers, but good practice and cheap anyway
 
 	lays := []string{"Input", "Output"}
 	for _, lnm := range lays {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		pats := en.State(ly.Nm)
+		pats := (*en).State(ly.Nm)
 		if pats != nil {
 			ly.ApplyExt(pats)
 		}
@@ -119,11 +119,13 @@ func (ss *Sim) TrainTrial() {
 		ss.NewRun()
 	}
 
-	ss.TrainEnv.Step() // the Env encapsulates and manages all counter state
+	TrainEnv := *ss.TrainEnv
+
+	TrainEnv.Step() // the Env encapsulates and manages all counter state
 
 	// Key to query counters FIRST because current state is in NEXT epoch
 	// if epoch counter has changed
-	epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
+	epc, _, chg := TrainEnv.Counter(env.Epoch)
 	if chg {
 		ss.LogTrnEpc(ss.TrnEpcLog)
 		ss.LrateSched(epc)
@@ -136,7 +138,7 @@ func (ss *Sim) TrainTrial() {
 		if epc >= ss.MaxEpcs || (ss.NZeroStop > 0 && ss.NZero >= ss.NZeroStop) {
 			// done with training..
 			ss.RunEnd()
-			if ss.TrainEnv.Run.Incr() { // we are done!
+			if TrainEnv.Run().Incr() { // we are done!
 				ss.StopNow = true
 				return
 			} else {
@@ -146,7 +148,7 @@ func (ss *Sim) TrainTrial() {
 		}
 	}
 
-	ss.ApplyInputs(&ss.TrainEnv)
+	ss.ApplyInputs(&TrainEnv)
 	ss.ThetaCyc(true)
 }
 
@@ -164,9 +166,12 @@ func (ss *Sim) RunEnd() {
 // for the new run value
 func (ss *Sim) NewRun() {
 	ss.InitRndSeed()
-	run := ss.TrainEnv.Run.Cur
-	ss.TrainEnv.Init(run)
-	ss.TestEnv.Init(run)
+	TrainEnv := *ss.TrainEnv
+	TestEnv := *ss.TestEnv
+
+	run := TrainEnv.Run().Cur
+	TrainEnv.Init(run)
+	TestEnv.Init(run)
 	ss.Time.Reset()
 	ss.Net.InitWts()
 	ss.InitStats()
@@ -177,11 +182,12 @@ func (ss *Sim) NewRun() {
 
 // TrainEpoch runs training trials for remainder of this epoch
 func (ss *Sim) TrainEpoch() {
+	TrainEnv := *ss.TrainEnv
 	ss.StopNow = false
-	curEpc := ss.TrainEnv.Epoch.Cur
+	curEpc := TrainEnv.Epoch().Cur
 	for {
 		ss.TrainTrial()
-		if ss.StopNow || ss.TrainEnv.Epoch.Cur != curEpc {
+		if ss.StopNow || TrainEnv.Epoch().Cur != curEpc {
 			break
 		}
 	}
@@ -190,11 +196,12 @@ func (ss *Sim) TrainEpoch() {
 
 // TrainRun runs training trials for remainder of run
 func (ss *Sim) TrainRun() {
+	TrainEnv := *ss.TrainEnv
 	ss.StopNow = false
-	curRun := ss.TrainEnv.Run.Cur
+	curRun := TrainEnv.Run().Cur
 	for {
 		ss.TrainTrial()
-		if ss.StopNow || ss.TrainEnv.Run.Cur != curRun {
+		if ss.StopNow || TrainEnv.Run().Cur != curRun {
 			break
 		}
 	}
@@ -250,10 +257,11 @@ func (ss *Sim) LrateSched(epc int) {
 
 // TestTrial runs one trial of testing -- always sequentially presented inputs
 func (ss *Sim) TestTrial(returnOnChg bool) {
-	ss.TestEnv.Step()
+	TestEnv := *ss.TestEnv
+	TestEnv.Step()
 
 	// Query counters FIRST
-	_, _, chg := ss.TestEnv.Counter(env.Epoch)
+	_, _, chg := TestEnv.Counter(env.Epoch)
 	if chg {
 		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
 			ss.UpdateView(false)
@@ -264,7 +272,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 		}
 	}
 
-	ss.ApplyInputs(&ss.TestEnv)
+	ss.ApplyInputs(ss.TestEnv)
 	ss.ThetaCyc(false) // !train
 	ss.LogTstTrl(ss.TstTrlLog)
 	if ss.NetData != nil { // offline record net data from testing, just final state
@@ -274,19 +282,22 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 
 // TestItem tests given item which is at given index in test item list
 func (ss *Sim) TestItem(idx int) {
-	cur := ss.TestEnv.Trial.Cur
-	ss.TestEnv.Trial.Cur = idx
-	ss.ApplyInputs(&ss.TestEnv)
+	TestEnv := *ss.TestEnv
+	cur := TestEnv.Trial().Cur
+	TestEnv.Trial().Cur = idx
+	ss.ApplyInputs(ss.TestEnv)
 	ss.ThetaCyc(false) // !train
-	ss.TestEnv.Trial.Cur = cur
+	TestEnv.Trial().Cur = cur
 }
 
 // TestAll runs through the full set of testing items
 func (ss *Sim) TestAll() {
-	ss.TestEnv.Init(ss.TrainEnv.Run.Cur)
+	TestEnv := *ss.TestEnv
+	TrainEnv := *ss.TrainEnv
+	TestEnv.Init(TrainEnv.Run().Cur)
 	for {
 		ss.TestTrial(true) // return on change -- don't wrap
-		_, _, chg := ss.TestEnv.Counter(env.Epoch)
+		_, _, chg := TestEnv.Counter(env.Epoch)
 		if chg || ss.StopNow {
 			break
 		}

@@ -69,8 +69,8 @@ func (ss *Sim) CmdArgs() {
 		fmt.Printf("Saving final weights per run\n")
 	}
 	fmt.Printf("Running %d Runs starting at %d\n", ss.MaxRuns, ss.StartRun)
-	ss.TrainEnv.Run.Set(ss.StartRun)
-	ss.TrainEnv.Run.Max = ss.StartRun + ss.MaxRuns
+	ss.TrainEnv.Run().Set(ss.StartRun)
+	ss.TrainEnv.Run().Max = ss.StartRun + ss.MaxRuns
 	ss.NewRun()
 	ss.Train()
 

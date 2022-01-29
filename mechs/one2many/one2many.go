@@ -483,6 +483,8 @@ func (ss *Sim) ThetaCyc(train bool) {
 	}
 }
 
+//TODO: Check if this should get a pointer instead of the object, huge memory copying bottleneck
+
 // ApplyInputs applies input patterns from given envirbonment.
 // It is good practice to have this be a separate method with appropriate
 // args so that it can be used for various different contexts

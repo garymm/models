@@ -37,7 +37,8 @@ type Sim struct {
 	RunStats       *etable.Table                 `view:"no-inline" desc:"aggregate stats on all runs"`
 	ErrLrMod       axon.LrateMod                 `view:"inline" desc:"learning rate modulation as function of error"`
 
-	TrialStatsFunc func(ss *Sim, accum bool) `view':"inline" desc: "a function that calculates trial stats"`
+	TrialStatsFunc  func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
+	TestTrialLength int                       `view:"inline" desc:"provides the expected length of a table slice"`
 
 	Params    params.Sets `view:"no-inline" desc:"full collection of param sets"`
 	ParamSet  string      `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set -- can use multiple names separated by spaces (don't put spaces in ParamSet names!)"`
@@ -47,8 +48,8 @@ type Sim struct {
 	MaxEpcs   int         `desc:"maximum number of epochs to run per model run"`
 	NZeroStop int         `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
-	TrainEnv     Environment     `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
-	TestEnv      Environment     `desc:"Testing environment -- manages iterating over testing"`
+	TrainEnv     *Environment    `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
+	TestEnv      *Environment    `desc:"Testing environment -- manages iterating over testing"`
 	Time         axon.Time       `desc:"axon timing parameters and state"`
 	ViewOn       bool            `desc:"whether to update the network view while running"`
 	TrainUpdt    axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
@@ -143,7 +144,7 @@ func (ss *Sim) Init() {
 
 // InitRndSeed initializes the random seed based on current training run number
 func (ss *Sim) InitRndSeed() {
-	run := ss.TrainEnv.Run().Cur
+	run := (*ss.TrainEnv).Run().Cur
 	rand.Seed(ss.RndSeeds[run])
 }
 
