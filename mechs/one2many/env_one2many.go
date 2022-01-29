@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/Astera-org/models/sim"
 	"github.com/emer/emergent/env"
+	"github.com/emer/etable/etensor"
 )
 
 //EnvOne2Many a wrapper for accessing the environment and it's variables
@@ -67,4 +68,19 @@ func (env *EnvOne2Many) Validate() error {
 }
 func (env *EnvOne2Many) Init(run int) {
 	env.FixedTable.Init(run)
+}
+
+func (env *EnvOne2Many) GetCurrentTrialName() string {
+	return env.TrialName().Cur
+}
+func (env *EnvOne2Many) Step() {
+	env.FixedTable.Step()
+}
+
+func (env *EnvOne2Many) State(s string) etensor.Tensor {
+	return env.FixedTable.State(s)
+}
+
+func (env *EnvOne2Many) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
+	return env.FixedTable.Counter(scale)
 }

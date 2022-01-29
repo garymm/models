@@ -24,14 +24,15 @@ func (ss *Sim) GetEpochWindow() *etable.IdxView {
 }
 
 func (ss *Sim) ConfigLogSpec() {
+
 	// Train epoch
 	ss.LogSpec.AddItem(&LogItem{Column: etable.Column{
 		Name: "Run",
 		Type: etensor.INT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run().Cur))
+			dt.SetCellFloat(name, row, float64((ss.TrainEnv).Run().Cur))
 		}, axon.Run: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run().Cur))
+			dt.SetCellFloat(name, row, float64((ss.TrainEnv).Run().Cur))
 		}},
 		Plot:     eplot.Off,
 		FixMin:   eplot.FixMin,
@@ -64,7 +65,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Name: "Epoch",
 		Type: etensor.INT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Epoch().Prv))
+			dt.SetCellFloat(name, row, float64((ss.TrainEnv).Epoch().Prv))
 		}},
 		Plot:     eplot.Off,
 		FixMin:   eplot.FixMin,
@@ -242,9 +243,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Name: "Run",
 		Type: etensor.INT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run().Cur))
+			dt.SetCellFloat(name, row, float64((ss.TrainEnv).Run().Cur))
 		}, axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Run().Cur))
+			dt.SetCellFloat(name, row, float64((ss.TrainEnv).Run().Cur))
 		}},
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
@@ -254,9 +255,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Name: "Epoch",
 		Type: etensor.INT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Epoch().Prv))
+			dt.SetCellFloat(name, row, float64((ss.TrainEnv).Epoch().Prv))
 		}, axon.Epoch: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TrainEnv.Epoch().Prv))
+			dt.SetCellFloat(name, row, float64((ss.TrainEnv).Epoch().Prv))
 		}},
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
@@ -266,7 +267,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Name: "Trial",
 		Type: etensor.INT64},
 		Compute: map[axon.TimeScales]LogFunc{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellFloat(name, row, float64(ss.TestEnv.Trial().Cur))
+			dt.SetCellFloat(name, row, float64((ss.TestEnv).Trial().Cur))
 		}},
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,
@@ -276,7 +277,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Name: "TrialName",
 		Type: etensor.STRING},
 		Compute: map[axon.TimeScales]LogFunc{axon.Trial: func(ss *Sim, dt *etable.Table, row int, name string) {
-			dt.SetCellString(name, row, ss.TestEnv.GetCurrentTrialName())
+			dt.SetCellString(name, row, (ss.TestEnv).GetCurrentTrialName())
 		}},
 		Plot:     eplot.On,
 		FixMin:   eplot.FixMin,

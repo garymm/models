@@ -86,7 +86,7 @@ func (ss *Sim) RunEpochName(run, epc int) string {
 
 // WeightsFileName returns default current weights file name
 func (ss *Sim) WeightsFileName() string {
-	return ss.Net.Nm + "_" + ss.RunName() + "_" + ss.RunEpochName(ss.TrainEnv.Run().Cur, ss.TrainEnv.Epoch().Cur) + ".wts"
+	return ss.Net.Nm + "_" + ss.RunName() + "_" + ss.RunEpochName((ss.TrainEnv).Run().Cur, (ss.TrainEnv).Epoch().Cur) + ".wts"
 }
 
 // LogFileName returns default log file name
@@ -103,9 +103,9 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	row := dt.Rows
 	dt.SetNumRows(row + 1)
 
-	epc := ss.TrainEnv.Epoch().Prv // this is triggered by increment so use previous value
-	//nt := float64(len(ss.TrainEnv.Order)) // number of trials in view
-	nt := float64(ss.TrainEnv.Trial().Max) //TODO: figure out the appropriate normalization term for the loss
+	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
+	//nt := float64(len((*ss.TrainEnv).Order)) // number of trials in view
+	nt := float64((ss.TrainEnv).Trial().Max) //TODO: figure out the appropriate normalization term for the loss
 	ss.EpcUnitErr = ss.SumUnitErr / nt
 	ss.SumUnitErr = 0
 	ss.EpcPctErr = float64(ss.SumErr) / nt
@@ -159,7 +159,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 		ss.TrnEpcPlot.GoUpdate()
 	}
 	if ss.TrnEpcFile != nil {
-		if ss.TrainEnv.Run().Cur == ss.StartRun && row == 0 {
+		if (ss.TrainEnv).Run().Cur == ss.StartRun && row == 0 {
 			// note: can't just use row=0 b/c reset table each run
 			dt.WriteCSVHeaders(ss.TrnEpcFile, etable.Tab)
 		}
@@ -194,9 +194,9 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 // LogTstTrl adds data from current trial to the TstTrlLog table.
 // log always contains number of testing items
 func (ss *Sim) LogTstTrl(dt *etable.Table) {
-	//epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
+	//epc := (*ss.TrainEnv).Epoch.Prv // this is triggered by increment so use previous value
 
-	trl := ss.TestEnv.Trial().Cur
+	trl := (ss.TestEnv).Trial().Cur
 	row := trl // TODO(clean) Is this making a copy? Is it necessary?
 	if dt.Rows <= row {
 		dt.SetNumRows(row + 1)
@@ -235,7 +235,7 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
-	nt := ss.TestTrialLength // 1 //ss.TestEnv.Table.Len() // number in view
+	nt := ss.TestTrialLength // 1 //(*ss.TestEnv).Table.Len() // number in view
 	sch := etable.Schema{}
 	for _, val := range ss.LogSpec.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.

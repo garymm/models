@@ -157,9 +157,9 @@ func ConfigParams(ss *sim.Sim) {
 
 func ConfigEnv(ss *sim.Sim) {
 
-	ss.TrainEnv, ok = sim.Environment.(TrainEnv)
+	ss.TrainEnv = &TrainEnv
 	ss.TestEnv = &TestEnv
-
+	
 	ss.TrialStatsFunc = TrialStats
 	//ss = *sim.Sim
 	if ss.MaxRuns == 0 { // allow user override

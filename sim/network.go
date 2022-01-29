@@ -99,14 +99,14 @@ func (ss *Sim) ThetaCyc(train bool) {
 // It is good practice to have this be a separate method with appropriate
 // args so that it can be used for various different contexts
 // (training, testing, etc).
-func (ss *Sim) ApplyInputs(en *Environment) {
+func (ss *Sim) ApplyInputs(en Environment) {
 	// ss.Net.InitExt() // clear any existing inputs -- not strictly necessary if always
 	// going to the same layers, but good practice and cheap anyway
 
 	lays := []string{"Input", "Output"}
 	for _, lnm := range lays {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		pats := (*en).State(ly.Nm)
+		pats := (en).State(ly.Nm)
 		if pats != nil {
 			ly.ApplyExt(pats)
 		}
@@ -119,7 +119,7 @@ func (ss *Sim) TrainTrial() {
 		ss.NewRun()
 	}
 
-	TrainEnv := *ss.TrainEnv
+	TrainEnv := ss.TrainEnv
 
 	TrainEnv.Step() // the Env encapsulates and manages all counter state
 
@@ -148,7 +148,7 @@ func (ss *Sim) TrainTrial() {
 		}
 	}
 
-	ss.ApplyInputs(&TrainEnv)
+	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
 }
 
@@ -166,8 +166,8 @@ func (ss *Sim) RunEnd() {
 // for the new run value
 func (ss *Sim) NewRun() {
 	ss.InitRndSeed()
-	TrainEnv := *ss.TrainEnv
-	TestEnv := *ss.TestEnv
+	TrainEnv := ss.TrainEnv
+	TestEnv := ss.TestEnv
 
 	run := TrainEnv.Run().Cur
 	TrainEnv.Init(run)
@@ -182,7 +182,7 @@ func (ss *Sim) NewRun() {
 
 // TrainEpoch runs training trials for remainder of this epoch
 func (ss *Sim) TrainEpoch() {
-	TrainEnv := *ss.TrainEnv
+	TrainEnv := ss.TrainEnv
 	ss.StopNow = false
 	curEpc := TrainEnv.Epoch().Cur
 	for {
@@ -196,7 +196,7 @@ func (ss *Sim) TrainEpoch() {
 
 // TrainRun runs training trials for remainder of run
 func (ss *Sim) TrainRun() {
-	TrainEnv := *ss.TrainEnv
+	TrainEnv := ss.TrainEnv
 	ss.StopNow = false
 	curRun := TrainEnv.Run().Cur
 	for {
@@ -257,7 +257,7 @@ func (ss *Sim) LrateSched(epc int) {
 
 // TestTrial runs one trial of testing -- always sequentially presented inputs
 func (ss *Sim) TestTrial(returnOnChg bool) {
-	TestEnv := *ss.TestEnv
+	TestEnv := ss.TestEnv
 	TestEnv.Step()
 
 	// Query counters FIRST
@@ -282,7 +282,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 
 // TestItem tests given item which is at given index in test item list
 func (ss *Sim) TestItem(idx int) {
-	TestEnv := *ss.TestEnv
+	TestEnv := ss.TestEnv
 	cur := TestEnv.Trial().Cur
 	TestEnv.Trial().Cur = idx
 	ss.ApplyInputs(ss.TestEnv)
@@ -292,8 +292,8 @@ func (ss *Sim) TestItem(idx int) {
 
 // TestAll runs through the full set of testing items
 func (ss *Sim) TestAll() {
-	TestEnv := *ss.TestEnv
-	TrainEnv := *ss.TrainEnv
+	TestEnv := ss.TestEnv
+	TrainEnv := ss.TrainEnv
 	TestEnv.Init(TrainEnv.Run().Cur)
 	for {
 		ss.TestTrial(true) // return on change -- don't wrap
