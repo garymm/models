@@ -2,21 +2,21 @@ package elog
 
 import "github.com/goki/ki/kit"
 
-// Modes the mode enum
-type Modes int32
+// TrainOrTest the mode enum
+type TrainOrTest int32
 
 //go:generate stringer -type=Modes
 
 var KiT_Modes = kit.Enums.AddEnum(ModesN, kit.NotBitFlag, nil)
 
-func (ev Modes) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
-func (ev *Modes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
+func (ev TrainOrTest) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
+func (ev *TrainOrTest) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
-// The time scales
+// The evaluation modes
 const (
 
 	// AllModes represents the kind of situation where your data is being used
-	AllModes Modes = iota
+	AllModes TrainOrTest = iota
 
 	// Train is this a training mode for the env
 	Train

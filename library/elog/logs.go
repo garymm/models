@@ -16,10 +16,11 @@ func (lg *Logs) AddItem(item *Item) {
 	if lg.ItemIdxMap == nil {
 		lg.ItemIdxMap = make(map[string]int)
 	}
+	// TODO Name is not unique
 	lg.ItemIdxMap[item.Name] = len(lg.Items) - 1
 }
 
-func (lg *Logs) AddItemScoped(item *Item, modes []Modes, times []Times) {
+func (lg *Logs) AddItemScoped(item *Item, modes []TrainOrTest, times []Times) {
 	item.ScopeKey.FromScopes(modes, times)
 	lg.AddItem(item)
 }
@@ -30,7 +31,7 @@ func (lg *Logs) CreateTables() {
 		for _, mode := range item.Modes {
 			for _, time := range item.Times {
 				tempScopeKey := ScopeKey("")
-				tempScopeKey.FromScopes([]Modes{mode}, []Times{time})
+				tempScopeKey.FromScopes([]TrainOrTest{mode}, []Times{time})
 				_, ok := uniqueTables[tempScopeKey]
 				if ok == false {
 					uniqueTables[tempScopeKey] = &etable.Table{}
@@ -41,8 +42,8 @@ func (lg *Logs) CreateTables() {
 	lg.Tables = uniqueTables
 }
 
-func (lg *Logs) GetTables(mode Modes, time Times) *etable.Table {
+func (lg *Logs) GetTables(mode TrainOrTest, time Times) *etable.Table {
 	tempScopeKey := ScopeKey("")
-	tempScopeKey.FromScopes([]Modes{mode}, []Times{time})
+	tempScopeKey.FromScopes([]TrainOrTest{mode}, []Times{time})
 	return lg.Tables[tempScopeKey]
 }

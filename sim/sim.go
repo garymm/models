@@ -25,7 +25,7 @@ type Sim struct {
 	Pats     *etable.Table `view:"no-inline" desc:"the training patterns to use"`
 	NInputs  int           `desc:"Number of input/output pattern pairs"`
 	NOutputs int           `desc:"The number of output patterns potentially associated with each input pattern."`
-	LogSpec  LogSpec       `desc:"Specifies which details are to be logged"`
+	//LogSpec  LogSpec       `desc:"Specifies which details are to be logged"`
 
 	Logs elog.Logs `desc:"In our neverending battle to refactor we've added LOGS'"`
 

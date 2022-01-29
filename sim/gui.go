@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
@@ -283,17 +284,16 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	return win
 }
 
+// TODO Replace all these functions
 func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
 	plt.Params.Title = "Axon Random Associator 25 Epoch Plot"
 	plt.Params.XAxisCol = "Epoch"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Train {
-			_, ok := item.Compute[axon.Epoch]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Train, elog.Epoch)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -320,13 +320,11 @@ func (ss *Sim) ConfigTstTrlPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.Params.Title = "Axon Random Associator 25 Test Trial Plot"
 	plt.Params.XAxisCol = "Trial"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Trial]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Test, elog.Trial)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -336,13 +334,11 @@ func (ss *Sim) ConfigTstEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.Params.Title = "Axon Random Associator 25 Testing Epoch Plot"
 	plt.Params.XAxisCol = "Epoch"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Epoch]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Test, elog.Epoch)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -352,13 +348,11 @@ func (ss *Sim) ConfigTstCycPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.Params.Title = "Axon Random Associator 25 Test Cycle Plot"
 	plt.Params.XAxisCol = "Cycle"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Cycle]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Test, elog.Cycle)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -369,13 +363,11 @@ func (ss *Sim) ConfigRunPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D 
 	plt.Params.XAxisCol = "Run"
 	plt.Params.LegendCol = "Params"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Train {
-			_, ok := item.Compute[axon.Run]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Train, elog.Run)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
