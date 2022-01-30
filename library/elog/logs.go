@@ -19,6 +19,7 @@ type Logs struct {
 }
 
 // DELETE THIS DO NOT SUBMIT
+
 //ss.TrnEpcLog = &etable.Table{}
 //ss.TstEpcLog = &etable.Table{}
 //ss.TstTrlLog = &etable.Table{}
