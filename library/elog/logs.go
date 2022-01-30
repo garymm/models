@@ -8,7 +8,22 @@ type Logs struct {
 	Items      []*Item
 	ItemIdxMap map[string]int
 	Tables     map[ScopeKey]*etable.Table
+
+	// TODO Remove these
+	TrnEpcLog *etable.Table `view:"no-inline" desc:"training epoch-level log data"`
+	TstEpcLog *etable.Table `view:"no-inline" desc:"testing epoch-level log data"`
+	TstTrlLog *etable.Table `view:"no-inline" desc:"testing trial-level log data"`
+	TstErrLog *etable.Table `view:"no-inline" desc:"log of all test trials where errors were made"`
+	TstCycLog *etable.Table `view:"no-inline" desc:"testing cycle-level log data"`
+	RunLog    *etable.Table `view:"no-inline" desc:"summary log of each run"`
 }
+
+// DELETE THIS DO NOT SUBMIT
+//ss.TrnEpcLog = &etable.Table{}
+//ss.TstEpcLog = &etable.Table{}
+//ss.TstTrlLog = &etable.Table{}
+//ss.TstCycLog = &etable.Table{}
+//ss.RunLog = &etable.Table{}
 
 // AddItem adds an item to the list
 func (lg *Logs) AddItem(item *Item) {

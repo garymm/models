@@ -25,19 +25,13 @@ type Sim struct {
 	Pats     *etable.Table `view:"no-inline" desc:"the training patterns to use"`
 	NInputs  int           `desc:"Number of input/output pattern pairs"`
 	NOutputs int           `desc:"The number of output patterns potentially associated with each input pattern."`
-	//LogSpec  LogSpec       `desc:"Specifies which details are to be logged"`
 
-	Logs elog.Logs `desc:"In our neverending battle to refactor we've added LOGS'"`
+	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 
-	TrnEpcLog      *etable.Table                 `view:"no-inline" desc:"training epoch-level log data"`
-	TstEpcLog      *etable.Table                 `view:"no-inline" desc:"testing epoch-level log data"`
-	TstTrlLog      *etable.Table                 `view:"no-inline" desc:"testing trial-level log data"`
-	TstErrLog      *etable.Table                 `view:"no-inline" desc:"log of all test trials where errors were made"`
+	// TODO Move this to Logs
 	TstErrStats    *etable.Table                 `view:"no-inline" desc:"stats on test trials where errors were made"`
-	TstCycLog      *etable.Table                 `view:"no-inline" desc:"testing cycle-level log data"`
 	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
 	SpikeRastGrids map[string]*etview.TensorGrid `desc:"spike raster plots for different layers"`
-	RunLog         *etable.Table                 `view:"no-inline" desc:"summary log of each run"`
 	RunStats       *etable.Table                 `view:"no-inline" desc:"aggregate stats on all runs"`
 	ErrLrMod       axon.LrateMod                 `view:"inline" desc:"learning rate modulation as function of error"`
 
@@ -103,16 +97,10 @@ type Sim struct {
 
 // New creates new blank elements and initializes defaults
 func (ss *Sim) New() {
-
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
 	ss.NInputs = 25
 	ss.NOutputs = 2
-	ss.TrnEpcLog = &etable.Table{}
-	ss.TstEpcLog = &etable.Table{}
-	ss.TstTrlLog = &etable.Table{}
-	ss.TstCycLog = &etable.Table{}
-	ss.RunLog = &etable.Table{}
 	ss.RunStats = &etable.Table{}
 	ss.ErrLrMod.Defaults()
 	ss.ErrLrMod.Base = 0.5 // 0.5 > 0.2 -- not very useful in this model, but key in larger nets
