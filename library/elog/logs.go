@@ -2,7 +2,11 @@ package elog
 
 import (
 	"github.com/emer/etable/etable"
+	"strconv"
 )
+
+// LogPrec is precision for saving float values in logs
+const LogPrec = 4
 
 type Logs struct {
 	Items      []*Item
@@ -17,14 +21,6 @@ type Logs struct {
 	TstCycLog *etable.Table `view:"no-inline" desc:"testing cycle-level log data"`
 	RunLog    *etable.Table `view:"no-inline" desc:"summary log of each run"`
 }
-
-// DELETE THIS DO NOT SUBMIT
-// DO NOT SUBMIT cats
-//ss.TrnEpcLog = &etable.Table{}
-//ss.TstEpcLog = &etable.Table{}
-//ss.TstTrlLog = &etable.Table{}
-//ss.TstCycLog = &etable.Table{}
-//ss.RunLog = &etable.Table{}
 
 // AddItem adds an item to the list
 func (lg *Logs) AddItem(item *Item) {
@@ -41,6 +37,22 @@ func (lg *Logs) AddItemScoped(item *Item, modes []TrainOrTest, times []Times) {
 	lg.AddItem(item)
 }
 
+func (lg *Logs) configLogTable(dt *etable.Table, mode TrainOrTest, time Times) {
+	dt.SetMetaData("name", mode.String()+time.String()+"Log")
+	dt.SetMetaData("desc", "Record of performance over epochs of training")
+	dt.SetMetaData("read-only", "true")
+	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
+	sch := etable.Schema{}
+	for _, val := range lg.Items {
+		// Compute records which timescales are logged. It also records how, but we don't need that here.
+		_, ok := val.GetComputeFunc(mode, time)
+		if ok {
+			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
+		}
+	}
+	dt.SetFromSchema(sch, 0)
+}
+
 func (lg *Logs) CreateTables() {
 	uniqueTables := make(map[ScopeKey]*etable.Table)
 	for _, item := range lg.Items {
@@ -51,6 +63,7 @@ func (lg *Logs) CreateTables() {
 				_, ok := uniqueTables[tempScopeKey]
 				if ok == false {
 					uniqueTables[tempScopeKey] = &etable.Table{}
+					lg.configLogTable(uniqueTables[tempScopeKey], mode, time)
 				}
 			}
 		}
@@ -58,7 +71,7 @@ func (lg *Logs) CreateTables() {
 	lg.Tables = uniqueTables
 }
 
-func (lg *Logs) GetTables(mode TrainOrTest, time Times) *etable.Table {
+func (lg *Logs) GetTable(mode TrainOrTest, time Times) *etable.Table {
 	tempScopeKey := ScopeKey("")
 	tempScopeKey.FromScopes([]TrainOrTest{mode}, []Times{time})
 	return lg.Tables[tempScopeKey]

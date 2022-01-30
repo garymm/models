@@ -11,7 +11,7 @@ import (
 )
 
 func GetEpochWindowLast5(ss *Sim) *etable.IdxView {
-	epochlog := ss.TrnEpcLog
+	epochlog := ss.Logs.GetTable(elog.Train, elog.Epoch)
 	epochwindow := etable.NewIdxView(epochlog)
 
 	// compute mean over last N epochs for run level
@@ -259,7 +259,7 @@ func (ss *Sim) ConfigLogSpec() {
 	}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 		dt.SetCellFloat(item.Name, row, float64(ss.TrlUnitErr))
 	}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		trl := ss.TstTrlLog
+		trl := ss.Logs.GetTable(elog.Test, elog.Trial)
 		tix := etable.NewIdxView(trl)
 		dt.SetCellFloat(item.Name, row, agg.Sum(tix, "UnitErr")[0])
 	}}})
@@ -269,7 +269,7 @@ func (ss *Sim) ConfigLogSpec() {
 		FixMax: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 	}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		trl := ss.TstTrlLog
+		trl := ss.Logs.GetTable(elog.Test, elog.Trial)
 		tix := etable.NewIdxView(trl)
 		dt.SetCellFloat(item.Name, row, agg.Mean(tix, "Err")[0])
 	}}})
@@ -279,7 +279,7 @@ func (ss *Sim) ConfigLogSpec() {
 		FixMax: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 	}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		trl := ss.TstTrlLog
+		trl := ss.Logs.GetTable(elog.Test, elog.Trial)
 		tix := etable.NewIdxView(trl)
 		dt.SetCellFloat(item.Name, row, 1-agg.Mean(tix, "Err")[0])
 	}}})
@@ -291,7 +291,7 @@ func (ss *Sim) ConfigLogSpec() {
 	}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 		dt.SetCellFloat(item.Name, row, float64(ss.TrlCosDiff))
 	}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		trl := ss.TstTrlLog
+		trl := ss.Logs.GetTable(elog.Test, elog.Trial)
 		tix := etable.NewIdxView(trl)
 		dt.SetCellFloat(item.Name, row, agg.Sum(tix, "CosDiff")[0])
 	}}})
@@ -303,7 +303,7 @@ func (ss *Sim) ConfigLogSpec() {
 	}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 		dt.SetCellFloat(item.Name, row, float64(ss.TrlCorrel))
 	}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		trl := ss.TstTrlLog
+		trl := ss.Logs.GetTable(elog.Test, elog.Trial)
 		tix := etable.NewIdxView(trl)
 		dt.SetCellFloat(item.Name, row, agg.Sum(tix, "Correl")[0])
 	}}})

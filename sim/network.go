@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/env"
 	"github.com/goki/gi/gi"
@@ -38,7 +39,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
 		if !train {
-			ss.LogTstCyc(ss.TstCycLog, ss.Time.Cycle)
+			ss.LogTstCyc(ss.Logs.GetTable(elog.Test, elog.Cycle), ss.Time.Cycle)
 		}
 		if !ss.NoGui {
 			ss.RecSpikes(ss.Time.Cycle)
@@ -65,7 +66,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
 		if !train {
-			ss.LogTstCyc(ss.TstCycLog, ss.Time.Cycle)
+			ss.LogTstCyc(ss.Logs.GetTable(elog.Test, elog.Cycle), ss.Time.Cycle)
 		}
 		if !ss.NoGui {
 			ss.RecSpikes(ss.Time.Cycle)
@@ -125,7 +126,7 @@ func (ss *Sim) TrainTrial() {
 	// if epoch counter has changed
 	epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
 	if chg {
-		ss.LogTrnEpc(ss.TrnEpcLog)
+		ss.LogTrnEpc(ss.Logs.GetTable(elog.Train, elog.Epoch))
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 			ss.UpdateView(true)
@@ -152,7 +153,7 @@ func (ss *Sim) TrainTrial() {
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here
 func (ss *Sim) RunEnd() {
-	ss.LogRun(ss.RunLog)
+	ss.LogRun(ss.Logs.GetTable(elog.Train, elog.Run))
 	if ss.SaveWts {
 		fnm := ss.WeightsFileName()
 		fmt.Printf("Saving Weights to: %s\n", fnm)
@@ -170,8 +171,8 @@ func (ss *Sim) NewRun() {
 	ss.Time.Reset()
 	ss.Net.InitWts()
 	ss.InitStats()
-	ss.TrnEpcLog.SetNumRows(0)
-	ss.TstEpcLog.SetNumRows(0)
+	ss.Logs.GetTable(elog.Train, elog.Epoch).SetNumRows(0)
+	ss.Logs.GetTable(elog.Test, elog.Epoch).SetNumRows(0)
 	ss.NeedsNewRun = false
 }
 
@@ -258,7 +259,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
 			ss.UpdateView(false)
 		}
-		ss.LogTstEpc(ss.TstEpcLog)
+		ss.LogTstEpc(ss.Logs.GetTable(elog.Test, elog.Epoch))
 		if returnOnChg {
 			return
 		}
@@ -266,7 +267,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 
 	ss.ApplyInputs(&ss.TestEnv)
 	ss.ThetaCyc(false) // !train
-	ss.LogTstTrl(ss.TstTrlLog)
+	ss.LogTstTrl(ss.Logs.GetTable(elog.Test, elog.Trial))
 	if ss.NetData != nil { // offline record net data from testing, just final state
 		ss.NetData.Record(ss.Counters(false))
 	}

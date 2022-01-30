@@ -43,6 +43,10 @@ func (item *Item) GetScopeKey(mode TrainOrTest, time Times) ScopeKey {
 	return ss
 }
 
+func (item *Item) GetScopeName(mode TrainOrTest, time Times) string {
+	return mode.String() + time.String()
+}
+
 func (item *Item) GetComputeFunc(mode TrainOrTest, time Times) (ComputeFunc, bool) {
 	item.ScopeKey.FromScope(mode, time)
 	val, ok := item.Compute[item.ScopeKey]

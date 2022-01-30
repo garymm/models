@@ -29,6 +29,7 @@ type Sim struct {
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 
 	// TODO Move this to Logs
+	TstErrLog      *etable.Table                 `view:"no-inline" desc:"log of all test trials where errors were made"`
 	TstErrStats    *etable.Table                 `view:"no-inline" desc:"stats on test trials where errors were made"`
 	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
 	SpikeRastGrids map[string]*etview.TensorGrid `desc:"spike raster plots for different layers"`

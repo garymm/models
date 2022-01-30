@@ -10,13 +10,9 @@ import (
 	"github.com/emer/etable/etview"
 	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
-	"strconv"
 	"strings"
 	"time"
 )
-
-// LogPrec is precision for saving float values in logs
-const LogPrec = 4
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Logging
@@ -124,20 +120,8 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	}
 }
 
-func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
-	dt.SetMetaData("name", "TrnEpcLog")
-	dt.SetMetaData("desc", "Record of performance over epochs of training")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-	sch := etable.Schema{}
-	for _, val := range ss.Logs.Items {
-		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.GetComputeFunc(elog.Train, elog.Epoch)
-		if ok {
-			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
-		}
-	}
-	dt.SetFromSchema(sch, 0)
+func (ss *Sim) ConfigLogs() {
+	ss.Logs.CreateTables()
 }
 
 //////////////////////////////////////////////
@@ -167,24 +151,6 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 	}
 }
 
-func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
-	dt.SetMetaData("name", "TstTrlLog")
-	dt.SetMetaData("desc", "Record of testing per input pattern")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-
-	nt := len(ss.TestEnv.NGrams) // 1 //ss.TestEnv.Table.Len() // number in view
-	sch := etable.Schema{}
-	for _, val := range ss.Logs.Items {
-		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.GetComputeFunc(elog.Test, elog.Trial)
-		if ok {
-			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
-		}
-	}
-	dt.SetFromSchema(sch, nt)
-}
-
 //////////////////////////////////////////////
 //  TstEpcLog
 
@@ -200,7 +166,7 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	}
 
 	// Record those test trials which had errors
-	trl := ss.TstTrlLog
+	trl := ss.Logs.GetTable(elog.Test, elog.Trial)
 	trlix := etable.NewIdxView(trl)
 	trlix.Filter(func(et *etable.Table, row int) bool {
 		return et.CellFloat("UnitErr", row) > 0 // include error trials
@@ -217,23 +183,6 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	if ss.TstEpcPlot != nil {
 		ss.TstEpcPlot.GoUpdate()
 	}
-}
-
-func (ss *Sim) ConfigTstEpcLog(dt *etable.Table) {
-	dt.SetMetaData("name", "TstEpcLog")
-	dt.SetMetaData("desc", "Summary stats for testing trials")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-
-	sch := etable.Schema{}
-	for _, val := range ss.Logs.Items {
-		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.GetComputeFunc(elog.Test, elog.Epoch)
-		if ok {
-			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
-		}
-	}
-	dt.SetFromSchema(sch, 0)
 }
 
 //////////////////////////////////////////////
@@ -331,30 +280,12 @@ func (ss *Sim) LogTstCyc(dt *etable.Table, cyc int) {
 	}
 }
 
-func (ss *Sim) ConfigTstCycLog(dt *etable.Table) {
-	dt.SetMetaData("name", "TstCycLog")
-	dt.SetMetaData("desc", "Record of activity etc over one trial by cycle")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-
-	np := 100 // max cycles
-	sch := etable.Schema{}
-	for _, val := range ss.Logs.Items {
-		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.GetComputeFunc(elog.Test, elog.Cycle)
-		if ok {
-			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
-		}
-	}
-	dt.SetFromSchema(sch, np)
-}
-
 //////////////////////////////////////////////
 //  RunLog
 
 // LogRun adds data from current run to the RunLog table.
 func (ss *Sim) LogRun(dt *etable.Table) {
-	epclog := ss.TrnEpcLog
+	epclog := ss.Logs.GetTable(elog.Train, elog.Epoch)
 	epcix := etable.NewIdxView(epclog)
 	if epcix.Len() == 0 {
 		return
@@ -386,24 +317,6 @@ func (ss *Sim) LogRun(dt *etable.Table) {
 		}
 		dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
 	}
-}
-
-func (ss *Sim) ConfigRunLog(dt *etable.Table) {
-	dt.SetMetaData("name", "RunLog")
-	dt.SetMetaData("desc", "Record of performance at end of training")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-
-	sch := etable.Schema{}
-	for _, val := range ss.Logs.Items {
-		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.GetComputeFunc(elog.Train, elog.Run)
-		if ok {
-			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
-		}
-	}
-
-	dt.SetFromSchema(sch, 0)
 }
 
 // InitStats initializes all the statistics, especially important for the

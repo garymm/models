@@ -56,20 +56,21 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	nv.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
 	nv.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
 
+	// TODO(andrew) Replace these with a loop
 	plt := tv.AddNewTab(eplot.KiT_Plot2D, "TrnEpcPlot").(*eplot.Plot2D)
-	ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.TrnEpcLog)
+	ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.Logs.GetTable(elog.Train, elog.Epoch))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstTrlPlot").(*eplot.Plot2D)
-	ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.TstTrlLog)
+	ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.Logs.GetTable(elog.Test, elog.Trial))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstCycPlot").(*eplot.Plot2D)
-	ss.TstCycPlot = ss.ConfigTstCycPlot(plt, ss.TstCycLog)
+	ss.TstCycPlot = ss.ConfigTstCycPlot(plt, ss.Logs.GetTable(elog.Test, elog.Cycle))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstEpcPlot").(*eplot.Plot2D)
-	ss.TstEpcPlot = ss.ConfigTstEpcPlot(plt, ss.TstEpcLog)
+	ss.TstEpcPlot = ss.ConfigTstEpcPlot(plt, ss.Logs.GetTable(elog.Test, elog.Epoch))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "RunPlot").(*eplot.Plot2D)
-	ss.RunPlot = ss.ConfigRunPlot(plt, ss.RunLog)
+	ss.RunPlot = ss.ConfigRunPlot(plt, ss.Logs.GetTable(elog.Train, elog.Run))
 
 	stb := tv.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
 	stb.Lay = gi.LayoutVert
@@ -194,7 +195,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 
 	tbar.AddAction(gi.ActOpts{Label: "Reset RunLog", Icon: "reset", Tooltip: "Reset the accumulated log of all Runs, which are tagged with the ParamSet used"}, win.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
-			ss.RunLog.SetNumRows(0)
+			ss.Logs.GetTable(elog.Train, elog.Run).SetNumRows(0)
 			ss.RunPlot.Update()
 		})
 
