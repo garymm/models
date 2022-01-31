@@ -85,13 +85,11 @@ func Config(ss *sim.Sim) {
 	ConfigEnv(ss)
 	ConfigNet(ss, ss.Net)
 	// LogSpec needs to be configured after Net
+
 	ss.ConfigLogSpec()
-	ss.ConfigTrnEpcLog(ss.TrnEpcLog)
-	ss.ConfigTstEpcLog(ss.TstEpcLog)
-	ss.ConfigTstTrlLog(ss.TstTrlLog)
-	ss.ConfigTstCycLog(ss.TstCycLog)
+	ss.ConfigLogs()
 	ss.ConfigSpikeRasts()
-	ss.ConfigRunLog(ss.RunLog)
+
 }
 
 // ConfigParams configure the parameters

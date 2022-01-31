@@ -8,11 +8,8 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
-	"github.com/emer/etable/minmax"
 	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -132,7 +129,6 @@ func (ss *Sim) ConfigLogs() {
 // LogTstTrl adds data from current trial to the TstTrlLog table.
 // log always contains number of testing items
 func (ss *Sim) LogTstTrl(dt *etable.Table) {
-
 
 	trl := (ss.TestEnv).Trial().Cur
 	row := trl // TODO(clean) Is this making a copy? Is it necessary?

@@ -7,7 +7,6 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/minmax"
-	"strings"
 )
 
 func GetEpochWindowLast5(ss *Sim) *etable.IdxView {
@@ -58,13 +57,13 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.INT64,
 		Plot: elog.DFalse,
 	}, []logsComputeHelper{{Mode: elog.Train, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 	}}, {Mode: elog.Train, Time: elog.Run, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 	}}, {Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 	}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 	}}})
 	addLogsItem(ss, elog.Item{
 		Name: "Params",
@@ -86,11 +85,11 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.INT64,
 		Plot: elog.DFalse,
 	}, []logsComputeHelper{{Mode: elog.Train, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch.Prv))
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
 	}}, {Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch.Prv))
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
 	}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch.Prv))
+		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
 	}}})
 	addLogsItem(ss, elog.Item{
 		Name: "UnitErr",
@@ -223,29 +222,29 @@ func (ss *Sim) ConfigLogSpec() {
 	//	Name: "Run",
 	//	Type: etensor.INT64,
 	//}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 	//}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run.Cur))
+	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 	//}}})
 	//addLogsItem(ss, elog.Item{
 	//	Name: "Epoch",
 	//	Type: etensor.INT64,
 	//}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch.Prv))
+	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
 	//}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch.Prv))
+	//	dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
 	//}}})
 	addLogsItem(ss, elog.Item{
 		Name: "Trial",
 		Type: etensor.INT64,
 	}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TestEnv.Trial.Cur))
+		dt.SetCellFloat(item.Name, row, float64(ss.TestEnv.Trial().Cur))
 	}}})
 	addLogsItem(ss, elog.Item{
 		Name: "TrialName",
 		Type: etensor.STRING,
 	}, []logsComputeHelper{{Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellString(item.Name, row, strings.Join(ss.TestEnv.CurWords, " "))
+		dt.SetCellString(item.Name, row, ss.TestEnv.GetCurrentTrialName())
 	}}})
 	addLogsItem(ss, elog.Item{
 		Name: "Err",
