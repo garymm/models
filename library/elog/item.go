@@ -21,33 +21,40 @@ func (db *DefaultBool) ToBool() bool {
 	return *db == DTrue
 }
 
+type ComputeMap map[ScopeKey]ComputeFunc
+
 // Item describes the logging functionality
 type Item struct {
-	Name      string                   `desc:"name of column -- must be unique for a table"`
-	Type      etensor.Type             `desc:"data type, using etensor types which are isomorphic with arrow.Type"`
-	CellShape []int                    `desc:"shape of a single cell in the column (i.e., without the row dimension) -- for scalars this is nil -- tensor column will add the outer row dimension to this shape"`
-	DimNames  []string                 `desc:"names of the dimensions within the CellShape -- 'Row' will be added to outer dimension"`
-	Modes     []TrainOrTest            `desc:"a variable list of modes that this item can exist in"`
-	Times     []Times                  `desc:"a variable list of times that this item can exist in"`
-	ScopeKey  ScopeKey                 `desc:"a string representation of the combined enum name"`
-	Compute   map[ScopeKey]ComputeFunc `desc:"For each timescale and mode, how is this value computed?"`
-	Plot      DefaultBool              `desc:"Whether or not to plot it"`
-	FixMin    DefaultBool              `desc:"Whether to fix the minimum in the display"`
-	FixMax    DefaultBool              `desc:"Whether to fix the maximum in the display"`
-	Range     minmax.F64               `desc:"The minimum and maximum"`
+	Name      string       `desc:"name of column -- must be unique for a table"`
+	Type      etensor.Type `desc:"data type, using etensor types which are isomorphic with arrow.Type"`
+	CellShape []int        `desc:"shape of a single cell in the column (i.e., without the row dimension) -- for scalars this is nil -- tensor column will add the outer row dimension to this shape"`
+	DimNames  []string     `desc:"names of the dimensions within the CellShape -- 'Row' will be added to outer dimension"`
+	Modes     []EvalModes  `desc:"a variable list of modes that this item can exist in"`
+	Times     []Times      `desc:"a variable list of times that this item can exist in"`
+	ScopeKey  ScopeKey     `desc:"a string representation of the combined enum name"`
+	Compute   ComputeMap   `desc:"For each timescale and mode, how is this value computed?"`
+	Plot      DefaultBool  `desc:"Whether or not to plot it"`
+	FixMin    DefaultBool  `desc:"Whether to fix the minimum in the display"`
+	FixMax    DefaultBool  `desc:"Whether to fix the maximum in the display"`
+	Range     minmax.F64   `desc:"The minimum and maximum"`
 }
 
-func (item *Item) GetScopeKey(mode TrainOrTest, time Times) ScopeKey {
+func GenScopeKey(mode EvalModes, time Times) ScopeKey {
+	ss := ScopeKey("")
+	ss.FromScope(mode, time)
+	return ss
+}
+func (item *Item) GetScopeKey(mode EvalModes, time Times) ScopeKey {
 	ss := ScopeKey("")
 	ss.FromScope(mode, time)
 	return ss
 }
 
-func (item *Item) GetScopeName(mode TrainOrTest, time Times) string {
+func (item *Item) GetScopeName(mode EvalModes, time Times) string {
 	return mode.String() + time.String()
 }
 
-func (item *Item) GetComputeFunc(mode TrainOrTest, time Times) (ComputeFunc, bool) {
+func (item *Item) GetComputeFunc(mode EvalModes, time Times) (ComputeFunc, bool) {
 	item.ScopeKey.FromScope(mode, time)
 	val, ok := item.Compute[item.ScopeKey]
 	return val, ok
@@ -61,7 +68,7 @@ func (item *Item) AssignComputeFuncAll(theFunc ComputeFunc) {
 	}
 }
 
-func (item *Item) AssignComputeFuncOver(modes []TrainOrTest, times []Times, theFunc ComputeFunc) {
+func (item *Item) AssignComputeFuncOver(modes []EvalModes, times []Times, theFunc ComputeFunc) {
 	for _, mode := range modes {
 		containsMode := false
 		for _, m := range item.Modes {
@@ -94,11 +101,11 @@ func (item *Item) AssignComputeFuncOver(modes []TrainOrTest, times []Times, theF
 	}
 }
 
-func (item *Item) AssignComputeFunc(mode TrainOrTest, time Times, theFunc ComputeFunc) {
-	item.AssignComputeFuncOver([]TrainOrTest{mode}, []Times{time}, theFunc)
+func (item *Item) AssignComputeFunc(mode EvalModes, time Times, theFunc ComputeFunc) {
+	item.AssignComputeFuncOver([]EvalModes{mode}, []Times{time}, theFunc)
 }
 
-func (item *Item) HasMode(mode TrainOrTest) bool {
+func (item *Item) HasMode(mode EvalModes) bool {
 	for _, m := range item.Modes {
 		if m == mode {
 			return true
@@ -122,7 +129,7 @@ func (item *Item) HasTimescale(time Times) bool {
 type ScopeKey string
 
 // FromScopes create an associated scope merging the modes and times that are specified
-func (sk *ScopeKey) FromScopes(modes []TrainOrTest, times []Times) {
+func (sk *ScopeKey) FromScopes(modes []EvalModes, times []Times) {
 	var mstr string
 	var tstr string
 	for _, mode := range modes {
@@ -145,6 +152,6 @@ func (sk *ScopeKey) FromScopes(modes []TrainOrTest, times []Times) {
 }
 
 // FromScope create an associated scope merging the modes and times that are specified
-func (sk *ScopeKey) FromScope(mode TrainOrTest, time Times) {
-	sk.FromScopes([]TrainOrTest{mode}, []Times{time})
+func (sk *ScopeKey) FromScope(mode EvalModes, time Times) {
+	sk.FromScopes([]EvalModes{mode}, []Times{time})
 }

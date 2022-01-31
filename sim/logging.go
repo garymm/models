@@ -63,6 +63,7 @@ func (ss *Sim) LogFileName(lognm string) string {
 //  TrnEpcLog
 
 // TODO Unify these functions
+// TODO move these calculations to the logger add items compute function
 
 // LogTrnEpc adds data from current epoch to the TrnEpcLog table.
 // computes epoch averages prior to logging.

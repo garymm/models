@@ -32,12 +32,12 @@ func (lg *Logs) AddItem(item *Item) {
 	lg.ItemIdxMap[item.Name] = len(lg.Items) - 1
 }
 
-func (lg *Logs) AddItemScoped(item *Item, modes []TrainOrTest, times []Times) {
+func (lg *Logs) AddItemScoped(item *Item, modes []EvalModes, times []Times) {
 	item.ScopeKey.FromScopes(modes, times)
 	lg.AddItem(item)
 }
 
-func (lg *Logs) configLogTable(dt *etable.Table, mode TrainOrTest, time Times) {
+func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 	dt.SetMetaData("name", mode.String()+time.String()+"Log")
 	dt.SetMetaData("desc", "Record of performance over "+time.String()+" of "+mode.String())
 	dt.SetMetaData("read-only", "true")
@@ -59,7 +59,7 @@ func (lg *Logs) CreateTables() {
 		for _, mode := range item.Modes {
 			for _, time := range item.Times {
 				tempScopeKey := ScopeKey("")
-				tempScopeKey.FromScopes([]TrainOrTest{mode}, []Times{time})
+				tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
 				_, ok := uniqueTables[tempScopeKey]
 				if ok == false {
 					uniqueTables[tempScopeKey] = &etable.Table{}
@@ -71,8 +71,8 @@ func (lg *Logs) CreateTables() {
 	lg.Tables = uniqueTables
 }
 
-func (lg *Logs) GetTable(mode TrainOrTest, time Times) *etable.Table {
+func (lg *Logs) GetTable(mode EvalModes, time Times) *etable.Table {
 	tempScopeKey := ScopeKey("")
-	tempScopeKey.FromScopes([]TrainOrTest{mode}, []Times{time})
+	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
 	return lg.Tables[tempScopeKey]
 }

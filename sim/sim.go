@@ -28,7 +28,7 @@ type Sim struct {
 
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 
-	// TODO Move this to Logs
+	//This block is not general enough to go into logs and should stay in sim
 	TstErrLog      *etable.Table                 `view:"no-inline" desc:"log of all test trials where errors were made"`
 	TstErrStats    *etable.Table                 `view:"no-inline" desc:"stats on test trials where errors were made"`
 	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
@@ -57,6 +57,8 @@ type Sim struct {
 	LayStatNms   []string        `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
 	SpikeRecLays []string        `desc:"names of layers to record spikes of during testing"`
 
+	// TODO for the following block these should be encoded in the compute functions and replaced with agg functions on traintrial
+
 	// statistics: note use float64 as that is best for etable.Table
 	TrlErr        float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
 	TrlClosest    string  `inactive:"+" desc:"Name of the pattern with the closest output"`
@@ -69,14 +71,15 @@ type Sim struct {
 	EpcCosDiff    float64 `inactive:"+" desc:"last epoch's average cosine difference for output layer (a normalized error measure, maximum of 1 when the minus phase exactly matches the plus)"`
 	EpcCorrel     float64 `inactive:"+" desc:"last epoch's average correlation for output layer"`
 	EpcPerTrlMSec float64 `inactive:"+" desc:"how long did the epoch take per trial in wall-clock milliseconds"`
-	FirstZero     int     `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
-	NZero         int     `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
+
+	FirstZero int `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
+	NZero     int `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
 
 	// internal state - view:"-"
-	SumErr       float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
-	SumUnitErr   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
-	SumCosDiff   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
-	SumCorrel    float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"`
+	SumErr       float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumUnitErr   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumCosDiff   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumCorrel    float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
 	Win          *gi.Window                  `view:"-" desc:"main GUI window"`
 	NetView      *netview.NetView            `view:"-" desc:"the network viewer"`
 	ToolBar      *gi.ToolBar                 `view:"-" desc:"the master toolbar"`

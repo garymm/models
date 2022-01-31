@@ -25,11 +25,11 @@ func GetEpochWindowLast5(ss *Sim) *etable.IdxView {
 
 type logsComputeHelper struct {
 	// Use either Modes+Times or Mode+Time
-	Modes   []elog.TrainOrTest `desc:"a variable list of modes that this item can exist in"`
-	Times   []elog.Times       `desc:"a variable list of times that this item can exist in"`
-	Mode    elog.TrainOrTest   `desc:"a single mode that this item can exist in"`
-	Time    elog.Times         `desc:"a single time that this item can exist in"`
-	Compute elog.ComputeFunc   `desc:"For this timescale and mode, how is this value computed?"`
+	Modes   []elog.EvalModes `desc:"a variable list of modes that this item can exist in"`
+	Times   []elog.Times     `desc:"a variable list of times that this item can exist in"`
+	Mode    elog.EvalModes   `desc:"a single mode that this item can exist in"`
+	Time    elog.Times       `desc:"a single time that this item can exist in"`
+	Compute elog.ComputeFunc `desc:"For this timescale and mode, how is this value computed?"`
 }
 
 func addLogsItem(ss *Sim, item elog.Item, computes []logsComputeHelper) {
@@ -52,6 +52,7 @@ func addLogsItem(ss *Sim, item elog.Item, computes []logsComputeHelper) {
 
 func (ss *Sim) ConfigLogSpec() {
 	// Train epoch
+	//TODO(Andrew) implement on all times and ESPECIALLY all modes
 	addLogsItem(ss, elog.Item{
 		Name: "Run",
 		Type: etensor.INT64,
@@ -68,10 +69,16 @@ func (ss *Sim) ConfigLogSpec() {
 	addLogsItem(ss, elog.Item{
 		Name: "Params",
 		Type: etensor.STRING,
-		Plot: elog.DFalse,
+		Plot: elog.DFalse, //TODO(Andrew) refactor this to actually assign maps this way instead via logscomputerHelper
+		Compute: elog.ComputeMap{
+			elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				dt.SetCellString(item.Name, row, ss.RunName())
+			},
+		},
 	}, []logsComputeHelper{{Mode: elog.Train, Time: elog.Run, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 		dt.SetCellString(item.Name, row, ss.RunName())
 	}}})
+
 	addLogsItem(ss, elog.Item{
 		Name:  "FirstZero",
 		Type:  etensor.FLOAT64,
@@ -84,11 +91,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Name: "Epoch",
 		Type: etensor.INT64,
 		Plot: elog.DFalse,
-	}, []logsComputeHelper{{Mode: elog.Train, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
-	}}, {Mode: elog.Test, Time: elog.Trial, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
-	}}, {Mode: elog.Test, Time: elog.Epoch, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+	}, []logsComputeHelper{{Modes: []elog.EvalModes{elog.Train, elog.Test}, Times: []elog.Times{elog.Epoch, elog.Trial}, Compute: func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 		dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Epoch().Prv))
 	}}})
 	addLogsItem(ss, elog.Item{
@@ -306,8 +309,11 @@ func (ss *Sim) ConfigLogSpec() {
 		tix := etable.NewIdxView(trl)
 		dt.SetCellFloat(item.Name, row, agg.Sum(tix, "Correl")[0])
 	}}})
+
+	//TODO move inp and out to compute function in some helper that goes inside the function
 	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
+
 	addLogsItem(ss, elog.Item{
 		Name:      "InAct",
 		Type:      etensor.FLOAT64,
