@@ -79,9 +79,10 @@ func main() {
 // Config configures all the elements using the standard functions
 func Config(ss *sim.Sim) {
 
+	ConfigPats(ss)
+	OpenPats(ss)
 	ConfigParams(ss)
 	ConfigEnv(ss)
-	ConfigPats(ss)
 	ConfigNet(ss, ss.Net)
 	// LogSpec needs to be configured after Net
 	ss.ConfigLogSpec()
@@ -211,6 +212,16 @@ func ConfigPats(ss *sim.Sim) {
 		}
 	}
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
+}
+
+func OpenPats(ss *sim.Sim) {
+	dt := ss.Pats
+	dt.SetMetaData("name", "TrainPats")
+	dt.SetMetaData("desc", "Training patterns")
+	err := dt.OpenCSV("random_5x5_25.tsv", etable.Tab)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func ConfigNet(ss *sim.Sim, net *axon.Network) {

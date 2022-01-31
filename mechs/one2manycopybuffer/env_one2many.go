@@ -64,6 +64,7 @@ func (env *EnvOne2Many) SetGroupCol(s string) {
 }
 
 func (env *EnvOne2Many) Validate() error {
+
 	return env.FixedTable.Validate()
 }
 func (env *EnvOne2Many) Init(run int) {
