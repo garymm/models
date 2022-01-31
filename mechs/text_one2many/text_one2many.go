@@ -53,7 +53,6 @@ func Config(ss *sim.Sim) {
 }
 
 func ConfigParams(ss *sim.Sim) {
-
 	// ParamSetsMin sets the minimal non-default params
 	// Base is always applied, and others can be optionally selected to apply on top of that
 	ss.Params = params.Sets{

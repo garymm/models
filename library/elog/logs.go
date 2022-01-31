@@ -39,7 +39,7 @@ func (lg *Logs) AddItemScoped(item *Item, modes []TrainOrTest, times []Times) {
 
 func (lg *Logs) configLogTable(dt *etable.Table, mode TrainOrTest, time Times) {
 	dt.SetMetaData("name", mode.String()+time.String()+"Log")
-	dt.SetMetaData("desc", "Record of performance over epochs of training")
+	dt.SetMetaData("desc", "Record of performance over "+time.String()+" of "+mode.String())
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 	sch := etable.Schema{}
