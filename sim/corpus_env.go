@@ -440,10 +440,6 @@ func (ev *CorpusEnv) RenderWords() {
 	for _, word := range ev.CurWords {
 		ev.AddWordRep(&ev.Input, word)
 	}
-	// DO NOT SUBMIT TODO Remove these
-	//ev.Input.SetFloat1D(1, 1)
-	//ev.Input.SetFloat1D(2, 1)
-	//ev.Input.SetFloat1D(3, 1)
 	ev.Output.SetZeros()
 	ev.AddWordRep(&ev.Output, ev.CurNextWord)
 }

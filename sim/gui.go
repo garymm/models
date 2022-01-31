@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
@@ -55,20 +56,21 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	nv.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
 	nv.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
 
+	// TODO(andrew) Replace these with a loop
 	plt := tv.AddNewTab(eplot.KiT_Plot2D, "TrnEpcPlot").(*eplot.Plot2D)
-	ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.TrnEpcLog)
+	ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.Logs.GetTable(elog.Train, elog.Epoch))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstTrlPlot").(*eplot.Plot2D)
-	ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.TstTrlLog)
+	ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.Logs.GetTable(elog.Test, elog.Trial))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstCycPlot").(*eplot.Plot2D)
-	ss.TstCycPlot = ss.ConfigTstCycPlot(plt, ss.TstCycLog)
+	ss.TstCycPlot = ss.ConfigTstCycPlot(plt, ss.Logs.GetTable(elog.Test, elog.Cycle))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstEpcPlot").(*eplot.Plot2D)
-	ss.TstEpcPlot = ss.ConfigTstEpcPlot(plt, ss.TstEpcLog)
+	ss.TstEpcPlot = ss.ConfigTstEpcPlot(plt, ss.Logs.GetTable(elog.Test, elog.Epoch))
 
 	plt = tv.AddNewTab(eplot.KiT_Plot2D, "RunPlot").(*eplot.Plot2D)
-	ss.RunPlot = ss.ConfigRunPlot(plt, ss.RunLog)
+	ss.RunPlot = ss.ConfigRunPlot(plt, ss.Logs.GetTable(elog.Train, elog.Run))
 
 	stb := tv.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
 	stb.Lay = gi.LayoutVert
@@ -193,7 +195,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 
 	tbar.AddAction(gi.ActOpts{Label: "Reset RunLog", Icon: "reset", Tooltip: "Reset the accumulated log of all Runs, which are tagged with the ParamSet used"}, win.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
-			ss.RunLog.SetNumRows(0)
+			ss.Logs.GetTable(elog.Train, elog.Run).SetNumRows(0)
 			ss.RunPlot.Update()
 		})
 
@@ -283,17 +285,16 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	return win
 }
 
+// TODO Replace all these functions
 func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
 	plt.Params.Title = "Axon Random Associator 25 Epoch Plot"
 	plt.Params.XAxisCol = "Epoch"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Train {
-			_, ok := item.Compute[axon.Epoch]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Train, elog.Epoch)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -320,13 +321,11 @@ func (ss *Sim) ConfigTstTrlPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.Params.Title = "Axon Random Associator 25 Test Trial Plot"
 	plt.Params.XAxisCol = "Trial"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Trial]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Test, elog.Trial)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -336,13 +335,11 @@ func (ss *Sim) ConfigTstEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.Params.Title = "Axon Random Associator 25 Testing Epoch Plot"
 	plt.Params.XAxisCol = "Epoch"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Epoch]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Test, elog.Epoch)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -352,13 +349,11 @@ func (ss *Sim) ConfigTstCycPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 	plt.Params.Title = "Axon Random Associator 25 Test Cycle Plot"
 	plt.Params.XAxisCol = "Cycle"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Test {
-			_, ok := item.Compute[axon.Cycle]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Test, elog.Cycle)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
@@ -369,13 +364,11 @@ func (ss *Sim) ConfigRunPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D 
 	plt.Params.XAxisCol = "Run"
 	plt.Params.LegendCol = "Params"
 	plt.SetTable(dt)
-	for _, item := range ss.LogSpec.Items {
-		if item.EvalType == Train {
-			_, ok := item.Compute[axon.Run]
-			if ok {
-				// order of params: on, fixMin, min, fixMax, max
-				plt.SetColParams(item.Name, item.Plot, item.FixMin, item.Range.Min, item.FixMax, item.Range.Max)
-			}
+	for _, item := range ss.Logs.Items {
+		_, ok := item.GetComputeFunc(elog.Train, elog.Run)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 		}
 	}
 	return plt
