@@ -12,14 +12,6 @@ type Logs struct {
 	Items      []*Item
 	ItemIdxMap map[string]int
 	Tables     map[ScopeKey]*etable.Table
-
-	// TODO Remove these
-	TrnEpcLog *etable.Table `view:"no-inline" desc:"training epoch-level log data"`
-	TstEpcLog *etable.Table `view:"no-inline" desc:"testing epoch-level log data"`
-	TstTrlLog *etable.Table `view:"no-inline" desc:"testing trial-level log data"`
-	TstErrLog *etable.Table `view:"no-inline" desc:"log of all test trials where errors were made"`
-	TstCycLog *etable.Table `view:"no-inline" desc:"testing cycle-level log data"`
-	RunLog    *etable.Table `view:"no-inline" desc:"summary log of each run"`
 }
 
 // AddItem adds an item to the list
@@ -58,8 +50,7 @@ func (lg *Logs) CreateTables() {
 	for _, item := range lg.Items {
 		for _, mode := range item.Modes {
 			for _, time := range item.Times {
-				tempScopeKey := ScopeKey("")
-				tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
+				tempScopeKey := GenScopeKey(mode, time)
 				_, ok := uniqueTables[tempScopeKey]
 				if ok == false {
 					uniqueTables[tempScopeKey] = &etable.Table{}

@@ -21,10 +21,12 @@ import (
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
 type Sim struct {
-	Net      *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
-	Pats     *etable.Table `view:"no-inline" desc:"the training patterns to use"`
-	NInputs  int           `desc:"Number of input/output pattern pairs"`
-	NOutputs int           `desc:"The number of output patterns potentially associated with each input pattern."`
+	Net  *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
+	Pats *etable.Table `view:"no-inline" desc:"the training patterns to use"`
+
+	// Specific to the one2many module
+	NInputs  int `desc:"Number of input/output pattern pairs"`
+	NOutputs int `desc:"The number of output patterns potentially associated with each input pattern."`
 
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 
@@ -72,34 +74,40 @@ type Sim struct {
 	EpcCorrel     float64 `inactive:"+" desc:"last epoch's average correlation for output layer"`
 	EpcPerTrlMSec float64 `inactive:"+" desc:"how long did the epoch take per trial in wall-clock milliseconds"`
 
-	FirstZero int `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
-	NZero     int `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
+	// TODO Move these to a newly created func EpochStats
+	// State about how long there's been zero error.
+	FirstZero   int       `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
+	NZero       int       `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
+	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
 
 	// internal state - view:"-"
-	SumErr       float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	SumUnitErr   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	SumCosDiff   float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	SumCorrel    float64                     `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	Win          *gi.Window                  `view:"-" desc:"main GUI window"`
-	NetView      *netview.NetView            `view:"-" desc:"the network viewer"`
-	ToolBar      *gi.ToolBar                 `view:"-" desc:"the master toolbar"`
-	TrnEpcPlot   *eplot.Plot2D               `view:"-" desc:"the training epoch plot"`
-	TstEpcPlot   *eplot.Plot2D               `view:"-" desc:"the testing epoch plot"`
-	TstTrlPlot   *eplot.Plot2D               `view:"-" desc:"the test-trial plot"`
-	TstCycPlot   *eplot.Plot2D               `view:"-" desc:"the test-cycle plot"`
-	RunPlot      *eplot.Plot2D               `view:"-" desc:"the run plot"`
-	TrnEpcFile   *os.File                    `view:"-" desc:"log file"`
-	RunFile      *os.File                    `view:"-" desc:"log file"`
-	ValsTsrs     map[string]*etensor.Float32 `view:"-" desc:"for holding layer values"`
-	SaveWts      bool                        `view:"-" desc:"for command-line run only, auto-save final weights after each run"`
-	NoGui        bool                        `view:"-" desc:"if true, runing in no GUI mode"`
-	LogSetParams bool                        `view:"-" desc:"if true, print message for all params that are set"`
-	IsRunning    bool                        `view:"-" desc:"true if sim is running"`
-	StopNow      bool                        `view:"-" desc:"flag to stop running"`
-	NeedsNewRun  bool                        `view:"-" desc:"flag to initialize NewRun if last one finished"`
-	RndSeeds     []int64                     `view:"-" desc:"a list of random seeds to use for each run"`
-	NetData      *netview.NetData            `view:"-" desc:"net data for recording in nogui mode"`
-	LastEpcTime  time.Time                   `view:"-" desc:"timer for last epoch"`
+	SumErr     float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me // TODO Replace the use of these with agg functions
+	SumUnitErr float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumCosDiff float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumCorrel  float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	Win        *gi.Window       `view:"-" desc:"main GUI window"`
+	NetView    *netview.NetView `view:"-" desc:"the network viewer"`
+	ToolBar    *gi.ToolBar      `view:"-" desc:"the master toolbar"`
+	// TODO Create a GUI object that stores these
+	TrnEpcPlot *eplot.Plot2D `view:"-" desc:"the training epoch plot"`
+	TstEpcPlot *eplot.Plot2D `view:"-" desc:"the testing epoch plot"`
+	TstTrlPlot *eplot.Plot2D `view:"-" desc:"the test-trial plot"`
+	TstCycPlot *eplot.Plot2D `view:"-" desc:"the test-cycle plot"`
+	RunPlot    *eplot.Plot2D `view:"-" desc:"the run plot"`
+	TrnEpcFile *os.File      `view:"-" desc:"log file"`
+	RunFile    *os.File      `view:"-" desc:"log file"`
+
+	// TODO Move this to Logs
+	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"A buffer for holding layer values. This helps avoid reallocating memory every time"`
+
+	SaveWts      bool             `view:"-" desc:"for command-line run only, auto-save final weights after each run"`
+	NoGui        bool             `view:"-" desc:"if true, runing in no GUI mode"`
+	LogSetParams bool             `view:"-" desc:"if true, print message for all params that are set"`
+	IsRunning    bool             `view:"-" desc:"true if sim is running"`
+	StopNow      bool             `view:"-" desc:"flag to stop running"`
+	NeedsNewRun  bool             `view:"-" desc:"flag to initialize NewRun if last one finished"`
+	RndSeeds     []int64          `view:"-" desc:"a list of random seeds to use for each run"`
+	NetData      *netview.NetData `view:"-" desc:"net data for recording in nogui mode"`
 }
 
 // New creates new blank elements and initializes defaults

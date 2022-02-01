@@ -381,4 +381,5 @@ func (ss *Sim) ConfigLogSpec() {
 			dt.SetCellFloat(item.Name, row, float64(ly.Pools[0].Inhib.Act.Avg))
 		}}})
 	}
+	// TODO(andrew) Add a function to process all items which have been added
 }

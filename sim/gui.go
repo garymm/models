@@ -1,5 +1,7 @@
 package sim
 
+// TODO Move this to an egui package
+
 import (
 	"fmt"
 	"github.com/Astera-org/models/library/elog"
