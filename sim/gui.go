@@ -19,6 +19,49 @@ func GuiRun(TheSim *Sim) {
 	win.StartEventLoop()
 }
 
+// Plot2DLayout a simple wrapper for handling GUI 2D layouts for training and testing runs
+type Plot2DLayout struct {
+	label string
+	title string
+	mode  elog.EvalModes
+	time  elog.Times
+}
+
+func InitPlot2DLayout(title, label string, evalMode elog.EvalModes, time elog.Times) *Plot2DLayout {
+	plot2dLayout := Plot2DLayout{title, label, evalMode, time}
+	return &plot2dLayout
+}
+
+func (plot2dLayout *Plot2DLayout) Create2DLayout(tabView *gi.TabView, logs *elog.Logs) {
+	plt := tabView.AddNewTab(eplot.KiT_Plot2D, "TrnEpcPlot").(*eplot.Plot2D)
+	configPlotLogsDefault(plt, plot2dLayout.title, plot2dLayout.mode, plot2dLayout.time, logs)
+}
+
+func configPlotLogsDefault(plt *eplot.Plot2D, title string, evalMode elog.EvalModes, time elog.Times, logs *elog.Logs) {
+	axisTitle := title + "_" + evalMode.String() + " _ " + evalMode.String()
+	configPlotDefault(title, axisTitle, evalMode, time, logs.Items, plt, logs.GetTable(evalMode, time))
+}
+
+func configPlotDefault(title, axisTitle string, evalMode elog.EvalModes, time elog.Times, items []*elog.Item, plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
+	plt.Params.Title = title
+	plt.Params.XAxisCol = axisTitle
+	plt.SetTable(dt)
+	for _, item := range items {
+		_, ok := item.GetComputeFunc(evalMode, time)
+		if ok {
+			// order of params: on, fixMin, min, fixMax, max
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
+		}
+	}
+	return plt
+}
+
+/*
+	Width, Height
+	AddEvaluationPlots
+	AddRasters
+*/
+
 // ConfigGui configures the GoGi gui interface for this simulation,
 func (ss *Sim) ConfigGui() *gi.Window {
 	width := 1600
@@ -56,21 +99,12 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	nv.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
 	nv.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
 
-	// TODO(andrew) Replace these with a loop
-	plt := tv.AddNewTab(eplot.KiT_Plot2D, "TrnEpcPlot").(*eplot.Plot2D)
-	ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.Logs.GetTable(elog.Train, elog.Epoch))
-
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstTrlPlot").(*eplot.Plot2D)
-	ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.Logs.GetTable(elog.Test, elog.Trial))
-
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstCycPlot").(*eplot.Plot2D)
-	ss.TstCycPlot = ss.ConfigTstCycPlot(plt, ss.Logs.GetTable(elog.Test, elog.Cycle))
-
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstEpcPlot").(*eplot.Plot2D)
-	ss.TstEpcPlot = ss.ConfigTstEpcPlot(plt, ss.Logs.GetTable(elog.Test, elog.Epoch))
-
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "RunPlot").(*eplot.Plot2D)
-	ss.RunPlot = ss.ConfigRunPlot(plt, ss.Logs.GetTable(elog.Train, elog.Run))
+	title := " Axon 25 random associateor"
+	InitPlot2DLayout(title, "TrnEpcPlot", elog.Train, elog.Epoch).Create2DLayout(tv, &ss.Logs)
+	InitPlot2DLayout(title, "TstTrlPlot", elog.Test, elog.Trial).Create2DLayout(tv, &ss.Logs)
+	InitPlot2DLayout(title, "TstCycPlot", elog.Test, elog.Cycle).Create2DLayout(tv, &ss.Logs)
+	InitPlot2DLayout(title, "TstEpcPlot", elog.Test, elog.Epoch).Create2DLayout(tv, &ss.Logs)
+	InitPlot2DLayout(title, "RunPlot", elog.Train, elog.Run).Create2DLayout(tv, &ss.Logs)
 
 	stb := tv.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
 	stb.Lay = gi.LayoutVert
@@ -285,21 +319,6 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	return win
 }
 
-// TODO Replace all these functions
-func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
-	plt.Params.Title = "Axon Random Associator 25 Epoch Plot"
-	plt.Params.XAxisCol = "Epoch"
-	plt.SetTable(dt)
-	for _, item := range ss.Logs.Items {
-		_, ok := item.GetComputeFunc(elog.Train, elog.Epoch)
-		if ok {
-			// order of params: on, fixMin, min, fixMax, max
-			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
-		}
-	}
-	return plt
-}
-
 // SimProps  register Save methods so they can be used
 /**
 var SimProps = ki.Props{
@@ -316,63 +335,6 @@ var SimProps = ki.Props{
 	},
 }
 **/
-
-func (ss *Sim) ConfigTstTrlPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
-	plt.Params.Title = "Axon Random Associator 25 Test Trial Plot"
-	plt.Params.XAxisCol = "Trial"
-	plt.SetTable(dt)
-	for _, item := range ss.Logs.Items {
-		_, ok := item.GetComputeFunc(elog.Test, elog.Trial)
-		if ok {
-			// order of params: on, fixMin, min, fixMax, max
-			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
-		}
-	}
-	return plt
-}
-
-func (ss *Sim) ConfigTstEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
-	plt.Params.Title = "Axon Random Associator 25 Testing Epoch Plot"
-	plt.Params.XAxisCol = "Epoch"
-	plt.SetTable(dt)
-	for _, item := range ss.Logs.Items {
-		_, ok := item.GetComputeFunc(elog.Test, elog.Epoch)
-		if ok {
-			// order of params: on, fixMin, min, fixMax, max
-			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
-		}
-	}
-	return plt
-}
-
-func (ss *Sim) ConfigTstCycPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
-	plt.Params.Title = "Axon Random Associator 25 Test Cycle Plot"
-	plt.Params.XAxisCol = "Cycle"
-	plt.SetTable(dt)
-	for _, item := range ss.Logs.Items {
-		_, ok := item.GetComputeFunc(elog.Test, elog.Cycle)
-		if ok {
-			// order of params: on, fixMin, min, fixMax, max
-			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
-		}
-	}
-	return plt
-}
-
-func (ss *Sim) ConfigRunPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
-	plt.Params.Title = "Axon Random Associator 25 Run Plot"
-	plt.Params.XAxisCol = "Run"
-	plt.Params.LegendCol = "Params"
-	plt.SetTable(dt)
-	for _, item := range ss.Logs.Items {
-		_, ok := item.GetComputeFunc(elog.Train, elog.Run)
-		if ok {
-			// order of params: on, fixMin, min, fixMax, max
-			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
-		}
-	}
-	return plt
-}
 
 func (ss *Sim) UpdateView(train bool) {
 	if ss.NetView != nil && ss.NetView.IsVisible() {
