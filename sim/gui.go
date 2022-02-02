@@ -100,7 +100,9 @@ func (ss *Sim) ConfigGui() *gi.Window {
 	nv.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
 
 	title := " Axon 25 random associateor"
-	InitPlot2DLayout(title, "TrnEpcPlot", elog.Train, elog.Epoch).Create2DLayout(tv, &ss.Logs)
+	plt := tv.AddNewTab(eplot.KiT_Plot2D, "TrnEpcPlot").(*eplot.Plot2D)
+	ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.Logs.GetTable(elog.Train, elog.Epoch))
+	//InitPlot2DLayout(title, "TrnEpcPlot", elog.Train, elog.Epoch).Create2DLayout(tv, &ss.Logs)
 	InitPlot2DLayout(title, "TstTrlPlot", elog.Test, elog.Trial).Create2DLayout(tv, &ss.Logs)
 	InitPlot2DLayout(title, "TstCycPlot", elog.Test, elog.Cycle).Create2DLayout(tv, &ss.Logs)
 	InitPlot2DLayout(title, "TstEpcPlot", elog.Test, elog.Epoch).Create2DLayout(tv, &ss.Logs)
