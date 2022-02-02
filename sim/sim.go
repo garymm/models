@@ -94,8 +94,10 @@ type Sim struct {
 	TstTrlPlot *eplot.Plot2D `view:"-" desc:"the test-trial plot"`
 	TstCycPlot *eplot.Plot2D `view:"-" desc:"the test-cycle plot"`
 	RunPlot    *eplot.Plot2D `view:"-" desc:"the run plot"`
-	TrnEpcFile *os.File      `view:"-" desc:"log file"`
-	RunFile    *os.File      `view:"-" desc:"log file"`
+
+	// TODO These should be added to the logger as a list or map
+	TrnEpcFile *os.File `view:"-" desc:"log file"`
+	RunFile    *os.File `view:"-" desc:"log file"`
 
 	// TODO Move this to Logs
 	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"A buffer for holding layer values. This helps avoid reallocating memory every time"`

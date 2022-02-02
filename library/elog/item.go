@@ -182,12 +182,12 @@ func (sk *ScopeKey) GetModesAndTimes() (modes []EvalModes, times []Times) {
 	modestrs := strings.Split(modestr, "|")
 	timestrs := strings.Split(timestr, "|")
 	for _, m := range modestrs {
-		mo := AllModes
+		mo := UnknownEvalMode
 		mo.FromString(m)
 		modes = append(modes, mo)
 	}
 	for _, t := range timestrs {
-		tim := AllTimes
+		tim := UnknownTimescale
 		tim.FromString(t)
 		times = append(times, tim)
 	}

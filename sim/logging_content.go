@@ -24,6 +24,69 @@ func getEpochWindowLast5(ss *Sim) *etable.IdxView {
 	return epochwindow
 }
 
+func updateItemForAll(ss *Sim, item *elog.Item) {
+	// This could be refactored with a set object. It's not efficient to call this for every item, but it also doesn't matter.
+	// DO NOT SUBMIT Store usedmodes and usedtimes on Logs
+	usedModes := []elog.EvalModes{}
+	usedTimes := []elog.Times{}
+	for _, item := range ss.Logs.Items {
+		for sk, _ := range item.Compute {
+			modes, times := sk.GetModesAndTimes()
+			for _, m := range modes {
+				foundMode := false
+				for _, um := range usedModes {
+					if m == um {
+						foundMode = true
+						break
+					}
+				}
+				if !foundMode && m != elog.UnknownEvalMode {
+					usedModes = append(usedModes, m)
+				}
+			}
+			for _, t := range times {
+				foundTime := false
+				for _, ut := range usedTimes {
+					if t == ut {
+						foundTime = true
+						break
+					}
+				}
+				if !foundTime && t != elog.UnknownTimescale {
+					usedTimes = append(usedTimes, t)
+				}
+			}
+		}
+	}
+	newMap := elog.ComputeMap{}
+	for sk, c := range item.Compute {
+		newsk := sk
+		useAllModes := false
+		useAllTimes := false
+		modes, times := sk.GetModesAndTimes()
+		for _, m := range modes {
+			if m == elog.AllEvalModes {
+				useAllModes = true
+			}
+		}
+		for _, t := range times {
+			if t == elog.AllTimes {
+				useAllTimes = true
+			}
+		}
+		if useAllModes && useAllTimes {
+			newsk = elog.GenScopesKey(usedModes, usedTimes)
+		} else if useAllModes {
+			newsk = elog.GenScopesKey(usedModes, times)
+		} else if useAllTimes {
+			newsk = elog.GenScopesKey(modes, usedTimes)
+		}
+		newMap[newsk] = c
+	}
+	item.Compute = newMap
+}
+
+// DO NOT SUBMIT Move this to Logs
 func ProcessLogItems(ss *Sim) {
 	for _, item := range ss.Logs.Items {
 		if item.Plot == elog.DUnknown {
@@ -36,6 +99,7 @@ func ProcessLogItems(ss *Sim) {
 			item.FixMax = elog.DFalse
 		}
 		for scope, _ := range item.Compute {
+			//updateItemForAll(ss, item)
 			item.UpdateModesAndTimesFromScope(scope)
 		}
 	}

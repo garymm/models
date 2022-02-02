@@ -14,8 +14,11 @@ func (ev *Times) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev
 
 // The time scales
 const (
-	// AllTimes represents application at all timescales
-	AllTimes Times = iota
+	// UnknownTimescale represents application at all timescales
+	UnknownTimescale Times = iota
+
+	// AllTimes indicates that the log should occur over all times present in other items.
+	AllTimes
 
 	// Cycle is the finest time scale -- typically 1 msec -- a single activation update.
 	Cycle

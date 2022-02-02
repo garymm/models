@@ -11,7 +11,8 @@ const LogPrec = 4
 type Logs struct {
 	Items      []*Item
 	ItemIdxMap map[string]int
-	Tables     map[ScopeKey]*etable.Table
+	// TODO Replace this with a struct that stores etable.Table, File, IdxView, HeaderWrittenBool
+	Tables map[ScopeKey]*etable.Table
 }
 
 // AddItem adds an item to the list
