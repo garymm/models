@@ -32,13 +32,11 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.INT64,
 		Plot: elog.DFalse,
 		Compute: elog.ComputeMap{
-			elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			elog.GenScopeKey(elog.AllEvalModes, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 			}, elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 			}, elog.GenScopeKey(elog.Test, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
-			}, elog.GenScopeKey(elog.Test, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				dt.SetCellFloat(item.Name, row, float64(ss.TrainEnv.Run().Cur))
 			}}})
 	ss.Logs.AddItem(&elog.Item{
