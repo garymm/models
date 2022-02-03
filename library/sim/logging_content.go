@@ -35,6 +35,7 @@ func ProcessLogItems(ss *Sim) {
 		if item.FixMax == elog.DUnknown {
 			item.FixMax = elog.DFalse
 		}
+		item.ExpandModesAndTimesIfNecessary()
 		for scope, _ := range item.Compute {
 			item.UpdateModesAndTimesFromScope(scope)
 		}

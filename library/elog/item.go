@@ -33,7 +33,7 @@ type Item struct {
 	Modes     []EvalModes  `desc:"a variable list of modes that this item can exist in"`
 	Times     []Times      `desc:"a variable list of times that this item can exist in"`
 	ScopeKey  ScopeKey     `desc:"a string representation of the combined enum name"`
-	Compute   ComputeMap   `desc:"For each timescale and mode, how is this value computed?"`
+	Compute   ComputeMap   `desc:"For each timescale and mode, how is this value computed? The key should be a single mode and timescale."`
 	Plot      DefaultBool  `desc:"Whether or not to plot it"`
 	FixMin    DefaultBool  `desc:"Whether to fix the minimum in the display"`
 	FixMax    DefaultBool  `desc:"Whether to fix the maximum in the display"`
@@ -108,6 +108,27 @@ func (item *Item) UpdateModesAndTimesFromScope(scopekey ScopeKey) {
 	item.UpdateModesAndTimes(modes, times)
 }
 
+func (item *Item) ExpandModesAndTimesIfNecessary() {
+	newCompute := ComputeMap{}
+	doReplace := false
+	for sk, c := range item.Compute {
+		modes, times := sk.GetModesAndTimes()
+		if len(modes) > 1 || len(times) > 1 {
+			doReplace = true
+			for _, m := range modes {
+				for _, t := range times {
+					newCompute[GenScopeKey(m, t)] = c
+				}
+			}
+		} else {
+			newCompute[sk] = c
+		}
+	}
+	if doReplace {
+		item.Compute = newCompute
+	}
+}
+
 func (item *Item) AssignComputeFuncOver(modes []EvalModes, times []Times, theFunc ComputeFunc) {
 	item.UpdateModesAndTimes(modes, times)
 	for _, mode := range modes {
@@ -145,6 +166,10 @@ func (item *Item) HasTimescale(time Times) bool {
 // They include one or more EvalModes and one or more Times.
 type ScopeKey string
 
+// Like "Train&Test|Epoch&Trial"
+var ScopeKeyBetweenModeAndTime = "&"
+var ScopeKeyComma = "|"
+
 // FromScopes create an associated scope merging the modes and times that are specified
 // If you modify this, also modify GetModesAndTimes, below.
 func (sk *ScopeKey) FromScopes(modes []EvalModes, times []Times) {
@@ -155,7 +180,7 @@ func (sk *ScopeKey) FromScopes(modes []EvalModes, times []Times) {
 		if mstr == "" {
 			mstr = str
 		} else {
-			mstr += "|" + str
+			mstr += ScopeKeyComma + str
 		}
 	}
 	for _, time := range times {
@@ -163,10 +188,10 @@ func (sk *ScopeKey) FromScopes(modes []EvalModes, times []Times) {
 		if tstr == "" {
 			tstr = str
 		} else {
-			tstr += "|" + str
+			tstr += ScopeKeyComma + str
 		}
 	}
-	*sk = ScopeKey(mstr + "&" + tstr)
+	*sk = ScopeKey(mstr + ScopeKeyBetweenModeAndTime + tstr)
 }
 
 // FromScope create an associated scope merging the modes and times that are specified
@@ -176,11 +201,11 @@ func (sk *ScopeKey) FromScope(mode EvalModes, time Times) {
 
 // GetModesAndTimes needs to be the inverse mirror of FromScopes
 func (sk *ScopeKey) GetModesAndTimes() (modes []EvalModes, times []Times) {
-	skstr := strings.Split(string(*sk), "&")
+	skstr := strings.Split(string(*sk), ScopeKeyBetweenModeAndTime)
 	modestr := skstr[0]
 	timestr := skstr[1]
-	modestrs := strings.Split(modestr, "|")
-	timestrs := strings.Split(timestr, "|")
+	modestrs := strings.Split(modestr, ScopeKeyComma)
+	timestrs := strings.Split(timestr, ScopeKeyComma)
 	for _, m := range modestrs {
 		mo := AllModes
 		mo.FromString(m)
