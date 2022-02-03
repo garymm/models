@@ -5,6 +5,7 @@ import (
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/agg"
+	"github.com/emer/etable/eplot"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
@@ -70,6 +71,87 @@ func (ss *Sim) LogFileName(lognm string) string {
 // TODO move these calculations to the logger add items compute function
 // Create a general Log(mode, time) function
 
+func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
+	// TODO:
+	//   Get table
+	//   Update number of rows
+	//   Update random crap
+	//   Call all matching items
+	//   Update more random crap
+	//   Update plot (note special case for cycle)
+	//   Save plot
+	dt := ss.Logs.GetTable(mode, time)
+
+	row := dt.Rows
+	if time == elog.Cycle {
+		row = ss.Time.Cycle
+	}
+	if time == elog.Trial {
+		// TODO Why is this not stored on ss.Time?
+		if mode == elog.Test {
+			row = (ss.TestEnv).Trial().Cur
+		} else {
+			row = (ss.TrainEnv).Trial().Cur
+		}
+	}
+	if dt.Rows <= row {
+		dt.SetNumRows(row + 1)
+	}
+
+	// DO NOT SUBMIT Update random crap
+
+	// TODO(optimize): A map would be more efficient than a filter loop.
+	for _, item := range ss.Logs.Items {
+		callback, ok := item.GetComputeFunc(mode, time)
+		if ok {
+			callback(item, item.GetScopeKey(mode, time), dt, row)
+		}
+	}
+
+	// DO NOT SUBMIT Update random crap
+
+	// TODO Put these in a map or on LogTable
+	var plt *eplot.Plot2D
+	if mode == elog.Train && time == elog.Epoch {
+		plt = ss.TrnEpcPlot
+	}
+	if mode == elog.Test && time == elog.Trial {
+		plt = ss.TstTrlPlot
+	}
+	if mode == elog.Test && time == elog.Epoch {
+		plt = ss.TstEpcPlot
+	}
+	// Note this special case
+	if mode == elog.Test && time == elog.Cycle && row == 10 {
+		plt = ss.TstCycPlot
+	}
+	if mode == elog.Train && time == elog.Run {
+		plt = ss.RunPlot
+	}
+	if plt != nil {
+		plt.GoUpdate()
+	}
+
+	// TODO Check LogTable for details on saving the plot
+	if mode == elog.Train && time == elog.Epoch {
+		if ss.TrnEpcFile != nil {
+			if (ss.TrainEnv).Run().Cur == ss.StartRun && row == 0 {
+				// note: can't just use row=0 b/c reset table each run
+				dt.WriteCSVHeaders(ss.TrnEpcFile, etable.Tab)
+			}
+			dt.WriteCSVRow(ss.TrnEpcFile, row, etable.Tab)
+		}
+	}
+	if mode == elog.Train && time == elog.Run {
+		if ss.RunFile != nil {
+			if row == 0 {
+				dt.WriteCSVHeaders(ss.RunFile, etable.Tab)
+			}
+			dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
+		}
+	}
+}
+
 // LogTrnEpc adds data from current epoch to the TrnEpcLog table.
 // computes epoch averages prior to logging.
 func (ss *Sim) LogTrnEpc(dt *etable.Table) {
@@ -132,8 +214,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 // log always contains number of testing items
 func (ss *Sim) LogTstTrl(dt *etable.Table) {
 
-	trl := (ss.TestEnv).Trial().Cur
-	row := trl // TODO(clean) Is this making a copy? Is it necessary?
+	row := (ss.TestEnv).Trial().Cur
 	if dt.Rows <= row {
 		dt.SetNumRows(row + 1)
 	}
