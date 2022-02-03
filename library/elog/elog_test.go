@@ -22,6 +22,7 @@ func TestScopeKeyStringing(t *testing.T) {
 }
 
 func TestItem(t *testing.T) {
+	t.Errorf("ERROR!")
 	item := Item{
 		Name: "Testo",
 		Type: etensor.STRING,
