@@ -21,6 +21,8 @@ func (ss *Sim) ConfigGui() *gi.Window {
 
 	title := "Axon Random Associator"
 	ss.GUI.MakeWindow(ss, "one2many", title, `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+	ss.GUI.NetView.SetNet(ss.Net) // TODO ask Randy what this is doing
+
 	ss.GUI.NetView.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
 	ss.GUI.NetView.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
 	ss.GUI.AddPlots(title, ss.Logs)

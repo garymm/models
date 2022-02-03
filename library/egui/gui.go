@@ -95,6 +95,7 @@ func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 	gui.PlotMap = make(map[elog.ScopeKey]*eplot.Plot2D)
 	for key, table := range Log.Tables {
+
 		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, string(key)+"Plot").(*eplot.Plot2D)
 		gui.PlotMap[key] = plt
 		plt.SetTable(table)
