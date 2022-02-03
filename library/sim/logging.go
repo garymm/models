@@ -16,6 +16,10 @@ import (
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Logging
 
+func (ss *Sim) ConfigLogs() {
+	ss.Logs.CreateTables()
+}
+
 // ValsTsr gets value tensor of given name, creating if not yet made
 func (ss *Sim) ValsTsr(name string) *etensor.Float32 {
 	if ss.ValsTsrs == nil {
@@ -120,10 +124,6 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 	}
 }
 
-func (ss *Sim) ConfigLogs() {
-	ss.Logs.CreateTables()
-}
-
 //////////////////////////////////////////////
 //  TstTrlLog
 
@@ -181,6 +181,68 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	// note: essential to use Go version of update when called from another goroutine
 	if ss.TstEpcPlot != nil {
 		ss.TstEpcPlot.GoUpdate()
+	}
+}
+
+//////////////////////////////////////////////
+//  TstCycLog
+
+// LogTstCyc adds data from current trial to the TstCycLog table.
+// log just has 100 cycles, is overwritten
+func (ss *Sim) LogTstCyc(dt *etable.Table, cyc int) {
+	if dt.Rows <= cyc {
+		dt.SetNumRows(cyc + 1)
+	}
+
+	for _, item := range ss.Logs.Items {
+		callback, ok := item.GetComputeFunc(elog.Test, elog.Cycle)
+		if ok {
+			callback(item, item.GetScopeKey(elog.Test, elog.Cycle), dt, cyc)
+		}
+	}
+
+	if ss.TstCycPlot != nil && cyc%10 == 0 { // too slow to do every cyc
+		// note: essential to use Go version of update when called from another goroutine
+		ss.TstCycPlot.GoUpdate()
+	}
+}
+
+//////////////////////////////////////////////
+//  RunLog
+
+// LogRun adds data from current run to the RunLog table.
+func (ss *Sim) LogRun(dt *etable.Table) {
+	epclog := ss.Logs.GetTable(elog.Train, elog.Epoch)
+	epcix := etable.NewIdxView(epclog)
+	if epcix.Len() == 0 {
+		return
+	}
+
+	row := dt.Rows
+	dt.SetNumRows(row + 1)
+
+	for _, item := range ss.Logs.Items {
+		callback, ok := item.GetComputeFunc(elog.Train, elog.Run)
+		if ok {
+			callback(item, item.GetScopeKey(elog.Train, elog.Run), dt, row)
+		}
+	}
+
+	runix := etable.NewIdxView(dt)
+	spl := split.GroupBy(runix, []string{"Params"})
+	split.Desc(spl, "FirstZero")
+	split.Desc(spl, "PctCor")
+	ss.RunStats = spl.AggsToTable(etable.AddAggName)
+
+	// note: essential to use Go version of update when called from another goroutine
+	if ss.RunPlot != nil {
+		ss.RunPlot.GoUpdate()
+	}
+	if ss.RunFile != nil {
+		if row == 0 {
+			dt.WriteCSVHeaders(ss.RunFile, etable.Tab)
+		}
+		dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
 	}
 }
 
@@ -254,68 +316,6 @@ func (ss *Sim) AvgLayVal(ly *axon.Layer, vnm string) float32 {
 	tv := ss.ValsTsr(ly.Name())
 	ly.UnitValsTensor(tv, vnm)
 	return norm.Mean32(tv.Values)
-}
-
-//////////////////////////////////////////////
-//  TstCycLog
-
-// LogTstCyc adds data from current trial to the TstCycLog table.
-// log just has 100 cycles, is overwritten
-func (ss *Sim) LogTstCyc(dt *etable.Table, cyc int) {
-	if dt.Rows <= cyc {
-		dt.SetNumRows(cyc + 1)
-	}
-
-	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(elog.Test, elog.Cycle)
-		if ok {
-			callback(item, item.GetScopeKey(elog.Test, elog.Cycle), dt, cyc)
-		}
-	}
-
-	if ss.TstCycPlot != nil && cyc%10 == 0 { // too slow to do every cyc
-		// note: essential to use Go version of update when called from another goroutine
-		ss.TstCycPlot.GoUpdate()
-	}
-}
-
-//////////////////////////////////////////////
-//  RunLog
-
-// LogRun adds data from current run to the RunLog table.
-func (ss *Sim) LogRun(dt *etable.Table) {
-	epclog := ss.Logs.GetTable(elog.Train, elog.Epoch)
-	epcix := etable.NewIdxView(epclog)
-	if epcix.Len() == 0 {
-		return
-	}
-
-	row := dt.Rows
-	dt.SetNumRows(row + 1)
-
-	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(elog.Train, elog.Run)
-		if ok {
-			callback(item, item.GetScopeKey(elog.Train, elog.Run), dt, row)
-		}
-	}
-
-	runix := etable.NewIdxView(dt)
-	spl := split.GroupBy(runix, []string{"Params"})
-	split.Desc(spl, "FirstZero")
-	split.Desc(spl, "PctCor")
-	ss.RunStats = spl.AggsToTable(etable.AddAggName)
-
-	// note: essential to use Go version of update when called from another goroutine
-	if ss.RunPlot != nil {
-		ss.RunPlot.GoUpdate()
-	}
-	if ss.RunFile != nil {
-		if row == 0 {
-			dt.WriteCSVHeaders(ss.RunFile, etable.Tab)
-		}
-		dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
-	}
 }
 
 // InitStats initializes all the statistics, especially important for the
