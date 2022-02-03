@@ -62,11 +62,13 @@ type Sim struct {
 	// TODO for the following block these should be encoded in the compute functions and replaced with agg functions on traintrial
 
 	// statistics: note use float64 as that is best for etable.Table
-	TrlErr        float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
-	TrlClosest    string  `inactive:"+" desc:"Name of the pattern with the closest output"`
-	TrlCorrel     float64 `inactive:"+" desc:"Correlation with closest output"`
-	TrlUnitErr    float64 `inactive:"+" desc:"current trial's unit-level pct error"`
-	TrlCosDiff    float64 `inactive:"+" desc:"current trial's cosine difference"`
+	// TODO Leave the Trial stats here on Sim, but remove the Epoch stats completely
+	TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
+	TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
+	TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
+	TrlUnitErr float64 `inactive:"+" desc:"current trial's unit-level pct error"`
+	TrlCosDiff float64 `inactive:"+" desc:"current trial's cosine difference"`
+
 	EpcUnitErr    float64 `inactive:"+" desc:"last epoch's total unit-level pct error"`
 	EpcPctErr     float64 `inactive:"+" desc:"last epoch's average TrlErr"`
 	EpcPctCor     float64 `inactive:"+" desc:"1 - last epoch's average TrlErr"`
