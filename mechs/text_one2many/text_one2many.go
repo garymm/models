@@ -9,7 +9,7 @@
 package main
 
 import (
-	"github.com/Astera-org/models/sim"
+	sim2 "github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/evec"
@@ -26,7 +26,7 @@ import (
 
 func main() {
 	// TheSim is the overall state for this simulation
-	var TheSim sim.Sim
+	var TheSim sim2.Sim
 	TheSim.New()
 
 	Config(&TheSim)
@@ -35,7 +35,7 @@ func main() {
 		TheSim.CmdArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim)
+			sim2.GuiRun(&TheSim)
 		})
 	}
 
@@ -49,7 +49,7 @@ var TestEnv = EnvText2Many{}
 // core algorithm side remains as simple as possible, and doesn't need to worry about
 // different time-scales over which stats could be accumulated etc.
 // You can also aggregate directly from log data, as is done for testing stats
-func TrialStats(ss *sim.Sim, accum bool) {
+func TrialStats(ss *sim2.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
 
@@ -75,7 +75,7 @@ func TrialStats(ss *sim.Sim, accum bool) {
 }
 
 // Config configures all the elements using the standard functions
-func Config(ss *sim.Sim) {
+func Config(ss *sim2.Sim) {
 	ConfigParams(ss)
 	ConfigEnv(ss)
 	ConfigPats(ss)
@@ -86,7 +86,7 @@ func Config(ss *sim.Sim) {
 	ss.ConfigSpikeRasts()
 }
 
-func ConfigParams(ss *sim.Sim) {
+func ConfigParams(ss *sim2.Sim) {
 	// ParamSetsMin sets the minimal non-default params
 	// Base is always applied, and others can be optionally selected to apply on top of that
 	ss.Params = params.Sets{
@@ -150,11 +150,11 @@ func ConfigParams(ss *sim.Sim) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Configs
 
-func ConfigEnv(ss *sim.Sim) {
+func ConfigEnv(ss *sim2.Sim) {
 
 	ss.TrainEnv = &TrainEnv
 	ss.TestEnv = &TestEnv
-	
+
 	ss.TrialStatsFunc = TrialStats
 	//ss = *sim.Sim
 	if ss.MaxRuns == 0 { // allow user override
@@ -196,7 +196,7 @@ func ConfigEnv(ss *sim.Sim) {
 
 }
 
-func ConfigPats(ss *sim.Sim) {
+func ConfigPats(ss *sim2.Sim) {
 	dt := ss.Pats
 	dt.SetMetaData("name", "SuccessorPatterns")
 	dt.SetMetaData("desc", "SuccessorPatterns")
@@ -219,7 +219,7 @@ func ConfigPats(ss *sim.Sim) {
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
-func ConfigNet(ss *sim.Sim, net *axon.Network) {
+func ConfigNet(ss *sim2.Sim, net *axon.Network) {
 	net.InitName(net, "One2Many")
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
