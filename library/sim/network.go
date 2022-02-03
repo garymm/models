@@ -61,7 +61,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	}
 	ss.Time.NewPhase()
 	if viewUpdt == axon.Phase {
-		ss.GUI.UpdateView(ss, train)
+		ss.UpdateView(train)
 	}
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
@@ -88,7 +88,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	}
 
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
-		ss.GUI.UpdateView(ss, train)
+		ss.UpdateView(train)
 	}
 
 	if ss.TstCycPlot != nil && !train {
@@ -131,7 +131,7 @@ func (ss *Sim) TrainTrial() {
 		ss.LogTrnEpc(ss.Logs.GetTable(elog.Train, elog.Epoch))
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-			ss.GUI.UpdateView(ss, true)
+			ss.UpdateView(true)
 		}
 		if ss.TestInterval > 0 && epc%ss.TestInterval == 0 { // note: epc is *next* so won't trigger first time
 			ss.TestAll()
@@ -265,7 +265,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	_, _, chg := TestEnv.Counter(env.Epoch)
 	if chg {
 		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
-			ss.GUI.UpdateView(ss, false)
+			ss.UpdateView(false)
 		}
 		ss.LogTstEpc(ss.Logs.GetTable(elog.Test, elog.Epoch))
 		if returnOnChg {

@@ -2,7 +2,6 @@ package egui
 
 import (
 	"github.com/Astera-org/models/library/elog"
-	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
 	"github.com/goki/gi/gi"
@@ -24,6 +23,10 @@ type GUI struct {
 	TabView    *gi.TabView
 
 	PlotMap map[elog.ScopeKey]*eplot.Plot2D
+}
+
+func (gui *GUI) UpdateWindow() {
+	gui.ViewPort.SetNeedsFullRender()
 }
 
 func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
@@ -59,13 +62,13 @@ func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
 
 }
 
-func (gui *GUI) UpdateView(ss *sim.Sim, train bool) {
-	if gui.NetView != nil && gui.NetView.IsVisible() {
-		gui.NetView.Record(ss.Counters(train))
-		// note: essential to use Go version of update when called from another goroutine
-		gui.NetView.GoUpdate() // note: using counters is significantly slower..
-	}
-}
+//func (gui *GUI) UpdateView(ss *sim.Sim, train bool) {
+//	if gui.NetView != nil && gui.NetView.IsVisible() {
+//		gui.NetView.Record(ss.Counters(train))
+//		// note: essential to use Go version of update when called from another goroutine
+//		gui.NetView.GoUpdate() // note: using counters is significantly slower..
+//	}
+//}
 
 func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 	switch item.Active {
