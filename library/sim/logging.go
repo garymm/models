@@ -123,7 +123,7 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 		plt = ss.TstEpcPlot
 	}
 	// Note this special case
-	if mode == elog.Test && time == elog.Cycle && row == 10 {
+	if mode == elog.Test && time == elog.Cycle && row%10 == 0 {
 		plt = ss.TstCycPlot
 	}
 	if mode == elog.Train && time == elog.Run {
@@ -152,6 +152,9 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 		}
 	}
 }
+
+// Callback functions that update miscellaneous logs
+// TODO Move these to logging_content.go
 
 func (ss *Sim) UpdateTrnEpc() {
 	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
@@ -183,9 +186,6 @@ func (ss *Sim) UpdateTrnEpc() {
 	}
 	ss.LastEpcTime = time.Now()
 }
-
-//////////////////////////////////////////////
-//  TstEpcLog
 
 func (ss *Sim) UpdateTstEpcErrors() {
 	// Record those test trials which had errors
