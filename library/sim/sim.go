@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/netview"
@@ -9,7 +10,6 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
-	"github.com/goki/gi/gi"
 	"math/rand"
 	"os"
 	"time"
@@ -29,7 +29,7 @@ type Sim struct {
 	NOutputs int `desc:"The number of output patterns potentially associated with each input pattern."`
 
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
-
+	GUI  egui.GUI
 	//This block is not general enough to go into logs and should stay in sim
 	TstErrLog      *etable.Table                 `view:"no-inline" desc:"log of all test trials where errors were made"`
 	TstErrStats    *etable.Table                 `view:"no-inline" desc:"stats on test trials where errors were made"`
@@ -81,13 +81,10 @@ type Sim struct {
 	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
 
 	// internal state - view:"-"
-	SumErr     float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me // TODO Replace the use of these with agg functions
-	SumUnitErr float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	SumCosDiff float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	SumCorrel  float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	Win        *gi.Window       `view:"-" desc:"main GUI window"`
-	NetView    *netview.NetView `view:"-" desc:"the network viewer"`
-	ToolBar    *gi.ToolBar      `view:"-" desc:"the master toolbar"`
+	SumErr     float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me // TODO Replace the use of these with agg functions
+	SumUnitErr float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumCosDiff float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumCorrel  float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
 	// TODO Create a GUI object that stores these
 	TrnEpcPlot *eplot.Plot2D `view:"-" desc:"the training epoch plot"`
 	TstEpcPlot *eplot.Plot2D `view:"-" desc:"the testing epoch plot"`
@@ -103,8 +100,6 @@ type Sim struct {
 	SaveWts      bool             `view:"-" desc:"for command-line run only, auto-save final weights after each run"`
 	NoGui        bool             `view:"-" desc:"if true, runing in no GUI mode"`
 	LogSetParams bool             `view:"-" desc:"if true, print message for all params that are set"`
-	IsRunning    bool             `view:"-" desc:"true if sim is running"`
-	StopNow      bool             `view:"-" desc:"flag to stop running"`
 	NeedsNewRun  bool             `view:"-" desc:"flag to initialize NewRun if last one finished"`
 	RndSeeds     []int64          `view:"-" desc:"a list of random seeds to use for each run"`
 	NetData      *netview.NetData `view:"-" desc:"net data for recording in nogui mode"`
@@ -140,7 +135,7 @@ func (ss *Sim) Init() {
 	//TODO: need to modify such that you can load and update environment without calling
 	//ss.ConfigEnv()  // re-config env just in case a different set of patterns was
 	// selected or patterns have been modified etc
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	ss.SetParams("", ss.LogSetParams) // all sheets
 	ss.NewRun()
 	ss.UpdateView(true)

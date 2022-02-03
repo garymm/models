@@ -4,13 +4,12 @@ package sim
 
 import (
 	"fmt"
+	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
-	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
 	"github.com/emer/etable/etable"
 	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
 	"github.com/goki/ki/ki"
 	"github.com/goki/mat32"
 )
@@ -23,58 +22,30 @@ func GuiRun(TheSim *Sim) {
 
 // ConfigGui configures the GoGi gui interface for this simulation,
 func (ss *Sim) ConfigGui() *gi.Window {
-	width := 1600
-	height := 1200
 
-	gi.SetAppName("one2many")
-	gi.SetAppAbout(`This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+	ss.GUI.MakeWindow(ss, "one2many", "Axon Random Associator", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 
-	win := gi.NewMainWindow("one2many", "Axon Random Associator", width, height)
-	ss.Win = win
-
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
-
-	mfr := win.SetMainFrame()
-
-	tbar := gi.AddNewToolBar(mfr, "tbar")
-	tbar.SetStretchMaxWidth()
-	ss.ToolBar = tbar
-
-	split := gi.AddNewSplitView(mfr, "split")
-	split.Dim = mat32.X
-	split.SetStretchMax()
-
-	sv := giv.AddNewStructView(split, "sv")
-	sv.SetStruct(ss)
-
-	tv := gi.AddNewTabView(split, "tv")
-
-	nv := tv.AddNewTab(netview.KiT_NetView, "NetView").(*netview.NetView)
-	nv.Var = "Act"
-	nv.SetNet(ss.Net)
-	ss.NetView = nv
-
-	nv.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
-	nv.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
+	ss.GUI.NetView.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
+	ss.GUI.NetView.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
+	ss.GUI.AddPlots(ss.Logs)
 
 	// TODO(andrew) Replace these with a loop
-	plt := tv.AddNewTab(eplot.KiT_Plot2D, "TrnEpcPlot").(*eplot.Plot2D)
-	ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.Logs.GetTable(elog.Train, elog.Epoch))
+	//plt := tv.AddNewTab(eplot.KiT_Plot2D, "TrnEpcPlot").(*eplot.Plot2D)
+	//ss.TrnEpcPlot = ss.ConfigTrnEpcPlot(plt, ss.Logs.GetTable(elog.Train, elog.Epoch))
+	//
+	//plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstTrlPlot").(*eplot.Plot2D)
+	//ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.Logs.GetTable(elog.Test, elog.Trial))
+	//
+	//plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstCycPlot").(*eplot.Plot2D)
+	//ss.TstCycPlot = ss.ConfigTstCycPlot(plt, ss.Logs.GetTable(elog.Test, elog.Cycle))
+	//
+	//plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstEpcPlot").(*eplot.Plot2D)
+	//ss.TstEpcPlot = ss.ConfigTstEpcPlot(plt, ss.Logs.GetTable(elog.Test, elog.Epoch))
+	//
+	//plt = tv.AddNewTab(eplot.KiT_Plot2D, "RunPlot").(*eplot.Plot2D)
+	//ss.RunPlot = ss.ConfigRunPlot(plt, ss.Logs.GetTable(elog.Train, elog.Run))
 
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstTrlPlot").(*eplot.Plot2D)
-	ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.Logs.GetTable(elog.Test, elog.Trial))
-
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstCycPlot").(*eplot.Plot2D)
-	ss.TstCycPlot = ss.ConfigTstCycPlot(plt, ss.Logs.GetTable(elog.Test, elog.Cycle))
-
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstEpcPlot").(*eplot.Plot2D)
-	ss.TstEpcPlot = ss.ConfigTstEpcPlot(plt, ss.Logs.GetTable(elog.Test, elog.Epoch))
-
-	plt = tv.AddNewTab(eplot.KiT_Plot2D, "RunPlot").(*eplot.Plot2D)
-	ss.RunPlot = ss.ConfigRunPlot(plt, ss.Logs.GetTable(elog.Train, elog.Run))
-
-	stb := tv.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
+	stb := ss.GUI.TabView.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
 	stb.Lay = gi.LayoutVert
 	stb.SetStretchMax()
 	for _, lnm := range ss.SpikeRecLays {
@@ -86,27 +57,20 @@ func (ss *Sim) ConfigGui() *gi.Window {
 		gi.AddNewSpace(stb, lnm+"_spc")
 		ss.ConfigSpikeGrid(tg, sr)
 	}
-
-	split.SetSplits(.2, .8)
-
-	tbar.AddAction(gi.ActOpts{Label: "Init", Icon: "update", Tooltip: "Initialize everything including network weights, and start over.  Also applies current params.", UpdateFunc: func(act *gi.Action) {
-		act.SetActiveStateUpdt(!ss.IsRunning)
-	}}, win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		ss.Init()
-		vp.SetNeedsFullRender()
+	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Init", Icon: "update",
+		Tooltip: "Initialize everything including network weights, and start over.  Also applies current params.",
+		Active:  egui.ActiveRunning,
+		Func: func() {
+			ss.Init()
+			ss.GUI.ViewPort.SetNeedsFullRender()
+		},
+	})
+	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Train",
+		Icon: "run",
+		Tooltip: "Starts the network training, picking up from wherever it may have left off.  If not stopped, training will complete the specified number of Runs through the full number of Epochs of training, with testing automatically occuring at the specified interval."
+		Active: egui.ActiveStopped,
 	})
 
-	tbar.AddAction(gi.ActOpts{Label: "Train", Icon: "run", Tooltip: "Starts the network training, picking up from wherever it may have left off.  If not stopped, training will complete the specified number of Runs through the full number of Epochs of training, with testing automatically occuring at the specified interval.",
-		UpdateFunc: func(act *gi.Action) {
-			act.SetActiveStateUpdt(!ss.IsRunning)
-		}}, win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if !ss.IsRunning {
-			ss.IsRunning = true
-			tbar.UpdateActions()
-			// ss.Train()
-			go ss.Train()
-		}
-	})
 
 	tbar.AddAction(gi.ActOpts{Label: "Stop", Icon: "stop", Tooltip: "Interrupts running.  Hitting Train again will pick back up where it left off.", UpdateFunc: func(act *gi.Action) {
 		act.SetActiveStateUpdt(ss.IsRunning)
