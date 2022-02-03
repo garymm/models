@@ -26,7 +26,6 @@ func getEpochWindowLast5(ss *Sim) *etable.IdxView {
 
 func (ss *Sim) ConfigLogSpec() {
 	// Train epoch
-	//TODO(Andrew) implement the ability to specify that something covers all times and ESPECIALLY all modes
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Run",
 		Type: etensor.INT64,

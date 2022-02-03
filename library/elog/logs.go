@@ -2,19 +2,28 @@ package elog
 
 import (
 	"github.com/emer/etable/etable"
+	"github.com/goki/gi/gi"
 	"strconv"
 )
 
 // LogPrec is precision for saving float values in logs
 const LogPrec = 4
 
+type LogTable struct {
+	Table         *etable.Table  `desc:"Actual data stored."`
+	TableView     etable.IdxView `desc:"View of the table."`
+	FileName      gi.FileName    `desc:"Name of the file to store it at."`
+	HeaderWritten bool           `desc:"If true, header has been written already."`
+	SavePlot      bool           `desc:"If true, save plot when updating log."`
+}
+
 type Logs struct {
 	Items      []*Item `desc:"A list of the items that should be logged. Each item should describe one column that you want to log, and how."`
 	ItemIdxMap map[string]int
 	// TODO Replace this with a struct that stores etable.Table, File, IdxView, HeaderWrittenBool
-	Tables     map[ScopeKey]*etable.Table `desc:"Tables of logs"`
-	EvalModes  []EvalModes                `desc:"All the eval modes that appear in any of the items of this log"`
-	Timescales []Times                    `desc:"All the timescales that appear in any of the items of this log"`
+	Tables     map[ScopeKey]LogTable `desc:"Tables of logs."`
+	EvalModes  []EvalModes           `desc:"All the eval modes that appear in any of the items of this log."`
+	Timescales []Times               `desc:"All the timescales that appear in any of the items of this log."`
 }
 
 // AddItem adds an item to the list
@@ -136,15 +145,15 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 }
 
 func (lg *Logs) CreateTables() {
-	uniqueTables := make(map[ScopeKey]*etable.Table)
+	uniqueTables := make(map[ScopeKey]LogTable)
 	for _, item := range lg.Items {
 		for _, mode := range item.Modes {
 			for _, time := range item.Times {
 				tempScopeKey := GenScopeKey(mode, time)
 				_, ok := uniqueTables[tempScopeKey]
 				if ok == false {
-					uniqueTables[tempScopeKey] = &etable.Table{}
-					lg.configLogTable(uniqueTables[tempScopeKey], mode, time)
+					uniqueTables[tempScopeKey] = LogTable{Table: &etable.Table{}}
+					lg.configLogTable(uniqueTables[tempScopeKey].Table, mode, time)
 				}
 			}
 		}
@@ -153,6 +162,18 @@ func (lg *Logs) CreateTables() {
 }
 
 func (lg *Logs) GetTable(mode EvalModes, time Times) *etable.Table {
+	tempScopeKey := ScopeKey("")
+	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
+	return lg.Tables[tempScopeKey].Table
+}
+
+func (lg *Logs) GetTableView(mode EvalModes, time Times) etable.IdxView {
+	tempScopeKey := ScopeKey("")
+	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
+	return lg.Tables[tempScopeKey].TableView
+}
+
+func (lg *Logs) GetTableDetails(mode EvalModes, time Times) LogTable {
 	tempScopeKey := ScopeKey("")
 	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
 	return lg.Tables[tempScopeKey]
