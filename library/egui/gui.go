@@ -2,7 +2,9 @@ package egui
 
 import (
 	"github.com/Astera-org/models/library/elog"
+	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/emergent/netview"
+	"github.com/emer/etable/eplot"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki/ki"
@@ -20,16 +22,18 @@ type GUI struct {
 
 	StructView *giv.StructView
 	TabView    *gi.TabView
+
+	PlotMap map[elog.ScopeKey]*eplot.Plot2D
 }
 
 func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
 	width := 1600
 	height := 1200
 
-	gi.SetAppName("one2many")
-	gi.SetAppAbout(`This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+	gi.SetAppName(appname)
+	gi.SetAppAbout(about)
 
-	gui.Win = gi.NewMainWindow("one2many", "Axon Random Associator", width, height)
+	gui.Win = gi.NewMainWindow(appname, title, width, height)
 
 	gui.ViewPort = gui.Win.WinViewport2D()
 	gui.ViewPort.UpdateStart()
@@ -55,6 +59,14 @@ func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
 
 }
 
+func (gui *GUI) UpdateView(ss *sim.Sim, train bool) {
+	if gui.NetView != nil && gui.NetView.IsVisible() {
+		gui.NetView.Record(ss.Counters(train))
+		// note: essential to use Go version of update when called from another goroutine
+		gui.NetView.GoUpdate() // note: using counters is significantly slower..
+	}
+}
+
 func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 	switch item.Active {
 	case ActiveStopped:
@@ -77,9 +89,28 @@ func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 	}
 }
 
-func (gui *GUI) AddPlots(Log elog.Logs) {
-	//plt = tv.AddNewTab(eplot.KiT_Plot2D, "TstTrlPlot").(*eplot.Plot2D)
-	//ss.TstTrlPlot = ss.ConfigTstTrlPlot(plt, ss.Logs.GetTable(elog.Test, elog.Trial))
+func (gui *GUI) AddPlots(title string, Log elog.Logs) {
+	gui.PlotMap = make(map[elog.ScopeKey]*eplot.Plot2D)
+	for key, table := range Log.Tables {
+		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, string(key)+"Plot").(*eplot.Plot2D)
+		gui.PlotMap[key] = plt
+		plt.SetTable(table)
+		//This is so inefficient even if it's run once, this is ugly
+		for _, item := range Log.Items {
+			_, ok := item.Compute[key]
+			if ok {
+				plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
+				modes, times := key.GetModesAndTimes()
+				timeName := modes[0].String()
+				plt.Params.Title = title + " " + timeName + " Plot"
+				plt.Params.XAxisCol = timeName
+				if times[0] == elog.Run { //The one exception
+					plt.Params.LegendCol = "Params"
+				}
+			}
+		}
+	}
+
 }
 
 func (gui *GUI) FinalizeGUI(closePrompt bool) {
@@ -107,7 +138,7 @@ func (gui *GUI) FinalizeGUI(closePrompt bool) {
 			inQuitPrompt = true
 			gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
 				Prompt: "Are you <i>sure</i> you want to quit and lose any unsaved params, weights, logs, etc?"}, gi.AddOk, gi.AddCancel,
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				gui.Win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					if sig == int64(gi.DialogAccepted) {
 						gi.Quit()
 					} else {
@@ -117,14 +148,14 @@ func (gui *GUI) FinalizeGUI(closePrompt bool) {
 		})
 
 		inClosePrompt := false
-		win.SetCloseReqFunc(func(w *gi.Window) {
+		gui.Win.SetCloseReqFunc(func(w *gi.Window) {
 			if inClosePrompt {
 				return
 			}
 			inClosePrompt = true
 			gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Close gui.Window?",
 				Prompt: "Are you <i>sure</i> you want to close the gui.Window?  This will Quit the App as well, losing all unsaved params, weights, logs, etc"}, gi.AddOk, gi.AddCancel,
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				gui.Win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					if sig == int64(gi.DialogAccepted) {
 						gi.Quit()
 					} else {

@@ -61,7 +61,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	}
 	ss.Time.NewPhase()
 	if viewUpdt == axon.Phase {
-		ss.UpdateView(train)
+		ss.GUI.UpdateView(ss, train)
 	}
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
@@ -88,7 +88,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	}
 
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
-		ss.UpdateView(train)
+		ss.GUI.UpdateView(ss, train)
 	}
 
 	if ss.TstCycPlot != nil && !train {
@@ -131,7 +131,7 @@ func (ss *Sim) TrainTrial() {
 		ss.LogTrnEpc(ss.Logs.GetTable(elog.Train, elog.Epoch))
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-			ss.UpdateView(true)
+			ss.GUI.UpdateView(ss, true)
 		}
 		if ss.TestInterval > 0 && epc%ss.TestInterval == 0 { // note: epc is *next* so won't trigger first time
 			ss.TestAll()
@@ -140,7 +140,7 @@ func (ss *Sim) TrainTrial() {
 			// done with training..
 			ss.RunEnd()
 			if TrainEnv.Run().Incr() { // we are done!
-				ss.StopNow = true
+				ss.GUI.StopNow = true
 				return
 			} else {
 				ss.NeedsNewRun = true
@@ -184,11 +184,11 @@ func (ss *Sim) NewRun() {
 // TrainEpoch runs training trials for remainder of this epoch
 func (ss *Sim) TrainEpoch() {
 	TrainEnv := ss.TrainEnv
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	curEpc := TrainEnv.Epoch().Cur
 	for {
 		ss.TrainTrial()
-		if ss.StopNow || TrainEnv.Epoch().Cur != curEpc {
+		if ss.GUI.StopNow || TrainEnv.Epoch().Cur != curEpc {
 			break
 		}
 	}
@@ -198,11 +198,11 @@ func (ss *Sim) TrainEpoch() {
 // TrainRun runs training trials for remainder of run
 func (ss *Sim) TrainRun() {
 	TrainEnv := ss.TrainEnv
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	curRun := TrainEnv.Run().Cur
 	for {
 		ss.TrainTrial()
-		if ss.StopNow || TrainEnv.Run().Cur != curRun {
+		if ss.GUI.StopNow || TrainEnv.Run().Cur != curRun {
 			break
 		}
 	}
@@ -211,10 +211,10 @@ func (ss *Sim) TrainRun() {
 
 // Train runs the full training from this point onward
 func (ss *Sim) Train() {
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	for {
 		ss.TrainTrial()
-		if ss.StopNow {
+		if ss.GUI.StopNow {
 			break
 		}
 	}
@@ -223,16 +223,16 @@ func (ss *Sim) Train() {
 
 // Stop tells the sim to stop running
 func (ss *Sim) Stop() {
-	ss.StopNow = true
+	ss.GUI.StopNow = true
 }
 
 // Stopped is called when a run method stops running -- updates the IsRunning flag and toolbar
 func (ss *Sim) Stopped() {
-	ss.IsRunning = false
-	if ss.Win != nil {
-		vp := ss.Win.WinViewport2D()
-		if ss.ToolBar != nil {
-			ss.ToolBar.UpdateActions()
+	ss.GUI.IsRunning = false
+	if ss.GUI.Win != nil {
+		vp := ss.GUI.Win.WinViewport2D()
+		if ss.GUI.ToolBar != nil {
+			ss.GUI.ToolBar.UpdateActions()
 		}
 		vp.SetNeedsFullRender()
 	}
@@ -265,7 +265,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	_, _, chg := TestEnv.Counter(env.Epoch)
 	if chg {
 		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
-			ss.UpdateView(false)
+			ss.GUI.UpdateView(ss, false)
 		}
 		ss.LogTstEpc(ss.Logs.GetTable(elog.Test, elog.Epoch))
 		if returnOnChg {
@@ -299,7 +299,7 @@ func (ss *Sim) TestAll() {
 	for {
 		ss.TestTrial(true) // return on change -- don't wrap
 		_, _, chg := TestEnv.Counter(env.Epoch)
-		if chg || ss.StopNow {
+		if chg || ss.GUI.StopNow {
 			break
 		}
 	}
@@ -307,7 +307,7 @@ func (ss *Sim) TestAll() {
 
 // RunTestAll runs through the full set of testing items, has stop running = false at end -- for gui
 func (ss *Sim) RunTestAll() {
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	ss.TestAll()
 	ss.Stopped()
 }

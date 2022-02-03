@@ -12,10 +12,12 @@ type Logs struct {
 	Items      []*Item
 	ItemIdxMap map[string]int
 	Tables     map[ScopeKey]*etable.Table
+	TableFuncs ComputeMap
 }
 
 // AddItem adds an item to the list
 func (lg *Logs) AddItem(item *Item) {
+
 	lg.Items = append(lg.Items, item)
 	if lg.ItemIdxMap == nil {
 		lg.ItemIdxMap = make(map[string]int)
@@ -35,10 +37,14 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 	sch := etable.Schema{}
+	if len(lg.TableFuncs) == 0 {
+		lg.TableFuncs = make(ComputeMap)
+	}
 	for _, val := range lg.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.GetComputeFunc(mode, time)
+		theFunction, ok := val.GetComputeFunc(mode, time)
 		if ok {
+			lg.TableFuncs[GenScopeKey(mode, time)] = theFunction
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
 	}
@@ -46,6 +52,7 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 }
 
 func (lg *Logs) CreateTables() {
+
 	uniqueTables := make(map[ScopeKey]*etable.Table)
 	for _, item := range lg.Items {
 		for _, mode := range item.Modes {
