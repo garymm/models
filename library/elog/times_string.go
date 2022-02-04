@@ -13,31 +13,32 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[AllTimes-0]
-	_ = x[Cycle-1]
-	_ = x[FastSpike-2]
-	_ = x[GammaCycle-3]
-	_ = x[Phase-4]
-	_ = x[BetaCycle-5]
-	_ = x[AlphaCycle-6]
-	_ = x[ThetaCycle-7]
-	_ = x[Event-8]
-	_ = x[Trial-9]
-	_ = x[Tick-10]
-	_ = x[Sequence-11]
-	_ = x[Condition-12]
-	_ = x[Block-13]
-	_ = x[Epoch-14]
-	_ = x[Run-15]
-	_ = x[Expt-16]
-	_ = x[Scene-17]
-	_ = x[Episode-18]
-	_ = x[TimesN-19]
+	_ = x[UnknownTimescale-0]
+	_ = x[AllTimes-1]
+	_ = x[Cycle-2]
+	_ = x[FastSpike-3]
+	_ = x[GammaCycle-4]
+	_ = x[Phase-5]
+	_ = x[BetaCycle-6]
+	_ = x[AlphaCycle-7]
+	_ = x[ThetaCycle-8]
+	_ = x[Event-9]
+	_ = x[Trial-10]
+	_ = x[Tick-11]
+	_ = x[Sequence-12]
+	_ = x[Condition-13]
+	_ = x[Block-14]
+	_ = x[Epoch-15]
+	_ = x[Run-16]
+	_ = x[Expt-17]
+	_ = x[Scene-18]
+	_ = x[Episode-19]
+	_ = x[TimesN-20]
 }
 
-const _Times_name = "AllTimesCycleFastSpikeGammaCyclePhaseBetaCycleAlphaCycleThetaCycleEventTrialTickSequenceConditionBlockEpochRunExptSceneEpisodeTimesN"
+const _Times_name = "UnknownTimescaleAllTimesCycleFastSpikeGammaCyclePhaseBetaCycleAlphaCycleThetaCycleEventTrialTickSequenceConditionBlockEpochRunExptSceneEpisodeTimesN"
 
-var _Times_index = [...]uint8{0, 8, 13, 22, 32, 37, 46, 56, 66, 71, 76, 80, 88, 97, 102, 107, 110, 114, 119, 126, 132}
+var _Times_index = [...]uint8{0, 16, 24, 29, 38, 48, 53, 62, 72, 82, 87, 92, 96, 104, 113, 118, 123, 126, 130, 135, 142, 148}
 
 func (i Times) String() string {
 	if i < 0 || i >= Times(len(_Times_index)-1) {

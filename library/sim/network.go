@@ -39,7 +39,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
 		if !train {
-			ss.LogTstCyc(ss.Logs.GetTable(elog.Test, elog.Cycle), ss.Time.Cycle)
+			ss.Log(elog.Test, elog.Cycle)
 			ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 		}
 		if !ss.NoGui {
@@ -67,7 +67,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
 		if !train {
-			ss.LogTstCyc(ss.Logs.GetTable(elog.Test, elog.Cycle), ss.Time.Cycle)
+			ss.Log(elog.Test, elog.Cycle)
 			ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 		}
 		if !ss.NoGui {
@@ -130,7 +130,7 @@ func (ss *Sim) TrainTrial() {
 	// if epoch counter has changed
 	epc, _, chg := TrainEnv.Counter(env.Epoch)
 	if chg {
-		ss.LogTrnEpc(ss.Logs.GetTable(elog.Train, elog.Epoch))
+		ss.Log(elog.Train, elog.Epoch)
 		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Epoch))
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
@@ -154,11 +154,12 @@ func (ss *Sim) TrainTrial() {
 
 	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
+	ss.Log(elog.Train, elog.Trial)
 }
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here
 func (ss *Sim) RunEnd() {
-	ss.LogRun(ss.Logs.GetTable(elog.Train, elog.Run))
+	ss.Log(elog.Train, elog.Run)
 	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Run))
 	if ss.SaveWts {
 		fnm := ss.WeightsFileName()
@@ -271,7 +272,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
 			ss.UpdateView(false)
 		}
-		ss.LogTstEpc(ss.Logs.GetTable(elog.Test, elog.Epoch))
+		ss.Log(elog.Test, elog.Epoch)
 		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Epoch))
 		if returnOnChg {
 			return
@@ -280,7 +281,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 
 	ss.ApplyInputs(ss.TestEnv)
 	ss.ThetaCyc(false) // !train
-	ss.LogTstTrl(ss.Logs.GetTable(elog.Test, elog.Trial))
+	ss.Log(elog.Test, elog.Trial)
 	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Trial))
 	if ss.NetData != nil { // offline record net data from testing, just final state
 		ss.NetData.Record(ss.Counters(false))

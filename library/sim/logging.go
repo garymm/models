@@ -5,16 +5,20 @@ import (
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/agg"
+	"github.com/emer/etable/eplot"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
 	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
-	"time"
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Logging
+
+func (ss *Sim) ConfigLogs() {
+	ss.Logs.CreateTables()
+}
 
 // ValsTsr gets value tensor of given name, creating if not yet made
 func (ss *Sim) ValsTsr(name string) *etensor.Float32 {
@@ -64,106 +68,111 @@ func (ss *Sim) LogFileName(lognm string) string {
 
 // TODO Unify these functions
 // TODO move these calculations to the logger add items compute function
+// Create a general Log(mode, time) function
 
-// LogTrnEpc adds data from current epoch to the TrnEpcLog table.
-// computes epoch averages prior to logging.
-func (ss *Sim) LogTrnEpc(dt *etable.Table) {
+func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
+	dt := ss.Logs.GetTable(mode, time)
+
 	row := dt.Rows
-	dt.SetNumRows(row + 1)
-
-	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
-	//nt := float64(len((*ss.TrainEnv).Order)) // number of trials in view
-	nt := float64((ss.TrainEnv).Trial().Max) //TODO: figure out the appropriate normalization term for the loss
-	ss.EpcUnitErr = ss.SumUnitErr / nt
-	ss.SumUnitErr = 0
-	ss.EpcPctErr = float64(ss.SumErr) / nt
-	ss.SumErr = 0
-	ss.EpcPctCor = 1 - ss.EpcPctErr
-	ss.EpcCosDiff = ss.SumCosDiff / nt
-	ss.EpcCorrel = ss.SumCorrel / nt
-	ss.SumCosDiff = 0
-	ss.SumCorrel = 0
-	if ss.FirstZero < 0 && ss.EpcPctErr == 0 {
-		ss.FirstZero = epc
+	if time == elog.Cycle {
+		row = ss.Time.Cycle
 	}
-	if ss.EpcPctErr == 0 {
-		ss.NZero++
-	} else {
-		ss.NZero = 0
-	}
-
-	if ss.LastEpcTime.IsZero() {
-		ss.EpcPerTrlMSec = 0
-	} else {
-		iv := time.Now().Sub(ss.LastEpcTime)
-		ss.EpcPerTrlMSec = float64(iv) / (nt * float64(time.Millisecond))
-	}
-	ss.LastEpcTime = time.Now()
-
-	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(elog.Train, elog.Epoch)
-		if ok {
-			callback(item, item.GetScopeKey(elog.Train, elog.Epoch), dt, row)
+	if time == elog.Trial {
+		// TODO Why is this not stored on ss.Time?
+		if mode == elog.Test {
+			row = (ss.TestEnv).Trial().Cur
+		} else {
+			row = (ss.TrainEnv).Trial().Cur
 		}
 	}
-
-	// note: essential to use Go version of update when called from another goroutine
-	if ss.TrnEpcPlot != nil {
-		ss.TrnEpcPlot.GoUpdate()
-	}
-	if ss.TrnEpcFile != nil {
-		if (ss.TrainEnv).Run().Cur == ss.StartRun && row == 0 {
-			// note: can't just use row=0 b/c reset table each run
-			dt.WriteCSVHeaders(ss.TrnEpcFile, etable.Tab)
-		}
-		dt.WriteCSVRow(ss.TrnEpcFile, row, etable.Tab)
-	}
-}
-
-func (ss *Sim) ConfigLogs() {
-	ss.Logs.CreateTables()
-}
-
-//////////////////////////////////////////////
-//  TstTrlLog
-
-// LogTstTrl adds data from current trial to the TstTrlLog table.
-// log always contains number of testing items
-func (ss *Sim) LogTstTrl(dt *etable.Table) {
-
-	trl := (ss.TestEnv).Trial().Cur
-	row := trl // TODO(clean) Is this making a copy? Is it necessary?
 	if dt.Rows <= row {
 		dt.SetNumRows(row + 1)
 	}
 
+	// TODO These should be callback functions
+	if mode == elog.Train && time == elog.Epoch {
+		ss.UpdateTrnEpc()
+	}
+
+	// TODO(optimize): A map would be more efficient than a filter loop.
 	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(elog.Test, elog.Trial)
+		callback, ok := item.GetComputeFunc(mode, time)
 		if ok {
-			callback(item, item.GetScopeKey(elog.Test, elog.Trial), dt, row)
+			callback(item, item.GetScopeKey(mode, time), dt, row)
 		}
 	}
 
-	// note: essential to use Go version of update when called from another goroutine
-	if ss.TstTrlPlot != nil {
-		ss.TstTrlPlot.GoUpdate()
+	// TODO These should be callback functions
+	if mode == elog.Test && time == elog.Epoch {
+		ss.UpdateTstEpcErrors()
+	}
+	if mode == elog.Train && time == elog.Run {
+		ss.UpdateRun(dt)
+	}
+
+	// TODO Put these in a map or on LogTable
+	var plt *eplot.Plot2D
+	if mode == elog.Train && time == elog.Epoch {
+		plt = ss.TrnEpcPlot
+	}
+	if mode == elog.Test && time == elog.Trial {
+		plt = ss.TstTrlPlot
+	}
+	if mode == elog.Test && time == elog.Epoch {
+		plt = ss.TstEpcPlot
+	}
+	// Note this special case
+	if mode == elog.Test && time == elog.Cycle && row%10 == 0 {
+		plt = ss.TstCycPlot
+	}
+	if mode == elog.Train && time == elog.Run {
+		plt = ss.RunPlot
+	}
+	if plt != nil {
+		plt.GoUpdate()
+	}
+
+	// TODO Check LogTable for details on saving the plot
+	if mode == elog.Train && time == elog.Epoch {
+		if ss.TrnEpcFile != nil {
+			if (ss.TrainEnv).Run().Cur == ss.StartRun && row == 0 {
+				// note: can't just use row=0 b/c reset table each run
+				dt.WriteCSVHeaders(ss.TrnEpcFile, etable.Tab)
+			}
+			dt.WriteCSVRow(ss.TrnEpcFile, row, etable.Tab)
+		}
+	}
+	if mode == elog.Train && time == elog.Run {
+		if ss.RunFile != nil {
+			if row == 0 {
+				dt.WriteCSVHeaders(ss.RunFile, etable.Tab)
+			}
+			dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
+		}
 	}
 }
 
-//////////////////////////////////////////////
-//  TstEpcLog
+// Callback functions that update miscellaneous logs
+// TODO Move these to logging_content.go
 
-func (ss *Sim) LogTstEpc(dt *etable.Table) {
-	row := dt.Rows
-	dt.SetNumRows(row + 1)
-
-	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(elog.Test, elog.Epoch)
-		if ok {
-			callback(item, item.GetScopeKey(elog.Test, elog.Epoch), dt, row)
-		}
+func (ss *Sim) UpdateTrnEpc() {
+	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
+	ss.SumUnitErr = 0
+	epcSumErr := float64(ss.SumErr)
+	ss.SumErr = 0
+	ss.SumCosDiff = 0
+	ss.SumCorrel = 0
+	if ss.FirstZero < 0 && epcSumErr == 0 {
+		ss.FirstZero = epc
 	}
+	if epcSumErr == 0 {
+		ss.NZero++
+	} else {
+		ss.NZero = 0
+	}
+}
 
+func (ss *Sim) UpdateTstEpcErrors() {
 	// Record those test trials which had errors
 	trl := ss.Logs.GetTable(elog.Test, elog.Trial)
 	trlix := etable.NewIdxView(trl)
@@ -177,11 +186,18 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	split.Agg(allsp, "OutActM", agg.AggMean)
 	split.Agg(allsp, "OutActP", agg.AggMean)
 	ss.TstErrStats = allsp.AggsToTable(etable.AddAggName)
+}
 
-	// note: essential to use Go version of update when called from another goroutine
-	if ss.TstEpcPlot != nil {
-		ss.TstEpcPlot.GoUpdate()
-	}
+//////////////////////////////////////////////
+//  RunLog
+
+// LogRun adds data from current run to the RunLog table.
+func (ss *Sim) UpdateRun(dt *etable.Table) {
+	runix := etable.NewIdxView(dt)
+	spl := split.GroupBy(runix, []string{"Params"})
+	split.Desc(spl, "FirstZero")
+	split.Desc(spl, "PctCor")
+	ss.RunStats = spl.AggsToTable(etable.AddAggName)
 }
 
 //////////////////////////////////////////////
@@ -256,68 +272,6 @@ func (ss *Sim) AvgLayVal(ly *axon.Layer, vnm string) float32 {
 	return norm.Mean32(tv.Values)
 }
 
-//////////////////////////////////////////////
-//  TstCycLog
-
-// LogTstCyc adds data from current trial to the TstCycLog table.
-// log just has 100 cycles, is overwritten
-func (ss *Sim) LogTstCyc(dt *etable.Table, cyc int) {
-	if dt.Rows <= cyc {
-		dt.SetNumRows(cyc + 1)
-	}
-
-	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(elog.Test, elog.Cycle)
-		if ok {
-			callback(item, item.GetScopeKey(elog.Test, elog.Cycle), dt, cyc)
-		}
-	}
-
-	if ss.TstCycPlot != nil && cyc%10 == 0 { // too slow to do every cyc
-		// note: essential to use Go version of update when called from another goroutine
-		ss.TstCycPlot.GoUpdate()
-	}
-}
-
-//////////////////////////////////////////////
-//  RunLog
-
-// LogRun adds data from current run to the RunLog table.
-func (ss *Sim) LogRun(dt *etable.Table) {
-	epclog := ss.Logs.GetTable(elog.Train, elog.Epoch)
-	epcix := etable.NewIdxView(epclog)
-	if epcix.Len() == 0 {
-		return
-	}
-
-	row := dt.Rows
-	dt.SetNumRows(row + 1)
-
-	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(elog.Train, elog.Run)
-		if ok {
-			callback(item, item.GetScopeKey(elog.Train, elog.Run), dt, row)
-		}
-	}
-
-	runix := etable.NewIdxView(dt)
-	spl := split.GroupBy(runix, []string{"Params"})
-	split.Desc(spl, "FirstZero")
-	split.Desc(spl, "PctCor")
-	ss.RunStats = spl.AggsToTable(etable.AddAggName)
-
-	// note: essential to use Go version of update when called from another goroutine
-	if ss.RunPlot != nil {
-		ss.RunPlot.GoUpdate()
-	}
-	if ss.RunFile != nil {
-		if row == 0 {
-			dt.WriteCSVHeaders(ss.RunFile, etable.Tab)
-		}
-		dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
-	}
-}
-
 // InitStats initializes all the statistics, especially important for the
 // cumulative epoch stats -- called at start of new run
 func (ss *Sim) InitStats() {
@@ -331,7 +285,4 @@ func (ss *Sim) InitStats() {
 	// clear rest just to make Sim look initialized
 	ss.TrlErr = 0
 	ss.TrlUnitErr = 0
-	ss.EpcUnitErr = 0
-	ss.EpcPctErr = 0
-	ss.EpcCosDiff = 0
 }

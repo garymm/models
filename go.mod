@@ -14,4 +14,6 @@ require (
 	github.com/goki/ki v1.1.4
 	github.com/goki/mat32 v1.0.9
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
+	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
+	golang.org/x/tools v0.1.9 // indirect
 )

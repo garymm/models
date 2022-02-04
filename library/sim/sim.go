@@ -62,17 +62,12 @@ type Sim struct {
 	// TODO for the following block these should be encoded in the compute functions and replaced with agg functions on traintrial
 
 	// statistics: note use float64 as that is best for etable.Table
-	TrlErr        float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
-	TrlClosest    string  `inactive:"+" desc:"Name of the pattern with the closest output"`
-	TrlCorrel     float64 `inactive:"+" desc:"Correlation with closest output"`
-	TrlUnitErr    float64 `inactive:"+" desc:"current trial's unit-level pct error"`
-	TrlCosDiff    float64 `inactive:"+" desc:"current trial's cosine difference"`
-	EpcUnitErr    float64 `inactive:"+" desc:"last epoch's total unit-level pct error"`
-	EpcPctErr     float64 `inactive:"+" desc:"last epoch's average TrlErr"`
-	EpcPctCor     float64 `inactive:"+" desc:"1 - last epoch's average TrlErr"`
-	EpcCosDiff    float64 `inactive:"+" desc:"last epoch's average cosine difference for output layer (a normalized error measure, maximum of 1 when the minus phase exactly matches the plus)"`
-	EpcCorrel     float64 `inactive:"+" desc:"last epoch's average correlation for output layer"`
-	EpcPerTrlMSec float64 `inactive:"+" desc:"how long did the epoch take per trial in wall-clock milliseconds"`
+	// TODO Leave the Trial stats here on Sim, but remove the Epoch stats completely
+	TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
+	TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
+	TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
+	TrlUnitErr float64 `inactive:"+" desc:"current trial's unit-level pct error"`
+	TrlCosDiff float64 `inactive:"+" desc:"current trial's cosine difference"`
 
 	// TODO Move these to a newly created func EpochStats
 	// State about how long there's been zero error.
@@ -81,6 +76,7 @@ type Sim struct {
 	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
 
 	// internal state - view:"-"
+	// TODO(logging) Remove these
 	SumErr     float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me // TODO Replace the use of these with agg functions
 	SumUnitErr float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
 	SumCosDiff float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
@@ -91,8 +87,10 @@ type Sim struct {
 	TstTrlPlot *eplot.Plot2D `view:"-" desc:"the test-trial plot"`
 	TstCycPlot *eplot.Plot2D `view:"-" desc:"the test-cycle plot"`
 	RunPlot    *eplot.Plot2D `view:"-" desc:"the run plot"`
-	TrnEpcFile *os.File      `view:"-" desc:"log file"`
-	RunFile    *os.File      `view:"-" desc:"log file"`
+
+	// TODO These should be added to the logger as a list or map
+	TrnEpcFile *os.File `view:"-" desc:"log file"`
+	RunFile    *os.File `view:"-" desc:"log file"`
 
 	// TODO Move this to Logs
 	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"A buffer for holding layer values. This helps avoid reallocating memory every time"`

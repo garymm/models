@@ -52,6 +52,7 @@ var TestEnv = EnvText2Many{}
 func TrialStats(ss *sim2.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
+	ss.TrlUnitErr = out.PctUnitErr()
 
 	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 	ss.TrlClosest = closestWord
@@ -67,6 +68,7 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	}
 
 	if accum {
+		// TODO(logging) Stop doing this stuff
 		ss.SumErr += ss.TrlErr
 		ss.SumUnitErr += ss.TrlUnitErr
 		ss.SumCosDiff += ss.TrlCosDiff
