@@ -18,6 +18,9 @@ type LogTable struct {
 	SavePlot      bool           `desc:"If true, save plot when updating log."`
 }
 
+// DO NOT SUBMIT
+//func (lt *LogTable) GetIdxView(
+
 type Logs struct {
 	Items      []*Item `desc:"A list of the items that should be logged. Each item should describe one column that you want to log, and how."`
 	ItemIdxMap map[string]int
@@ -175,10 +178,11 @@ func (lg *Logs) GetTable(mode EvalModes, time Times) *etable.Table {
 	return lg.Tables[tempScopeKey].Table
 }
 
-func (lg *Logs) GetTableView(mode EvalModes, time Times) etable.IdxView {
+func (lg *Logs) GetTableView(mode EvalModes, time Times) *etable.IdxView {
 	tempScopeKey := ScopeKey("")
 	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
-	return lg.Tables[tempScopeKey].TableView
+	// TODO(optimize) Cache this in the TableView
+	return etable.NewIdxView(lg.Tables[tempScopeKey].Table)
 }
 
 func (lg *Logs) GetTableDetails(mode EvalModes, time Times) LogTable {
