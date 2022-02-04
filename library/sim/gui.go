@@ -195,6 +195,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	return ss.GUI.Win
 }
 
+// UpdateView updates the gui visualization of the network
 func (ss *Sim) UpdateView(train bool) {
 	if ss.GUI.NetView != nil && ss.GUI.NetView.IsVisible() {
 		ss.GUI.NetView.Record(ss.Counters(train))
@@ -204,6 +205,7 @@ func (ss *Sim) UpdateView(train bool) {
 	}
 }
 
+// UpdateViewTime based on differetn time scales change the values accoridngly
 func (ss *Sim) UpdateViewTime(train bool, viewUpdt axon.TimeScales) {
 	switch viewUpdt {
 	case axon.Cycle:
