@@ -10,7 +10,6 @@ import (
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
 	"math/rand"
-	"os"
 	"time"
 )
 
@@ -74,9 +73,6 @@ type Sim struct {
 
 	// internal state - view:"-"
 	SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
-	// TODO These should be added to the logger as a list or map
-	TrnEpcFile *os.File `view:"-" desc:"log file"`
-	RunFile    *os.File `view:"-" desc:"log file"`
 
 	// TODO Move this to Logs
 	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"A buffer for holding layer values. This helps avoid reallocating memory every time"`

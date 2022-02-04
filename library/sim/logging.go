@@ -111,20 +111,20 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 
 	// TODO Check LogTable for details on saving the plot
 	if mode == elog.Train && time == elog.Epoch {
-		if ss.TrnEpcFile != nil {
+		if ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File != nil {
 			if (ss.TrainEnv).Run().Cur == ss.StartRun && row == 0 {
 				// note: can't just use row=0 b/c reset table each run
-				dt.WriteCSVHeaders(ss.TrnEpcFile, etable.Tab)
+				dt.WriteCSVHeaders(ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File, etable.Tab)
 			}
-			dt.WriteCSVRow(ss.TrnEpcFile, row, etable.Tab)
+			dt.WriteCSVRow(ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File, row, etable.Tab)
 		}
 	}
 	if mode == elog.Train && time == elog.Run {
-		if ss.RunFile != nil {
+		if ss.Logs.GetTableDetails(elog.Train, elog.Run).File != nil {
 			if row == 0 {
-				dt.WriteCSVHeaders(ss.RunFile, etable.Tab)
+				dt.WriteCSVHeaders(ss.Logs.GetTableDetails(elog.Train, elog.Run).File, etable.Tab)
 			}
-			dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
+			dt.WriteCSVRow(ss.Logs.GetTableDetails(elog.Train, elog.Run).File, row, etable.Tab)
 		}
 	}
 }

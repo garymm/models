@@ -3,6 +3,7 @@ package sim
 import (
 	"flag"
 	"fmt"
+	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/goki/gi/gi"
 	"log"
@@ -40,25 +41,27 @@ func (ss *Sim) CmdArgs() {
 	if saveEpcLog {
 		var err error
 		fnm := ss.LogFileName("epc")
-		ss.TrnEpcFile, err = os.Create(fnm)
+		lt := ss.Logs.GetTableDetails(elog.Train, elog.Epoch)
+		lt.File, err = os.Create(fnm)
 		if err != nil {
 			log.Println(err)
-			ss.TrnEpcFile = nil
+			lt.File = nil
 		} else {
 			fmt.Printf("Saving epoch log to: %s\n", fnm)
-			defer ss.TrnEpcFile.Close()
+			defer lt.File.Close()
 		}
 	}
 	if saveRunLog {
 		var err error
 		fnm := ss.LogFileName("run")
-		ss.RunFile, err = os.Create(fnm)
+		lt := ss.Logs.GetTableDetails(elog.Train, elog.Run)
+		lt.File, err = os.Create(fnm)
 		if err != nil {
 			log.Println(err)
-			ss.RunFile = nil
+			lt.File = nil
 		} else {
 			fmt.Printf("Saving run log to: %s\n", fnm)
-			defer ss.RunFile.Close()
+			defer lt.File.Close()
 		}
 	}
 	if saveNetData {

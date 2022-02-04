@@ -3,7 +3,7 @@ package elog
 import (
 	"fmt"
 	"github.com/emer/etable/etable"
-	"github.com/goki/gi/gi"
+	"os"
 	"strconv"
 )
 
@@ -11,15 +11,13 @@ import (
 const LogPrec = 4
 
 type LogTable struct {
-	Table         *etable.Table  `desc:"Actual data stored."`
+	Table *etable.Table `desc:"Actual data stored."`
+	// TODO Use this to cache the IdxView if speed becomes an issue.
 	TableView     etable.IdxView `desc:"View of the table."`
-	FileName      gi.FileName    `desc:"Name of the file to store it at."`
+	File          *os.File       `desc:"File to store the log."`
 	HeaderWritten bool           `desc:"If true, header has been written already."`
-	SavePlot      bool           `desc:"If true, save plot when updating log."`
+	// DO NOT SUBMIT Add callback functions here
 }
-
-// DO NOT SUBMIT
-//func (lt *LogTable) GetIdxView(
 
 type Logs struct {
 	Items      []*Item `desc:"A list of the items that should be logged. Each item should describe one column that you want to log, and how."`
