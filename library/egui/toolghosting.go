@@ -12,7 +12,7 @@ var KiT_ToolGhosting = kit.Enums.AddEnum(ToolGhostingN, kit.BitFlag, nil)
 func (ev ToolGhosting) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *ToolGhosting) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
-// The evaluation modes
+// The evaluation modes for when a tool bar can be clicked
 const (
 	ActiveStopped ToolGhosting = iota
 

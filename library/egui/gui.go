@@ -28,11 +28,13 @@ type GUI struct {
 	CycleUpdateRate int
 }
 
+// UpdateWindow renders the viewport associated with the main window
 func (gui *GUI) UpdateWindow() {
 	gui.ViewPort.SetNeedsFullRender()
 
 }
 
+// MakeWindow specifies default window settings that are largely used in all windwos
 func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
 	width := 1600
 	height := 1200
@@ -66,14 +68,7 @@ func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
 
 }
 
-//func (gui *GUI) UpdateView(ss *sim.Sim, train bool) {
-//	if gui.NetView != nil && gui.NetView.IsVisible() {
-//		gui.NetView.Record(ss.Counters(train))
-//		// note: essential to use Go version of update when called from another goroutine
-//		gui.NetView.GoUpdate() // note: using counters is significantly slower..
-//	}
-//}
-
+// AddToolbarItem adds a toolbar item but also checks when it be active in the UI
 func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 	switch item.Active {
 	case ActiveStopped:
@@ -96,6 +91,7 @@ func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 	}
 }
 
+// AddPlots adds plots based on the unique tables we have, currently assumes they should always be plotted
 func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 	gui.PlotMap = make(map[elog.ScopeKey]*eplot.Plot2D)
 	//for key, table := range Log.Tables {
@@ -126,6 +122,7 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 
 }
 
+// UpdatePlot wrapper for updating each plot
 func (gui *GUI) UpdatePlot(scope elog.ScopeKey) {
 
 	plot, ok := gui.PlotMap[scope]
@@ -136,6 +133,7 @@ func (gui *GUI) UpdatePlot(scope elog.ScopeKey) {
 	}
 }
 
+// FinalizeGUI wraps the end functionality of the GUI
 func (gui *GUI) FinalizeGUI(closePrompt bool) {
 	vp := gui.Win.WinViewport2D()
 	vp.UpdateEndNoSig(true)
