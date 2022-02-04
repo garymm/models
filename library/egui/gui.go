@@ -102,7 +102,7 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, string(key)+"Plot").(*eplot.Plot2D)
 		gui.PlotMap[key] = plt
 		gui.PlotAry = append(gui.PlotAry, plt)
-		plt.SetTable(table)
+		plt.SetTable(table.Table)
 		//This is so inefficient even if it's run once, this is ugly
 		for _, item := range Log.Items {
 			_, ok := item.Compute[key]
