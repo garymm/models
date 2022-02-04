@@ -6,7 +6,6 @@ import (
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
-	"github.com/emer/etable/eplot"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
@@ -59,8 +58,6 @@ type Sim struct {
 	LayStatNms   []string        `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
 	SpikeRecLays []string        `desc:"names of layers to record spikes of during testing"`
 
-	// TODO for the following block these should be encoded in the compute functions and replaced with agg functions on traintrial
-
 	// statistics: note use float64 as that is best for etable.Table
 	// TODO Leave the Trial stats here on Sim, but remove the Epoch stats completely
 	TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
@@ -81,12 +78,6 @@ type Sim struct {
 	SumUnitErr float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
 	SumCosDiff float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
 	SumCorrel  float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	// TODO Create a GUI object that stores these
-	TrnEpcPlot *eplot.Plot2D `view:"-" desc:"the training epoch plot"`
-	TstEpcPlot *eplot.Plot2D `view:"-" desc:"the testing epoch plot"`
-	TstTrlPlot *eplot.Plot2D `view:"-" desc:"the test-trial plot"`
-	TstCycPlot *eplot.Plot2D `view:"-" desc:"the test-cycle plot"`
-	RunPlot    *eplot.Plot2D `view:"-" desc:"the run plot"`
 
 	// TODO These should be added to the logger as a list or map
 	TrnEpcFile *os.File `view:"-" desc:"log file"`

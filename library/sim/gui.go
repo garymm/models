@@ -1,7 +1,5 @@
 package sim
 
-// TODO Move this to an egui package
-
 import (
 	"fmt"
 	"github.com/Astera-org/models/library/egui"
@@ -171,7 +169,8 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Active:  egui.ActiveAlways,
 		Func: func() {
 			ss.Logs.GetTable(elog.Train, elog.Run).SetNumRows(0)
-			ss.RunPlot.Update()
+			runPlot := ss.GUI.PlotMap[elog.GenScopeKey(elog.Train, elog.Run)]
+			runPlot.Update()
 		},
 	})
 	////////////////////////////////////////////////

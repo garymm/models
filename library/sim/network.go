@@ -90,16 +90,15 @@ func (ss *Sim) ThetaCyc(train bool) {
 	ss.TrialStatsFunc(ss, train)
 
 	if train {
-		// ss.ErrLrMod.LrateMod(ss.Net, float32(1-ss.TrlCosDiff))
 		ss.Net.DWt()
 	}
 
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
 		ss.UpdateView(train)
 	}
-
-	if ss.TstCycPlot != nil && !train {
-		ss.TstCycPlot.GoUpdate() // make sure up-to-date at end
+	// TODO check why this is being called here instead of in plus or minus phase
+	if (ss.Time.Cycle % ss.GUI.CycleUpdateRate) == 0 {
+		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 	}
 }
 

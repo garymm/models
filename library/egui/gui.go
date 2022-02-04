@@ -100,8 +100,12 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 	gui.PlotMap = make(map[elog.ScopeKey]*eplot.Plot2D)
 	//for key, table := range Log.Tables {
 	for _, key := range Log.TableOrder {
+		modes, times := key.GetModesAndTimes()
+		timeName := times[0].String()
+		modeName := modes[0].String()
+
 		table := Log.Tables[key]
-		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, string(key)+"Plot").(*eplot.Plot2D)
+		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, modeName+" "+timeName+" Plot").(*eplot.Plot2D)
 		gui.PlotMap[key] = plt
 		gui.PlotAry = append(gui.PlotAry, plt)
 		plt.SetTable(table.Table)
@@ -110,8 +114,7 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 			_, ok := item.Compute[key]
 			if ok {
 				plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
-				_, times := key.GetModesAndTimes()
-				timeName := times[0].String()
+
 				plt.Params.Title = title + " " + timeName + " Plot"
 				plt.Params.XAxisCol = timeName
 				if times[0] == elog.Run { //The one exception
