@@ -126,6 +126,7 @@ func (gui *GUI) UpdatePlot(scope elog.ScopeKey) {
 	plot, ok := gui.PlotMap[scope]
 	if ok {
 		plot.UpdatePlot()
+		plot.GoUpdate()
 	}
 }
 
