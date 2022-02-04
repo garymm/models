@@ -155,6 +155,7 @@ func (ss *Sim) TrainTrial() {
 	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
 	ss.Log(elog.Train, elog.Trial)
+	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Trial))
 }
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here

@@ -257,14 +257,14 @@ func (ss *Sim) ConfigLogSpec() {
 		Name: "Trial",
 		Type: etensor.INT64,
 		Compute: elog.ComputeMap{
-			elog.GenScopeKey(elog.Test, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			elog.GenScopeKey(elog.AllEvalModes, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				dt.SetCellFloat(item.Name, row, float64(ss.TestEnv.Trial().Cur))
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "TrialName",
 		Type: etensor.STRING,
 		Compute: elog.ComputeMap{
-			elog.GenScopeKey(elog.Test, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+			elog.GenScopeKey(elog.AllEvalModes, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				dt.SetCellString(item.Name, row, ss.TestEnv.GetCurrentTrialName())
 			}}})
 	ss.Logs.AddItem(&elog.Item{
