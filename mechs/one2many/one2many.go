@@ -53,9 +53,6 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 
 	if accum {
 		ss.SumErr += ss.TrlErr
-		ss.SumUnitErr += ss.TrlUnitErr
-		ss.SumCosDiff += ss.TrlCosDiff
-		ss.SumCorrel += ss.TrlCorrel
 	}
 }
 

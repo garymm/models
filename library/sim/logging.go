@@ -108,7 +108,7 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 	if mode == elog.Train && time == elog.Run {
 		ss.UpdateRun(dt)
 	}
-	
+
 	// TODO Check LogTable for details on saving the plot
 	if mode == elog.Train && time == elog.Epoch {
 		if ss.TrnEpcFile != nil {
@@ -134,11 +134,8 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 
 func (ss *Sim) UpdateTrnEpc() {
 	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
-	ss.SumUnitErr = 0
 	epcSumErr := float64(ss.SumErr)
 	ss.SumErr = 0
-	ss.SumCosDiff = 0
-	ss.SumCorrel = 0
 	if ss.FirstZero < 0 && epcSumErr == 0 {
 		ss.FirstZero = epc
 	}
@@ -254,9 +251,6 @@ func (ss *Sim) AvgLayVal(ly *axon.Layer, vnm string) float32 {
 func (ss *Sim) InitStats() {
 	// accumulators
 	ss.SumErr = 0
-	ss.SumUnitErr = 0
-	ss.SumCosDiff = 0
-	ss.SumCorrel = 0
 	ss.FirstZero = -1
 	ss.NZero = 0
 	// clear rest just to make Sim look initialized
