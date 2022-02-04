@@ -40,6 +40,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.Net.Cycle(&ss.Time)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
+			ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 		}
 		if !ss.NoGui {
 			ss.RecSpikes(ss.Time.Cycle)
@@ -67,6 +68,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.Net.Cycle(&ss.Time)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
+			ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 		}
 		if !ss.NoGui {
 			ss.RecSpikes(ss.Time.Cycle)
@@ -129,6 +131,7 @@ func (ss *Sim) TrainTrial() {
 	epc, _, chg := TrainEnv.Counter(env.Epoch)
 	if chg {
 		ss.Log(elog.Train, elog.Epoch)
+		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Epoch))
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 			ss.UpdateView(true)
@@ -140,7 +143,7 @@ func (ss *Sim) TrainTrial() {
 			// done with training..
 			ss.RunEnd()
 			if TrainEnv.Run().Incr() { // we are done!
-				ss.StopNow = true
+				ss.GUI.StopNow = true
 				return
 			} else {
 				ss.NeedsNewRun = true
@@ -152,11 +155,13 @@ func (ss *Sim) TrainTrial() {
 	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
 	ss.Log(elog.Train, elog.Trial)
+	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Trial))
 }
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
+	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Run))
 	if ss.SaveWts {
 		fnm := ss.WeightsFileName()
 		fmt.Printf("Saving Weights to: %s\n", fnm)
@@ -185,11 +190,11 @@ func (ss *Sim) NewRun() {
 // TrainEpoch runs training trials for remainder of this epoch
 func (ss *Sim) TrainEpoch() {
 	TrainEnv := ss.TrainEnv
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	curEpc := TrainEnv.Epoch().Cur
 	for {
 		ss.TrainTrial()
-		if ss.StopNow || TrainEnv.Epoch().Cur != curEpc {
+		if ss.GUI.StopNow || TrainEnv.Epoch().Cur != curEpc {
 			break
 		}
 	}
@@ -199,11 +204,11 @@ func (ss *Sim) TrainEpoch() {
 // TrainRun runs training trials for remainder of run
 func (ss *Sim) TrainRun() {
 	TrainEnv := ss.TrainEnv
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	curRun := TrainEnv.Run().Cur
 	for {
 		ss.TrainTrial()
-		if ss.StopNow || TrainEnv.Run().Cur != curRun {
+		if ss.GUI.StopNow || TrainEnv.Run().Cur != curRun {
 			break
 		}
 	}
@@ -212,10 +217,10 @@ func (ss *Sim) TrainRun() {
 
 // Train runs the full training from this point onward
 func (ss *Sim) Train() {
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	for {
 		ss.TrainTrial()
-		if ss.StopNow {
+		if ss.GUI.StopNow {
 			break
 		}
 	}
@@ -224,16 +229,16 @@ func (ss *Sim) Train() {
 
 // Stop tells the sim to stop running
 func (ss *Sim) Stop() {
-	ss.StopNow = true
+	ss.GUI.StopNow = true
 }
 
 // Stopped is called when a run method stops running -- updates the IsRunning flag and toolbar
 func (ss *Sim) Stopped() {
-	ss.IsRunning = false
-	if ss.Win != nil {
-		vp := ss.Win.WinViewport2D()
-		if ss.ToolBar != nil {
-			ss.ToolBar.UpdateActions()
+	ss.GUI.IsRunning = false
+	if ss.GUI.Win != nil {
+		vp := ss.GUI.Win.WinViewport2D()
+		if ss.GUI.ToolBar != nil {
+			ss.GUI.ToolBar.UpdateActions()
 		}
 		vp.SetNeedsFullRender()
 	}
@@ -269,6 +274,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 			ss.UpdateView(false)
 		}
 		ss.Log(elog.Test, elog.Epoch)
+		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Epoch))
 		if returnOnChg {
 			return
 		}
@@ -277,6 +283,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	ss.ApplyInputs(ss.TestEnv)
 	ss.ThetaCyc(false) // !train
 	ss.Log(elog.Test, elog.Trial)
+	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Trial))
 	if ss.NetData != nil { // offline record net data from testing, just final state
 		ss.NetData.Record(ss.Counters(false))
 	}
@@ -300,7 +307,7 @@ func (ss *Sim) TestAll() {
 	for {
 		ss.TestTrial(true) // return on change -- don't wrap
 		_, _, chg := TestEnv.Counter(env.Epoch)
-		if chg || ss.StopNow {
+		if chg || ss.GUI.StopNow {
 			break
 		}
 	}
@@ -308,7 +315,7 @@ func (ss *Sim) TestAll() {
 
 // RunTestAll runs through the full set of testing items, has stop running = false at end -- for gui
 func (ss *Sim) RunTestAll() {
-	ss.StopNow = false
+	ss.GUI.StopNow = false
 	ss.TestAll()
 	ss.Stopped()
 }

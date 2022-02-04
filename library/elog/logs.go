@@ -21,10 +21,14 @@ type LogTable struct {
 type Logs struct {
 	Items      []*Item `desc:"A list of the items that should be logged. Each item should describe one column that you want to log, and how."`
 	ItemIdxMap map[string]int
+
 	// TODO Replace this with a struct that stores etable.Table, File, IdxView, HeaderWrittenBool
 	Tables     map[ScopeKey]LogTable `desc:"Tables of logs."`
 	EvalModes  []EvalModes           `desc:"All the eval modes that appear in any of the items of this log."`
 	Timescales []Times               `desc:"All the timescales that appear in any of the items of this log."`
+
+	TableOrder []ScopeKey
+	TableFuncs ComputeMap
 }
 
 // AddItem adds an item to the list
@@ -130,10 +134,14 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 	sch := etable.Schema{}
+	if len(lg.TableFuncs) == 0 {
+		lg.TableFuncs = make(ComputeMap)
+	}
 	for _, val := range lg.Items {
 		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		_, ok := val.GetComputeFunc(mode, time)
+		theFunction, ok := val.GetComputeFunc(mode, time)
 		if ok {
+			lg.TableFuncs[GenScopeKey(mode, time)] = theFunction
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
 	}
@@ -142,6 +150,7 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 
 func (lg *Logs) CreateTables() {
 	uniqueTables := make(map[ScopeKey]LogTable)
+	tableOrder := make([]ScopeKey, 0) //initial size
 	for _, item := range lg.Items {
 		for scope, _ := range item.Compute {
 			_, ok := uniqueTables[scope]
@@ -151,11 +160,13 @@ func (lg *Logs) CreateTables() {
 			}
 			if ok == false {
 				uniqueTables[scope] = LogTable{Table: &etable.Table{}}
+				tableOrder = append(tableOrder, scope)
 				lg.configLogTable(uniqueTables[scope].Table, modes[0], times[0])
 			}
 		}
 	}
 	lg.Tables = uniqueTables
+	lg.TableOrder = tableOrder
 }
 
 func (lg *Logs) GetTable(mode EvalModes, time Times) *etable.Table {

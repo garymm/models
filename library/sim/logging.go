@@ -5,7 +5,6 @@ import (
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/agg"
-	"github.com/emer/etable/eplot"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
@@ -109,29 +108,7 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 	if mode == elog.Train && time == elog.Run {
 		ss.UpdateRun(dt)
 	}
-
-	// TODO Put these in a map or on LogTable
-	var plt *eplot.Plot2D
-	if mode == elog.Train && time == elog.Epoch {
-		plt = ss.TrnEpcPlot
-	}
-	if mode == elog.Test && time == elog.Trial {
-		plt = ss.TstTrlPlot
-	}
-	if mode == elog.Test && time == elog.Epoch {
-		plt = ss.TstEpcPlot
-	}
-	// Note this special case
-	if mode == elog.Test && time == elog.Cycle && row%10 == 0 {
-		plt = ss.TstCycPlot
-	}
-	if mode == elog.Train && time == elog.Run {
-		plt = ss.RunPlot
-	}
-	if plt != nil {
-		plt.GoUpdate()
-	}
-
+	
 	// TODO Check LogTable for details on saving the plot
 	if mode == elog.Train && time == elog.Epoch {
 		if ss.TrnEpcFile != nil {
