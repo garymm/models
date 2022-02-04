@@ -13,10 +13,9 @@ const LogPrec = 4
 type LogTable struct {
 	Table *etable.Table `desc:"Actual data stored."`
 	// TODO Use this to cache the IdxView if speed becomes an issue.
-	TableView     etable.IdxView `desc:"View of the table."`
-	File          *os.File       `desc:"File to store the log."`
-	HeaderWritten bool           `desc:"If true, header has been written already."`
-	// DO NOT SUBMIT Add callback functions here
+	TableView etable.IdxView `desc:"View of the table."`
+	File      *os.File       `desc:"File to store the log."`
+	// TODO Store a bool for HeadersWritten and another bool for whether or not to plot
 }
 
 type Logs struct {

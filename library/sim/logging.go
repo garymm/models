@@ -112,11 +112,12 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 	// TODO Check LogTable for details on saving the plot
 	if mode == elog.Train && time == elog.Epoch {
 		if ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File != nil {
+			lt := ss.Logs.GetTableDetails(elog.Train, elog.Epoch)
 			if (ss.TrainEnv).Run().Cur == ss.StartRun && row == 0 {
 				// note: can't just use row=0 b/c reset table each run
 				dt.WriteCSVHeaders(ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File, etable.Tab)
 			}
-			dt.WriteCSVRow(ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File, row, etable.Tab)
+			dt.WriteCSVRow(lt.File, row, etable.Tab)
 		}
 	}
 	if mode == elog.Train && time == elog.Run {
