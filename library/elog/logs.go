@@ -54,7 +54,7 @@ func (lg *Logs) CompileAllModesAndTimes() {
 						break
 					}
 				}
-				if !foundMode && m != UnknownEvalMode {
+				if !foundMode && m != UnknownEvalMode && m != AllEvalModes {
 					lg.EvalModes = append(lg.EvalModes, m)
 				}
 			}
@@ -66,7 +66,7 @@ func (lg *Logs) CompileAllModesAndTimes() {
 						break
 					}
 				}
-				if !foundTime && t != UnknownTimescale {
+				if !foundTime && t != UnknownTimescale && t != AllTimes {
 					lg.Timescales = append(lg.Timescales, t)
 				}
 			}
@@ -145,7 +145,6 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 }
 
 func (lg *Logs) CreateTables() {
-	// TODO This function is creating tables for scopekeys that include AllTimes and it shouldn't
 	uniqueTables := make(map[ScopeKey]LogTable)
 	for _, item := range lg.Items {
 		for _, mode := range item.Modes {
