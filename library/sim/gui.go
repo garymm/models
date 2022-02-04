@@ -200,6 +200,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 func (ss *Sim) UpdateView(train bool) {
 	if ss.GUI.NetView != nil && ss.GUI.NetView.IsVisible() {
 		ss.GUI.NetView.Record(ss.Counters(train))
+
 		// note: essential to use Go version of update when called from another goroutine
 		ss.GUI.NetView.GoUpdate() // note: using counters is significantly slower..
 	}
