@@ -24,6 +24,8 @@ type GUI struct {
 
 	PlotMap map[elog.ScopeKey]*eplot.Plot2D
 	PlotAry []*eplot.Plot2D
+
+	CycleUpdateRate int
 }
 
 func (gui *GUI) UpdateWindow() {

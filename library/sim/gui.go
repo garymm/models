@@ -21,6 +21,7 @@ func GuiRun(TheSim *Sim, appname, title, about string) {
 // ConfigGui configures the GoGi gui interface for this simulation,
 func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	ss.GUI.MakeWindow(ss, appname, title, about)
+	ss.GUI.CycleUpdateRate = 10
 	ss.GUI.NetView.SetNet(ss.Net) // TODO ask Randy what this is doing
 
 	ss.GUI.NetView.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"

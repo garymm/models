@@ -40,7 +40,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.Net.Cycle(&ss.Time)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if (ss.Time.Cycle % 10) == 0 {
+			if (ss.Time.Cycle % ss.GUI.CycleUpdateRate) == 0 {
 				ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 			}
 		}
@@ -70,7 +70,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.Net.Cycle(&ss.Time)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if (ss.Time.Cycle % 10) == 0 {
+			if (ss.Time.Cycle % ss.GUI.CycleUpdateRate) == 0 {
 				ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 			}
 
