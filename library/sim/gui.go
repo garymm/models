@@ -3,10 +3,12 @@ package sim
 // TODO Move this to an egui package
 
 import (
+	"fmt"
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/goki/gi/gi"
+	"github.com/goki/ki/ki"
 	"github.com/goki/mat32"
 )
 
@@ -125,6 +127,27 @@ func (ss *Sim) ConfigGui() *gi.Window {
 		Tooltip: "Prompts for a specific input pattern name to run, and runs it in testing mode.",
 		Active:  egui.ActiveStopped,
 		Func: func() {
+
+			gi.StringPromptDialog(ss.GUI.ViewPort, "", "Test Item",
+				gi.DlgOpts{Title: "Test Item", Prompt: "Enter the Name of a given input pattern to test (case insensitive, contains given string."},
+				ss.GUI.Win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+					dlg := send.(*gi.Dialog)
+					if sig == int64(gi.DialogAccepted) {
+						val := gi.StringPromptDialogValue(dlg)
+						idxs := []int{0} //TODO: //ss.TestEnv.Table.RowsByString("Name", val, etable.Contains, etable.IgnoreCase)
+						if len(idxs) == 0 {
+							gi.PromptDialog(nil, gi.DlgOpts{Title: "Name Not Found", Prompt: "No patterns found containing: " + val}, gi.AddOk, gi.NoCancel, nil, nil)
+						} else {
+							if !ss.GUI.IsRunning {
+								ss.GUI.IsRunning = true
+								fmt.Printf("testing index: %d\n", idxs[0])
+								ss.TestItem(idxs[0])
+								ss.GUI.IsRunning = false
+								ss.GUI.ViewPort.SetNeedsFullRender()
+							}
+						}
+					}
+				})
 
 		},
 	})
