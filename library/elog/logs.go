@@ -12,6 +12,7 @@ type Logs struct {
 	Items      []*Item
 	ItemIdxMap map[string]int
 	Tables     map[ScopeKey]*etable.Table
+	TableOrder []ScopeKey
 	TableFuncs ComputeMap
 }
 
@@ -54,6 +55,7 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 func (lg *Logs) CreateTables() {
 
 	uniqueTables := make(map[ScopeKey]*etable.Table)
+	tableOrder := make([]ScopeKey, 0) //initial size
 	for _, item := range lg.Items {
 		for _, mode := range item.Modes {
 			for _, time := range item.Times {
@@ -61,12 +63,14 @@ func (lg *Logs) CreateTables() {
 				_, ok := uniqueTables[tempScopeKey]
 				if ok == false {
 					uniqueTables[tempScopeKey] = &etable.Table{}
+					tableOrder = append(tableOrder, tempScopeKey)
 					lg.configLogTable(uniqueTables[tempScopeKey], mode, time)
 				}
 			}
 		}
 	}
 	lg.Tables = uniqueTables
+	lg.TableOrder = tableOrder
 }
 
 func (lg *Logs) GetTable(mode EvalModes, time Times) *etable.Table {

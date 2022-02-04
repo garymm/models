@@ -23,10 +23,12 @@ type GUI struct {
 	TabView    *gi.TabView
 
 	PlotMap map[elog.ScopeKey]*eplot.Plot2D
+	PlotAry []*eplot.Plot2D
 }
 
 func (gui *GUI) UpdateWindow() {
 	gui.ViewPort.SetNeedsFullRender()
+
 }
 
 func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
@@ -94,10 +96,12 @@ func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 
 func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 	gui.PlotMap = make(map[elog.ScopeKey]*eplot.Plot2D)
-	for key, table := range Log.Tables {
-
+	//for key, table := range Log.Tables {
+	for _, key := range Log.TableOrder {
+		table := Log.Tables[key]
 		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, string(key)+"Plot").(*eplot.Plot2D)
 		gui.PlotMap[key] = plt
+		gui.PlotAry = append(gui.PlotAry, plt)
 		plt.SetTable(table)
 		//This is so inefficient even if it's run once, this is ugly
 		for _, item := range Log.Items {
