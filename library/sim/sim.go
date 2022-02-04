@@ -76,11 +76,7 @@ type Sim struct {
 	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
 
 	// internal state - view:"-"
-	// TODO(logging) Remove these
-	SumErr     float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me // TODO Replace the use of these with agg functions
-	SumUnitErr float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	SumCosDiff float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
-	SumCorrel  float64 `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
+	SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
 	// TODO Create a GUI object that stores these
 	TrnEpcPlot *eplot.Plot2D `view:"-" desc:"the training epoch plot"`
 	TstEpcPlot *eplot.Plot2D `view:"-" desc:"the testing epoch plot"`
