@@ -104,8 +104,8 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 			_, ok := item.Compute[key]
 			if ok {
 				plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
-				modes, times := key.GetModesAndTimes()
-				timeName := modes[0].String()
+				_, times := key.GetModesAndTimes()
+				timeName := times[0].String()
 				plt.Params.Title = title + " " + timeName + " Plot"
 				plt.Params.XAxisCol = timeName
 				if times[0] == elog.Run { //The one exception
@@ -115,6 +115,14 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 		}
 	}
 
+}
+
+func (gui *GUI) UpdatePlot(scope elog.ScopeKey) {
+
+	plot, ok := gui.PlotMap[scope]
+	if ok {
+		plot.UpdatePlot()
+	}
 }
 
 func (gui *GUI) FinalizeGUI(closePrompt bool) {
