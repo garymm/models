@@ -69,13 +69,6 @@ type Sim struct {
 	TrlUnitErr float64 `inactive:"+" desc:"current trial's unit-level pct error"`
 	TrlCosDiff float64 `inactive:"+" desc:"current trial's cosine difference"`
 
-	EpcUnitErr    float64 `inactive:"+" desc:"last epoch's total unit-level pct error"`
-	EpcPctErr     float64 `inactive:"+" desc:"last epoch's average TrlErr"`
-	EpcPctCor     float64 `inactive:"+" desc:"1 - last epoch's average TrlErr"`
-	EpcCosDiff    float64 `inactive:"+" desc:"last epoch's average cosine difference for output layer (a normalized error measure, maximum of 1 when the minus phase exactly matches the plus)"`
-	EpcCorrel     float64 `inactive:"+" desc:"last epoch's average correlation for output layer"`
-	EpcPerTrlMSec float64 `inactive:"+" desc:"how long did the epoch take per trial in wall-clock milliseconds"`
-
 	// TODO Move these to a newly created func EpochStats
 	// State about how long there's been zero error.
 	FirstZero   int       `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
@@ -83,6 +76,7 @@ type Sim struct {
 	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
 
 	// internal state - view:"-"
+	// TODO(logging) Remove these
 	SumErr     float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me // TODO Replace the use of these with agg functions
 	SumUnitErr float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me
 	SumCosDiff float64          `view:"-" inactive:"+" desc:"sum to increment as we go through epoch"` //Remove me

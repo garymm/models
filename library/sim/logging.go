@@ -11,7 +11,6 @@ import (
 	"github.com/emer/etable/etview"
 	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
-	"time"
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,33 +157,19 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 
 func (ss *Sim) UpdateTrnEpc() {
 	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
-	//nt := float64(len((*ss.TrainEnv).Order)) // number of trials in view
-	nt := float64((ss.TrainEnv).Trial().Max) //TODO: figure out the appropriate normalization term for the loss
-	ss.EpcUnitErr = ss.SumUnitErr / nt
 	ss.SumUnitErr = 0
-	ss.EpcPctErr = float64(ss.SumErr) / nt
+	epcSumErr := float64(ss.SumErr)
 	ss.SumErr = 0
-	ss.EpcPctCor = 1 - ss.EpcPctErr
-	ss.EpcCosDiff = ss.SumCosDiff / nt
-	ss.EpcCorrel = ss.SumCorrel / nt
 	ss.SumCosDiff = 0
 	ss.SumCorrel = 0
-	if ss.FirstZero < 0 && ss.EpcPctErr == 0 {
+	if ss.FirstZero < 0 && epcSumErr == 0 {
 		ss.FirstZero = epc
 	}
-	if ss.EpcPctErr == 0 {
+	if epcSumErr == 0 {
 		ss.NZero++
 	} else {
 		ss.NZero = 0
 	}
-
-	if ss.LastEpcTime.IsZero() {
-		ss.EpcPerTrlMSec = 0
-	} else {
-		iv := time.Now().Sub(ss.LastEpcTime)
-		ss.EpcPerTrlMSec = float64(iv) / (nt * float64(time.Millisecond))
-	}
-	ss.LastEpcTime = time.Now()
 }
 
 func (ss *Sim) UpdateTstEpcErrors() {
@@ -300,7 +285,4 @@ func (ss *Sim) InitStats() {
 	// clear rest just to make Sim look initialized
 	ss.TrlErr = 0
 	ss.TrlUnitErr = 0
-	ss.EpcUnitErr = 0
-	ss.EpcPctErr = 0
-	ss.EpcCosDiff = 0
 }

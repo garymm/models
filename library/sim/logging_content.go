@@ -7,6 +7,7 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/minmax"
+	"time"
 )
 
 // Helper function for one of the compute functions below.
@@ -71,8 +72,13 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.FLOAT64,
 		Plot: elog.DFalse,
 		Compute: elog.ComputeMap{
-			elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, ss.EpcUnitErr)
+			elog.GenScopeKey(elog.Train, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				dt.SetCellFloat(item.Name, row, ss.TrlUnitErr)
+			}, elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				// TODO(logging) Replace all instances of this pattern with a cached IDX view
+				trl := ss.Logs.GetTable(elog.Train, elog.Trial)
+				tix := etable.NewIdxView(trl)
+				dt.SetCellFloat(item.Name, row, agg.Mean(tix, item.Name)[0])
 			}, elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				epochWin := getEpochWindowLast5(ss)
 				dt.SetCellFloat(item.Name, row, agg.Mean(epochWin, item.Name)[0])
@@ -83,8 +89,12 @@ func (ss *Sim) ConfigLogSpec() {
 		FixMax: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Compute: elog.ComputeMap{
-			elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, ss.EpcPctErr)
+			elog.GenScopeKey(elog.Train, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				dt.SetCellFloat(item.Name, row, ss.TrlErr)
+			}, elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				trl := ss.Logs.GetTable(elog.Train, elog.Trial)
+				tix := etable.NewIdxView(trl)
+				dt.SetCellFloat(item.Name, row, agg.Mean(tix, item.Name)[0])
 			}, elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				epochWin := getEpochWindowLast5(ss)
 				dt.SetCellFloat(item.Name, row, agg.Mean(epochWin, item.Name)[0])
@@ -96,7 +106,9 @@ func (ss *Sim) ConfigLogSpec() {
 		Range:  minmax.F64{Max: 1},
 		Compute: elog.ComputeMap{
 			elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, ss.EpcPctCor)
+				trl := ss.Logs.GetTable(elog.Train, elog.Trial)
+				tix := etable.NewIdxView(trl)
+				dt.SetCellFloat(item.Name, row, 1-agg.Mean(tix, "PctErr")[0])
 			}, elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				epochWin := getEpochWindowLast5(ss)
 				dt.SetCellFloat(item.Name, row, agg.Mean(epochWin, item.Name)[0])
@@ -107,8 +119,12 @@ func (ss *Sim) ConfigLogSpec() {
 		FixMax: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Compute: elog.ComputeMap{
-			elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, ss.EpcCosDiff)
+			elog.GenScopeKey(elog.Train, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				dt.SetCellFloat(item.Name, row, ss.TrlCosDiff)
+			}, elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				trl := ss.Logs.GetTable(elog.Train, elog.Trial)
+				tix := etable.NewIdxView(trl)
+				dt.SetCellFloat(item.Name, row, agg.Mean(tix, item.Name)[0])
 			}, elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				epochWin := getEpochWindowLast5(ss)
 				dt.SetCellFloat(item.Name, row, agg.Mean(epochWin, item.Name)[0])
@@ -119,19 +135,32 @@ func (ss *Sim) ConfigLogSpec() {
 		FixMax: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Compute: elog.ComputeMap{
-			elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, ss.EpcCorrel)
+			elog.GenScopeKey(elog.Train, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				dt.SetCellFloat(item.Name, row, ss.TrlCorrel)
+			}, elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+				trl := ss.Logs.GetTable(elog.Train, elog.Trial)
+				tix := etable.NewIdxView(trl)
+				dt.SetCellFloat(item.Name, row, agg.Mean(tix, item.Name)[0])
 			}, elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				epochWin := getEpochWindowLast5(ss)
 				dt.SetCellFloat(item.Name, row, agg.Mean(epochWin, item.Name)[0])
 			}}})
 	ss.Logs.AddItem(&elog.Item{
-		Name: "PerTrlMSec",
+		Name: "PerEpcMSec",
 		Type: etensor.FLOAT64,
 		Plot: elog.DFalse,
 		Compute: elog.ComputeMap{
 			elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, ss.EpcPerTrlMSec)
+				epcPerTrlMSec := 0.0
+				if ss.LastEpcTime.IsZero() {
+					epcPerTrlMSec = 0
+				} else {
+					iv := time.Now().Sub(ss.LastEpcTime)
+					// TODO This should be normalized by number of trials rather than 1.0 and renamed back to PerTrlMSec
+					epcPerTrlMSec = float64(iv) / (1.0 * float64(time.Millisecond))
+				}
+				ss.LastEpcTime = time.Now()
+				dt.SetCellFloat(item.Name, row, epcPerTrlMSec)
 			}}})
 	// Add for each layer
 	for _, lnm := range ss.LayStatNms {
