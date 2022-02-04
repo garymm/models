@@ -30,14 +30,14 @@ type Item struct {
 	Type      etensor.Type `desc:"data type, using etensor types which are isomorphic with arrow.Type"`
 	CellShape []int        `desc:"shape of a single cell in the column (i.e., without the row dimension) -- for scalars this is nil -- tensor column will add the outer row dimension to this shape"`
 	DimNames  []string     `desc:"names of the dimensions within the CellShape -- 'Row' will be added to outer dimension"`
-	Modes     []EvalModes  `desc:"a variable list of modes that this item can exist in"`
-	Times     []Times      `desc:"a variable list of times that this item can exist in"`
-	ScopeKey  ScopeKey     `desc:"a string representation of the combined enum name"`
-	Compute   ComputeMap   `desc:"For each timescale and mode, how is this value computed? The key should be a single mode and timescale."`
-	Plot      DefaultBool  `desc:"Whether or not to plot it"`
-	FixMin    DefaultBool  `desc:"Whether to fix the minimum in the display"`
-	FixMax    DefaultBool  `desc:"Whether to fix the maximum in the display"`
-	Range     minmax.F64   `desc:"The minimum and maximum"`
+	// Note that this item will not appear in the full combination of modes and times, and the ComputeMap contains a more accurate list of scopes it appears in
+	Modes   []EvalModes `desc:"a variable list of modes that this item can exist in"`
+	Times   []Times     `desc:"a variable list of times that this item can exist in"`
+	Compute ComputeMap  `desc:"For each timescale and mode, how is this value computed? The key should be a single mode and timescale."`
+	Plot    DefaultBool `desc:"Whether or not to plot it"`
+	FixMin  DefaultBool `desc:"Whether to fix the minimum in the display"`
+	FixMax  DefaultBool `desc:"Whether to fix the maximum in the display"`
+	Range   minmax.F64  `desc:"The minimum and maximum"`
 }
 
 func GenScopeKey(mode EvalModes, time Times) ScopeKey {
@@ -63,8 +63,7 @@ func (item *Item) GetScopeName(mode EvalModes, time Times) string {
 }
 
 func (item *Item) GetComputeFunc(mode EvalModes, time Times) (ComputeFunc, bool) {
-	item.ScopeKey.FromScope(mode, time)
-	val, ok := item.Compute[item.ScopeKey]
+	val, ok := item.Compute[GenScopeKey(mode, time)]
 	return val, ok
 }
 
