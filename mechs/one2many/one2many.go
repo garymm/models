@@ -70,7 +70,7 @@ func main() {
 		TheSim.CmdArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim2.GuiRun(&TheSim)
+			sim2.GuiRun(&TheSim, "one2many", "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
 
