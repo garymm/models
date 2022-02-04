@@ -1,6 +1,7 @@
 package elog
 
 import (
+	"fmt"
 	"github.com/emer/etable/etable"
 	"github.com/goki/gi/gi"
 	"strconv"
@@ -34,11 +35,6 @@ func (lg *Logs) AddItem(item *Item) {
 	}
 	// TODO Name is not unique
 	lg.ItemIdxMap[item.Name] = len(lg.Items) - 1
-}
-
-func (lg *Logs) AddItemScoped(item *Item, modes []EvalModes, times []Times) {
-	item.ScopeKey.FromScopes(modes, times)
-	lg.AddItem(item)
 }
 
 func (lg *Logs) CompileAllModesAndTimes() {
@@ -147,14 +143,15 @@ func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
 func (lg *Logs) CreateTables() {
 	uniqueTables := make(map[ScopeKey]LogTable)
 	for _, item := range lg.Items {
-		for _, mode := range item.Modes {
-			for _, time := range item.Times {
-				tempScopeKey := GenScopeKey(mode, time)
-				_, ok := uniqueTables[tempScopeKey]
-				if ok == false {
-					uniqueTables[tempScopeKey] = LogTable{Table: &etable.Table{}}
-					lg.configLogTable(uniqueTables[tempScopeKey].Table, mode, time)
-				}
+		for scope, _ := range item.Compute {
+			_, ok := uniqueTables[scope]
+			modes, times := scope.GetModesAndTimes()
+			if len(modes) != 1 || len(times) != 1 {
+				fmt.Errorf("Unexpected too long modes or times in " + string(scope))
+			}
+			if ok == false {
+				uniqueTables[scope] = LogTable{Table: &etable.Table{}}
+				lg.configLogTable(uniqueTables[scope].Table, modes[0], times[0])
 			}
 		}
 	}
