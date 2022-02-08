@@ -12,10 +12,10 @@ var KiT_Times = kit.Enums.AddEnum(TimesN, kit.NotBitFlag, nil)
 func (ev Times) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *Times) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
-// The time scales
+// A list of predefined time scales at which logging can occur
 const (
-	// UnknownTime represents application at all timescales
-	UnknownTime Times = iota
+	// NoTime represents a non-initialized value
+	NoTime Times = iota
 
 	// AllTimes indicates that the log should occur over all times present in other items.
 	AllTimes

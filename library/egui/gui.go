@@ -97,8 +97,8 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 	//for key, table := range Log.Tables {
 	for _, key := range Log.TableOrder {
 		modes, times := key.ModesAndTimes()
-		timeName := times[0].String()
-		modeName := modes[0].String()
+		timeName := times[0]
+		modeName := modes[0]
 
 		table := Log.Tables[key]
 		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, modeName+" "+timeName+" Plot").(*eplot.Plot2D)
@@ -113,7 +113,8 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 
 				plt.Params.Title = title + " " + timeName + " Plot"
 				plt.Params.XAxisCol = timeName
-				if times[0] == elog.Run { //The one exception
+				// TODO this needs to be settable in config
+				if times[0] == "Run" { //The one exception
 					plt.Params.LegendCol = "Params"
 				}
 			}

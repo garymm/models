@@ -32,13 +32,13 @@ type LogTable struct {
 // and ResetLog to reset the log to empty.
 type Logs struct {
 	Items      []*Item        `desc:"A list of the items that should be logged. Each item should describe one column that you want to log, and how.  Order in list determines order in logs."`
-	ItemIdxMap map[string]int `desc:"map of item indexes by name, for rapid access"`
+	ItemIdxMap map[string]int `view:"-" desc:"map of item indexes by name, for rapid access"`
 
 	Tables map[ScopeKey]*LogTable `desc:"Tables storing log data, auto-generated from Items."`
-	Modes  map[EvalModes]bool     `desc:"All the eval modes that appear in any of the items of this log."`
-	Times  map[Times]bool         `desc:"All the timescales that appear in any of the items of this log."`
+	Modes  map[string]bool        `view:"-" desc:"All the eval modes that appear in any of the items of this log."`
+	Times  map[string]bool        `view:"-" desc:"All the timescales that appear in any of the items of this log."`
 
-	TableOrder []ScopeKey `desc:"sorted order of table scopes"`
+	TableOrder []ScopeKey `view:"-" desc:"sorted order of table scopes"`
 }
 
 // AddItem adds an item to the list
@@ -105,7 +105,7 @@ func (lg *Logs) CreateTables() error {
 		}
 	}
 	lg.Tables = uniqueTables
-	lg.TableOrder = tableOrder
+	lg.TableOrder = SortScopes(tableOrder)
 	return err
 }
 
@@ -133,6 +133,16 @@ func (lg *Logs) LogRow(mode EvalModes, time Times, row int) *etable.Table {
 	return dt
 }
 
+// ResetLog resets the log for given mode, time, at given row.
+// by setting number of rows = 0
+func (lg *Logs) ResetLog(mode EvalModes, time Times) {
+	sk := GenScopeKey(mode, time)
+	ld := lg.Tables[sk]
+	dt := ld.Table
+	dt.SetNumRows(0)
+	ld.IdxView = nil // dirty that so it is regenerated later when needed
+}
+
 // SetLogFile sets the log filename for given scope
 func (lg *Logs) SetLogFile(mode EvalModes, time Times, fnm string) {
 	lt := lg.TableDetails(mode, time)
@@ -148,7 +158,12 @@ func (lg *Logs) SetLogFile(mode EvalModes, time Times, fnm string) {
 
 // CloseLogFiles closes all open log files
 func (lg *Logs) CloseLogFiles() {
-	// todo iterate
+	for _, ld := range lg.Tables {
+		if ld.File != nil {
+			ld.File.Close()
+			ld.File = nil
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -202,19 +217,19 @@ func (lg *Logs) ProcessItems() {
 
 // CompileAllModesAndTimes gathers all the modes and times used across all items
 func (lg *Logs) CompileAllModesAndTimes() {
-	lg.Modes = make(map[EvalModes]bool)
-	lg.Times = make(map[Times]bool)
+	lg.Modes = make(map[string]bool)
+	lg.Times = make(map[string]bool)
 	for _, item := range lg.Items {
 		for sk, _ := range item.Compute {
 			modes, times := sk.ModesAndTimes()
 			for _, m := range modes {
-				if m == AllEvalModes || m == UnknownEvalMode {
+				if m == "AllEvalModes" || m == "NoEvalMode" {
 					continue
 				}
 				lg.Modes[m] = true
 			}
 			for _, t := range times {
-				if t == AllTimes || t == UnknownTime {
+				if t == "AllTimes" || t == "NoTime" {
 					continue
 				}
 				lg.Times[t] = true
@@ -233,12 +248,12 @@ func (lg *Logs) ItemBindAllScopes(item *Item) {
 		useAllTimes := false
 		modes, times := sk.ModesAndTimesMap()
 		for m := range modes {
-			if m == AllEvalModes {
+			if m == "AllEvalModes" {
 				useAllModes = true
 			}
 		}
 		for t := range times {
-			if t == AllTimes {
+			if t == "AllTimes" {
 				useAllTimes = true
 			}
 		}
@@ -255,9 +270,9 @@ func (lg *Logs) ItemBindAllScopes(item *Item) {
 }
 
 // ConfigTable configures given table for given unique mode, time scope
-func (lg *Logs) ConfigTable(dt *etable.Table, mode EvalModes, time Times) {
-	dt.SetMetaData("name", mode.String()+time.String()+"Log")
-	dt.SetMetaData("desc", "Record of performance over "+time.String()+" of "+mode.String())
+func (lg *Logs) ConfigTable(dt *etable.Table, mode, time string) {
+	dt.SetMetaData("name", mode+time+"Log")
+	dt.SetMetaData("desc", "Record of performance over "+time+" of "+mode)
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 	sch := etable.Schema{}

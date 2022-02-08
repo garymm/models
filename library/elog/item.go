@@ -42,12 +42,12 @@ type Item struct {
 	Range     minmax.F64   `desc:"The minimum and maximum"`
 
 	// following are updated in final Process step
-	Modes map[EvalModes]bool `desc:"map of eval modes that this item has a compute function for"`
-	Times map[Times]bool     `desc:"map of times that this item has a compute function for"`
+	Modes map[string]bool `desc:"map of eval modes that this item has a compute function for"`
+	Times map[string]bool `desc:"map of times that this item has a compute function for"`
 }
 
-func (item *Item) ComputeFunc(mode EvalModes, time Times) (ComputeFunc, bool) {
-	val, ok := item.Compute[GenScopeKey(mode, time)]
+func (item *Item) ComputeFunc(mode, time string) (ComputeFunc, bool) {
+	val, ok := item.Compute[GenScopeKeyStr(mode, time)]
 	return val, ok
 }
 
@@ -56,7 +56,7 @@ func (item *Item) ComputeFunc(mode EvalModes, time Times) (ComputeFunc, bool) {
 func (item *Item) SetComputeFuncAll(theFunc ComputeFunc) {
 	for mode := range item.Modes {
 		for time := range item.Times {
-			item.Compute[GenScopeKey(mode, time)] = theFunc
+			item.Compute[GenScopeKeyStr(mode, time)] = theFunc
 		}
 	}
 }
@@ -87,7 +87,7 @@ func (item *Item) SetEachScopeKey() {
 			doReplace = true
 			for _, m := range modes {
 				for _, t := range times {
-					newCompute[GenScopeKey(m, t)] = c
+					newCompute[GenScopeKeyStr(m, t)] = c
 				}
 			}
 		} else {
@@ -102,8 +102,8 @@ func (item *Item) SetEachScopeKey() {
 // CompileModesAndTimes compiles maps of modes and times where this item appears.
 // Based on the final updated Compute map
 func (item *Item) CompileModesAndTimes() {
-	item.Modes = make(map[EvalModes]bool)
-	item.Times = make(map[Times]bool)
+	item.Modes = make(map[string]bool)
+	item.Times = make(map[string]bool)
 	for scope, _ := range item.Compute {
 		modes, times := scope.ModesAndTimes()
 		for _, mode := range modes {
@@ -116,11 +116,11 @@ func (item *Item) CompileModesAndTimes() {
 }
 
 func (item *Item) HasMode(mode EvalModes) bool {
-	_, has := item.Modes[mode]
+	_, has := item.Modes[mode.String()]
 	return has
 }
 
 func (item *Item) HasTime(time Times) bool {
-	_, has := item.Times[time]
+	_, has := item.Times[time.String()]
 	return has
 }

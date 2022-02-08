@@ -7,14 +7,14 @@ type EvalModes int32
 
 //go:generate stringer -type=EvalModes
 
-var KiT_EvalModes = kit.Enums.AddEnum(EvalModesN, kit.BitFlag, nil)
+var KiT_EvalModes = kit.Enums.AddEnum(EvalModesN, kit.NotBitFlag, nil)
 
 func (ev EvalModes) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *EvalModes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
 // The evaluation modes
 const (
-	UnknownEvalMode EvalModes = iota
+	NoEvalMode EvalModes = iota
 
 	// AllEvalModes indicates that the log should occur over all modes present in other items.
 	AllEvalModes

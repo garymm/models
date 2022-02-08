@@ -13,7 +13,7 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[UnknownEvalMode-0]
+	_ = x[NoEvalMode-0]
 	_ = x[AllEvalModes-1]
 	_ = x[Train-2]
 	_ = x[Test-3]
@@ -21,9 +21,9 @@ func _() {
 	_ = x[EvalModesN-5]
 }
 
-const _EvalModes_name = "UnknownEvalModeAllEvalModesTrainTestValidateEvalModesN"
+const _EvalModes_name = "NoEvalModeAllEvalModesTrainTestValidateEvalModesN"
 
-var _EvalModes_index = [...]uint8{0, 15, 27, 32, 36, 44, 54}
+var _EvalModes_index = [...]uint8{0, 10, 22, 27, 31, 39, 49}
 
 func (i EvalModes) String() string {
 	if i < 0 || i >= EvalModes(len(_EvalModes_index)-1) {

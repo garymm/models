@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/emergent/netview"

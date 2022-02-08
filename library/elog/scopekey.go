@@ -4,70 +4,93 @@
 
 package elog
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 // ScopeKey the associated string representation of a scope or scopes.
 // They include one or more EvalModes and one or more Times.
+// It is fully extensible with arbitrary mode and time strings --
+// the enums are a convenience for standard cases.
+// Ultimately a single mode, time pair is used concretely, but the
+// All* cases and lists of multiple can be used as a convenience
+// to specify ranges
 type ScopeKey string
 
 // Like "Train&Test|Epoch&Trial"
-var ScopeKeyBetweenModeAndTime = "&"
-var ScopeKeyComma = "|"
+var (
+	ScopeKeySeparator = "&"
+	ScopeKeyList      = "|"
+)
 
-// FromScopes create an associated scope merging the modes and times that are specified
+// FromScopesStr creates an associated scope merging
+// the modes and times that are specified as strings
 // If you modify this, also modify ModesAndTimes, below.
-func (sk *ScopeKey) FromScopes(modes []EvalModes, times []Times) {
+func (sk *ScopeKey) FromScopesStr(modes, times []string) {
 	var mstr string
 	var tstr string
-	for _, mode := range modes {
-		str := mode.String()
+	for _, str := range modes {
 		if mstr == "" {
 			mstr = str
 		} else {
-			mstr += ScopeKeyComma + str
+			mstr += ScopeKeyList + str
 		}
 	}
-	for _, time := range times {
-		str := time.String()
+	for _, str := range times {
 		if tstr == "" {
 			tstr = str
 		} else {
-			tstr += ScopeKeyComma + str
+			tstr += ScopeKeyList + str
 		}
 	}
-	*sk = ScopeKey(mstr + ScopeKeyBetweenModeAndTime + tstr)
+	*sk = ScopeKey(mstr + ScopeKeySeparator + tstr)
 }
 
-// FromScope create an associated scope merging the modes and times that are specified
+// FromScopes creates an associated scope merging
+// the modes and times that are specified
+// If you modify this, also modify ModesAndTimes, below.
+func (sk *ScopeKey) FromScopes(modes []EvalModes, times []Times) {
+	mstr := make([]string, len(modes))
+	for i, mode := range modes {
+		mstr[i] = mode.String()
+	}
+	tstr := make([]string, len(times))
+	for i, time := range times {
+		tstr[i] = time.String()
+	}
+	sk.FromScopesStr(mstr, tstr)
+}
+
+// FromScope create an associated scope from given
+// standard mode and time
 func (sk *ScopeKey) FromScope(mode EvalModes, time Times) {
-	sk.FromScopes([]EvalModes{mode}, []Times{time})
+	sk.FromScopesStr([]string{mode.String()}, []string{time.String()})
 }
 
-// ModesAndTimes needs to be the inverse mirror of FromScopes
-func (sk *ScopeKey) ModesAndTimes() (modes []EvalModes, times []Times) {
-	skstr := strings.Split(string(*sk), ScopeKeyBetweenModeAndTime)
+// FromScopeStr create an associated scope from given
+// mode and time as strings
+func (sk *ScopeKey) FromScopeStr(mode, time string) {
+	sk.FromScopesStr([]string{mode}, []string{time})
+}
+
+// ModesAndTimes returns the mode(s) and time(s) as strings
+// from the current key value.  This must be the inverse
+// of FromScopesStr
+func (sk *ScopeKey) ModesAndTimes() (modes, times []string) {
+	skstr := strings.Split(string(*sk), ScopeKeySeparator)
 	modestr := skstr[0]
 	timestr := skstr[1]
-	modestrs := strings.Split(modestr, ScopeKeyComma)
-	timestrs := strings.Split(timestr, ScopeKeyComma)
-	for _, m := range modestrs {
-		mo := UnknownEvalMode
-		mo.FromString(m)
-		modes = append(modes, mo)
-	}
-	for _, t := range timestrs {
-		tim := UnknownTime
-		tim.FromString(t)
-		times = append(times, tim)
-	}
-	return modes, times
+	modes = strings.Split(modestr, ScopeKeyList)
+	times = strings.Split(timestr, ScopeKeyList)
+	return
 }
 
-// FromScopesMap create an associated scope merging the modes and times that are specified
-// If you modify this, also modify ModesAndTimesMap, below.
-func (sk *ScopeKey) FromScopesMap(modes map[EvalModes]bool, times map[Times]bool) {
-	ml := make([]EvalModes, len(modes))
-	tl := make([]Times, len(times))
+// FromScopesMap creates an associated scope key merging
+// the modes and times that are specified by map of strings.
+func (sk *ScopeKey) FromScopesMap(modes, times map[string]bool) {
+	ml := make([]string, len(modes))
+	tl := make([]string, len(times))
 	idx := 0
 	for m := range modes {
 		ml[idx] = m
@@ -78,14 +101,15 @@ func (sk *ScopeKey) FromScopesMap(modes map[EvalModes]bool, times map[Times]bool
 		tl[idx] = t
 		idx++
 	}
-	sk.FromScopes(ml, tl)
+	sk.FromScopesStr(ml, tl)
 }
 
-// ModesAndTimesMap returns maps of modes and times
-func (sk *ScopeKey) ModesAndTimesMap() (modes map[EvalModes]bool, times map[Times]bool) {
+// ModesAndTimesMap returns maps of modes and times as strings
+// parsed from the current scopekey
+func (sk *ScopeKey) ModesAndTimesMap() (modes, times map[string]bool) {
 	ml, tl := sk.ModesAndTimes()
-	modes = make(map[EvalModes]bool)
-	times = make(map[Times]bool)
+	modes = make(map[string]bool)
+	times = make(map[string]bool)
 	for _, m := range ml {
 		modes[m] = true
 	}
@@ -95,24 +119,73 @@ func (sk *ScopeKey) ModesAndTimesMap() (modes map[EvalModes]bool, times map[Time
 	return
 }
 
+//////////////////////////////////////////////////
+// Standalone funcs
+
+// GenScopeKey generates a scope key string from one mode and time
 func GenScopeKey(mode EvalModes, time Times) ScopeKey {
-	ss := ScopeKey("")
+	var ss ScopeKey
 	ss.FromScope(mode, time)
 	return ss
 }
 
+// GenScopeKeyStr generates a scope key string from string
+// values for mode, time
+func GenScopeKeyStr(mode, time string) ScopeKey {
+	var ss ScopeKey
+	ss.FromScopeStr(mode, time)
+	return ss
+}
+
+// GenScopesKey generates a scope key string from multiple modes, times
 func GenScopesKey(modes []EvalModes, times []Times) ScopeKey {
-	ss := ScopeKey("")
+	var ss ScopeKey
 	ss.FromScopes(modes, times)
 	return ss
 }
 
-func GenScopesKeyMap(modes map[EvalModes]bool, times map[Times]bool) ScopeKey {
-	ss := ScopeKey("")
+// GenScopesKeyStr generates a scope key string from multiple modes, times
+func GenScopesKeyStr(modes, times []string) ScopeKey {
+	var ss ScopeKey
+	ss.FromScopesStr(modes, times)
+	return ss
+}
+
+func GenScopesKeyMap(modes, times map[string]bool) ScopeKey {
+	var ss ScopeKey
 	ss.FromScopesMap(modes, times)
 	return ss
 }
 
-func GetScopeName(mode EvalModes, time Times) string {
+// ScopeName generates a basic name as a concatenation of mode + time
+func ScopeName(mode EvalModes, time Times) string {
 	return mode.String() + time.String()
+}
+
+// SortScopes sorts a list of concrete mode, time
+// scopes according to the EvalModes and Times enum
+// ordering, with all others at the end.
+func SortScopes(scopes []ScopeKey) []ScopeKey {
+	sort.Slice(scopes, func(i, j int) bool {
+		mi, ti := scopes[i].ModesAndTimes()
+		mj, tj := scopes[j].ModesAndTimes()
+		switch {
+		case len(mi) != 1 && len(mj) == 1:
+			return false
+		case len(mi) == 1 && len(mj) != 1:
+			return true
+		case len(ti) != 1 && len(tj) == 1:
+			return false
+		case len(ti) == 1 && len(tj) != 1:
+			return true
+		}
+		if mi[0] < mj[0] {
+			return true
+		}
+		if mi[0] > mj[0] {
+			return false
+		}
+		return ti[0] < tj[0]
+	})
+	return scopes
 }

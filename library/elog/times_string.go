@@ -13,7 +13,7 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[UnknownTime-0]
+	_ = x[NoTime-0]
 	_ = x[AllTimes-1]
 	_ = x[Cycle-2]
 	_ = x[FastSpike-3]
@@ -36,9 +36,9 @@ func _() {
 	_ = x[TimesN-20]
 }
 
-const _Times_name = "UnknownTimeAllTimesCycleFastSpikeGammaCyclePhaseBetaCycleAlphaCycleThetaCycleEventTrialTickSequenceConditionBlockEpochRunExptSceneEpisodeTimesN"
+const _Times_name = "NoTimeAllTimesCycleFastSpikeGammaCyclePhaseBetaCycleAlphaCycleThetaCycleEventTrialTickSequenceConditionBlockEpochRunExptSceneEpisodeTimesN"
 
-var _Times_index = [...]uint8{0, 11, 19, 24, 33, 43, 48, 57, 67, 77, 82, 87, 91, 99, 108, 113, 118, 121, 125, 130, 137, 143}
+var _Times_index = [...]uint8{0, 6, 14, 19, 28, 38, 43, 52, 62, 72, 77, 82, 86, 94, 103, 108, 113, 116, 120, 125, 132, 138}
 
 func (i Times) String() string {
 	if i < 0 || i >= Times(len(_Times_index)-1) {
