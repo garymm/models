@@ -166,7 +166,7 @@ func (ss *Sim) UpdateTstEpcErrors() {
 //////////////////////////////////////////////
 //  RunLog
 
-// LogRun adds data from current run to the RunLog table.
+// UpdateRun adds data from current run to the RunLog table.
 func (ss *Sim) UpdateRun(dt *etable.Table) {
 	runix := etable.NewIdxView(dt)
 	spl := split.GroupBy(runix, []string{"Params"})
