@@ -30,7 +30,7 @@ func TestItem(t *testing.T) {
 			// DO NOTHING
 		}},
 	}
-	item.ExpandModesAndTimesIfNecessary()
+	item.SetEachScopeKey()
 	_, ok := item.ComputeFunc(Train, Epoch)
 	if !ok {
 		t.Errorf("Error getting compute function")

@@ -11,9 +11,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
-
 	sim2 "github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
@@ -23,6 +20,7 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
+	"log"
 )
 
 var TestEnv = EnvOne2Many{}
@@ -64,7 +62,7 @@ func main() {
 
 	Config(&TheSim)
 
-	if len(os.Args) > 1 {
+	if TheSim.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
