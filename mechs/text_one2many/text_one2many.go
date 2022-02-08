@@ -20,7 +20,6 @@ import (
 	_ "github.com/emer/etable/etview" // include to get gui views
 	"github.com/goki/gi/gimain"
 	"log"
-	"os"
 	"strings"
 )
 
@@ -31,7 +30,7 @@ func main() {
 
 	Config(&TheSim)
 
-	if len(os.Args) > 1 {
+	if TheSim.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)

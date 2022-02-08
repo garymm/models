@@ -115,6 +115,7 @@ def main():
 
 
     updated_parameters = (create_hyperonly(params))
+    print(updated_parameters)
 
     with open("../hyperparams.json", "w") as outfile:
         json_object = json.dump(updated_parameters,outfile)
