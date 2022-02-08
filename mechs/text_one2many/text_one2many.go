@@ -32,13 +32,12 @@ func main() {
 	Config(&TheSim)
 
 	if len(os.Args) > 1 {
-		TheSim.CmdArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
+		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
 			sim2.GuiRun(&TheSim, "text_one2many", "Text One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
-
 }
 
 var TrainEnv = EnvText2Many{}
@@ -75,6 +74,7 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 // Config configures all the elements using the standard functions
 func Config(ss *sim2.Sim) {
 	ConfigParams(ss)
+	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigPats(ss)
 	ConfigNet(ss, ss.Net)

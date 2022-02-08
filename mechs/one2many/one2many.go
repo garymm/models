@@ -64,7 +64,7 @@ func main() {
 	Config(&TheSim)
 
 	if len(os.Args) > 1 {
-		TheSim.CmdArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
+		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
 			sim2.GuiRun(&TheSim, "one2many", "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
@@ -75,10 +75,11 @@ func main() {
 
 // Config configures all the elements using the standard functions
 func Config(ss *sim2.Sim) {
-
 	ConfigPats(ss)
 	OpenPats(ss)
 	ConfigParams(ss)
+	// Parse arguments before configuring the network and env, in case parameters are set.
+	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigNet(ss, ss.Net)
 	// LogSpec needs to be configured after Net

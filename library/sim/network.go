@@ -40,7 +40,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.Net.Cycle(&ss.Time)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if (ss.Time.Cycle % ss.GUI.CycleUpdateRate) == 0 {
+			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
 				ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 			}
 		}
@@ -70,7 +70,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.Net.Cycle(&ss.Time)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if (ss.Time.Cycle % ss.GUI.CycleUpdateRate) == 0 {
+			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
 				ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 			}
 
@@ -97,7 +97,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.UpdateView(train)
 	}
 	// TODO check why this is being called here instead of in plus or minus phase
-	if (ss.Time.Cycle % ss.GUI.CycleUpdateRate) == 0 {
+	if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
 		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 	}
 }
