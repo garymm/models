@@ -1,16 +1,19 @@
-//// Copyright (c) 2019, The Emergent Authors. All rights reserved.
-//// Use of this source code is governed by a BSD-style
-//// license that can be found in the LICENSE file.
-//
-//// one2many is a copy of ra25, but instead of a single output
-//// associated with each input, there are multiple. The Correl
-//// metric that's reported is computed based on correlation with
-//// the closest found pattern.
-//
+// Copyright (c) 2019, The Emergent Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// one2many is a copy of ra25, but instead of a single output
+// associated with each input, there are multiple. The Correl
+// metric that's reported is computed based on correlation with
+// the closest found pattern.
+
 package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	sim2 "github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
@@ -20,8 +23,6 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
-	"log"
-	"os"
 )
 
 var TestEnv = EnvOne2Many{}

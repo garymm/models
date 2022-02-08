@@ -14,8 +14,8 @@ func (ev *Times) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev
 
 // The time scales
 const (
-	// UnknownTimescale represents application at all timescales
-	UnknownTimescale Times = iota
+	// UnknownTime represents application at all timescales
+	UnknownTime Times = iota
 
 	// AllTimes indicates that the log should occur over all times present in other items.
 	AllTimes

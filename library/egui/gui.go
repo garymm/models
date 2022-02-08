@@ -96,7 +96,7 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 	gui.PlotMap = make(map[elog.ScopeKey]*eplot.Plot2D)
 	//for key, table := range Log.Tables {
 	for _, key := range Log.TableOrder {
-		modes, times := key.GetModesAndTimes()
+		modes, times := key.ModesAndTimes()
 		timeName := times[0].String()
 		modeName := modes[0].String()
 

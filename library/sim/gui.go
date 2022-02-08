@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
@@ -168,7 +169,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Tooltip: "Reset the accumulated log of all Runs, which are tagged with the ParamSet used",
 		Active:  egui.ActiveAlways,
 		Func: func() {
-			ss.Logs.GetTable(elog.Train, elog.Run).SetNumRows(0)
+			ss.Logs.Table(elog.Train, elog.Run).SetNumRows(0)
 			runPlot := ss.GUI.PlotMap[elog.GenScopeKey(elog.Train, elog.Run)]
 			runPlot.Update()
 		},

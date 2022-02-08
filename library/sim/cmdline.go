@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/goki/gi/gi"
-	"io/ioutil"
-	"log"
-	"os"
 )
 
 func (ss *Sim) CmdArgs() {
@@ -49,30 +48,12 @@ func (ss *Sim) CmdArgs() {
 	}
 
 	if saveEpcLog {
-		var err error
 		fnm := ss.LogFileName("epc")
-		lt := ss.Logs.GetTableDetails(elog.Train, elog.Epoch)
-		lt.File, err = os.Create(fnm)
-		if err != nil {
-			log.Println(err)
-			lt.File = nil
-		} else {
-			fmt.Printf("Saving epoch log to: %s\n", fnm)
-			defer lt.File.Close()
-		}
+		ss.Logs.SetLogFile(elog.Train, elog.Epoch, fnm)
 	}
 	if saveRunLog {
-		var err error
 		fnm := ss.LogFileName("run")
-		lt := ss.Logs.GetTableDetails(elog.Train, elog.Run)
-		lt.File, err = os.Create(fnm)
-		if err != nil {
-			log.Println(err)
-			lt.File = nil
-		} else {
-			fmt.Printf("Saving run log to: %s\n", fnm)
-			defer lt.File.Close()
-		}
+		ss.Logs.SetLogFile(elog.Train, elog.Run, fnm)
 	}
 	if saveNetData {
 		ss.NetData = &netview.NetData{}
@@ -86,6 +67,8 @@ func (ss *Sim) CmdArgs() {
 	(ss.TrainEnv).Run().Max = ss.StartRun + ss.MaxRuns
 	ss.NewRun()
 	ss.Train()
+
+	ss.Logs.CloseLogFiles()
 
 	if saveNetData {
 		ndfn := ss.Net.Nm + "_" + ss.RunName() + ".netdata.gz"

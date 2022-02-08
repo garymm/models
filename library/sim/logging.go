@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/agg"
@@ -70,7 +71,7 @@ func (ss *Sim) LogFileName(lognm string) string {
 // Create a general Log(mode, time) function
 
 func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
-	dt := ss.Logs.GetTable(mode, time)
+	dt := ss.Logs.Table(mode, time)
 
 	row := dt.Rows
 	if time == elog.Cycle {
@@ -84,22 +85,13 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 			row = (ss.TrainEnv).Trial().Cur
 		}
 	}
-	if dt.Rows <= row {
-		dt.SetNumRows(row + 1)
-	}
 
 	// TODO These should be callback functions
 	if mode == elog.Train && time == elog.Epoch {
 		ss.UpdateTrnEpc()
 	}
 
-	// TODO(optimize): A map would be more efficient than a filter loop.
-	for _, item := range ss.Logs.Items {
-		callback, ok := item.GetComputeFunc(mode, time)
-		if ok {
-			callback(item, item.GetScopeKey(mode, time), dt, row)
-		}
-	}
+	ss.Logs.LogRow(mode, time, row)
 
 	// TODO These should be callback functions
 	if mode == elog.Test && time == elog.Epoch {
@@ -107,26 +99,6 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 	}
 	if mode == elog.Train && time == elog.Run {
 		ss.UpdateRun(dt)
-	}
-
-	// TODO Check LogTable for details on saving the plot
-	if mode == elog.Train && time == elog.Epoch {
-		if ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File != nil {
-			lt := ss.Logs.GetTableDetails(elog.Train, elog.Epoch)
-			if (ss.TrainEnv).Run().Cur == ss.StartRun && row == 0 {
-				// note: can't just use row=0 b/c reset table each run
-				dt.WriteCSVHeaders(ss.Logs.GetTableDetails(elog.Train, elog.Epoch).File, etable.Tab)
-			}
-			dt.WriteCSVRow(lt.File, row, etable.Tab)
-		}
-	}
-	if mode == elog.Train && time == elog.Run {
-		if ss.Logs.GetTableDetails(elog.Train, elog.Run).File != nil {
-			if row == 0 {
-				dt.WriteCSVHeaders(ss.Logs.GetTableDetails(elog.Train, elog.Run).File, etable.Tab)
-			}
-			dt.WriteCSVRow(ss.Logs.GetTableDetails(elog.Train, elog.Run).File, row, etable.Tab)
-		}
 	}
 }
 
@@ -149,7 +121,7 @@ func (ss *Sim) UpdateTrnEpc() {
 
 func (ss *Sim) UpdateTstEpcErrors() {
 	// Record those test trials which had errors
-	trl := ss.Logs.GetTable(elog.Test, elog.Trial)
+	trl := ss.Logs.Table(elog.Test, elog.Trial)
 	trlix := etable.NewIdxView(trl)
 	trlix.Filter(func(et *etable.Table, row int) bool {
 		return et.CellFloat("UnitErr", row) > 0 // include error trials

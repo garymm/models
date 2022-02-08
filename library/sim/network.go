@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/env"
@@ -186,8 +187,8 @@ func (ss *Sim) NewRun() {
 	ss.Time.Reset()
 	ss.Net.InitWts()
 	ss.InitStats()
-	ss.Logs.GetTable(elog.Train, elog.Epoch).SetNumRows(0)
-	ss.Logs.GetTable(elog.Test, elog.Epoch).SetNumRows(0)
+	ss.Logs.Table(elog.Train, elog.Epoch).SetNumRows(0)
+	ss.Logs.Table(elog.Test, elog.Epoch).SetNumRows(0)
 	ss.NeedsNewRun = false
 }
 

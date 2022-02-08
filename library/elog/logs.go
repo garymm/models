@@ -1,34 +1,44 @@
+// Copyright (c) 2022, The Emergent Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package elog
 
 import (
 	"fmt"
-	"github.com/emer/etable/etable"
+	"log"
 	"os"
 	"strconv"
+
+	"github.com/emer/etable/etable"
 )
 
 // LogPrec is precision for saving float values in logs
 const LogPrec = 4
 
+// LogTable contains all the data for one log table
 type LogTable struct {
-	Table *etable.Table `desc:"Actual data stored."`
-	// TODO Use this to cache the IdxView if speed becomes an issue.
-	TableView etable.IdxView `desc:"View of the table."`
-	File      *os.File       `desc:"File to store the log."`
-	// TODO Store a bool for HeadersWritten and another bool for whether or not to plot
+	Table        *etable.Table   `desc:"Actual data stored."`
+	IdxView      *etable.IdxView `desc:"Index View of the table -- automatically updated when a new row of data is logged to the table."`
+	File         *os.File        `desc:"File to store the log into."`
+	WroteHeaders bool            `desc:"true if headers for File have already been written"`
 }
 
+// Logs contains all logging state and API for doing logging.
+// do AddItem to add any number of items, at different eval mode, time scopes.
+// Each Item has its own Compute functions, at each scope as neeeded.
+// Then call CreateTables to generate log tables from those items.
+// Call Log with a mode and time to add a new row of data to the log
+// and ResetLog to reset the log to empty.
 type Logs struct {
-	Items      []*Item `desc:"A list of the items that should be logged. Each item should describe one column that you want to log, and how."`
-	ItemIdxMap map[string]int
+	Items      []*Item        `desc:"A list of the items that should be logged. Each item should describe one column that you want to log, and how.  Order in list determines order in logs."`
+	ItemIdxMap map[string]int `desc:"map of item indexes by name, for rapid access"`
 
-	// TODO Replace this with a struct that stores etable.Table, File, IdxView, HeaderWrittenBool
-	Tables     map[ScopeKey]LogTable `desc:"Tables of logs."`
-	EvalModes  []EvalModes           `desc:"All the eval modes that appear in any of the items of this log."`
-	Timescales []Times               `desc:"All the timescales that appear in any of the items of this log."`
+	Tables map[ScopeKey]*LogTable `desc:"Tables storing log data, auto-generated from Items."`
+	Modes  map[EvalModes]bool     `desc:"All the eval modes that appear in any of the items of this log."`
+	Times  map[Times]bool         `desc:"All the timescales that appear in any of the items of this log."`
 
-	TableOrder []ScopeKey
-	TableFuncs ComputeMap
+	TableOrder []ScopeKey `desc:"sorted order of table scopes"`
 }
 
 // AddItem adds an item to the list
@@ -37,74 +47,140 @@ func (lg *Logs) AddItem(item *Item) {
 	if lg.ItemIdxMap == nil {
 		lg.ItemIdxMap = make(map[string]int)
 	}
-	// TODO Name is not unique
+	// note: we're not really in a position to track errors in a big list of
+	// AddItem statements, so don't both with error return
+	if _, has := lg.ItemIdxMap[item.Name]; has {
+		log.Printf("elog.AddItem Warning: item name repeated: %s\n", item.Name)
+	}
 	lg.ItemIdxMap[item.Name] = len(lg.Items) - 1
 }
 
-func (lg *Logs) CompileAllModesAndTimes() {
-	// It's not efficient to call this for every item, but it also doesn't matter.
+// Table returns the table for given mode, time
+func (lg *Logs) Table(mode EvalModes, time Times) *etable.Table {
+	sk := GenScopeKey(mode, time)
+	return lg.Tables[sk].Table
+}
+
+// TODO we could add facility for named index views that are also cached
+// just make the IdxView a named map
+
+// IdxView returns the Index View of a log table for a given mode, time
+// This is used for data aggregation, filtering etc.  This view
+// should not be altered and always shows the whole table
+// Create new ones as needed.
+func (lg *Logs) IdxView(mode EvalModes, time Times) *etable.IdxView {
+	sk := GenScopeKey(mode, time)
+	ld := lg.Tables[sk]
+	if ld.IdxView == nil {
+		ld.IdxView = etable.NewIdxView(ld.Table)
+	}
+	return ld.IdxView
+}
+
+// TableDetails returns the LogTable record of associated info for given table
+func (lg *Logs) TableDetails(mode EvalModes, time Times) *LogTable {
+	return lg.Tables[GenScopeKey(mode, time)]
+}
+
+// CreateTables creates the log tables based on all the specified log items
+// It first calls ProcessItems to instantiate specific scopes.
+func (lg *Logs) CreateTables() error {
+	lg.ProcessItems()
+	uniqueTables := make(map[ScopeKey]*LogTable)
+	tableOrder := make([]ScopeKey, 0) //initial size
+	var err error
 	for _, item := range lg.Items {
-		for sk, _ := range item.Compute {
-			modes, times := sk.GetModesAndTimes()
-			for _, m := range modes {
-				foundMode := false
-				for _, um := range lg.EvalModes {
-					if m == um {
-						foundMode = true
-						break
-					}
-				}
-				if !foundMode && m != UnknownEvalMode && m != AllEvalModes {
-					lg.EvalModes = append(lg.EvalModes, m)
-				}
+		for scope, _ := range item.Compute {
+			_, has := uniqueTables[scope]
+			modes, times := scope.ModesAndTimes()
+			if len(modes) != 1 || len(times) != 1 {
+				err = fmt.Errorf("Unexpected too long modes or times in: " + string(scope))
+				log.Println(err) // actually print the err
 			}
-			for _, t := range times {
-				foundTime := false
-				for _, ut := range lg.Timescales {
-					if t == ut {
-						foundTime = true
-						break
-					}
-				}
-				if !foundTime && t != UnknownTimescale && t != AllTimes {
-					lg.Timescales = append(lg.Timescales, t)
-				}
+			if !has {
+				uniqueTables[scope] = &LogTable{Table: &etable.Table{}}
+				tableOrder = append(tableOrder, scope)
+				lg.ConfigTable(uniqueTables[scope].Table, modes[0], times[0])
 			}
+		}
+	}
+	lg.Tables = uniqueTables
+	lg.TableOrder = tableOrder
+	return err
+}
+
+// Log performs logging for given mode, time.
+// Adds a new row and computes all the items.
+// and saves data to file if open.
+func (lg *Logs) Log(mode EvalModes, time Times) *etable.Table {
+	sk := GenScopeKey(mode, time)
+	ld := lg.Tables[sk]
+	return lg.LogRow(mode, time, ld.Table.Rows)
+}
+
+// LogRow performs logging for given mode, time, at given row.
+// Saves data to file if open.
+func (lg *Logs) LogRow(mode EvalModes, time Times, row int) *etable.Table {
+	sk := GenScopeKey(mode, time)
+	ld := lg.Tables[sk]
+	dt := ld.Table
+	if dt.Rows <= row {
+		dt.SetNumRows(row + 1)
+	}
+	lg.ComputeScope(sk, dt, row)
+	ld.IdxView = nil // dirty that so it is regenerated later when needed
+	lg.WriteLastLogRow(ld)
+	return dt
+}
+
+// SetLogFile sets the log filename for given scope
+func (lg *Logs) SetLogFile(mode EvalModes, time Times, fnm string) {
+	lt := lg.TableDetails(mode, time)
+	var err error
+	lt.File, err = os.Create(fnm)
+	if err != nil {
+		log.Println(err)
+		lt.File = nil
+	} else {
+		fmt.Printf("Saving log to: %s\n", fnm)
+	}
+}
+
+// CloseLogFiles closes all open log files
+func (lg *Logs) CloseLogFiles() {
+	// todo iterate
+}
+
+///////////////////////////////////////////////////////////////////////////
+//   Internal infrastructure below, main user API above
+
+// ComputeScope calls all item compute functions within given scope
+func (lg *Logs) ComputeScope(sk ScopeKey, dt *etable.Table, row int) {
+	for _, item := range lg.Items {
+		callback, ok := item.Compute[sk]
+		if ok {
+			callback(item, sk, dt, row)
 		}
 	}
 }
 
-func (lg *Logs) UpdateItemForAll(item *Item) {
-	// This could be refactored with a set object.
-	newMap := ComputeMap{}
-	for sk, c := range item.Compute {
-		newsk := sk
-		useAllModes := false
-		useAllTimes := false
-		modes, times := sk.GetModesAndTimes()
-		for _, m := range modes {
-			if m == AllEvalModes {
-				useAllModes = true
-			}
-		}
-		for _, t := range times {
-			if t == AllTimes {
-				useAllTimes = true
-			}
-		}
-		if useAllModes && useAllTimes {
-			newsk = GenScopesKey(lg.EvalModes, lg.Timescales)
-		} else if useAllModes {
-			newsk = GenScopesKey(lg.EvalModes, times)
-		} else if useAllTimes {
-			newsk = GenScopesKey(modes, lg.Timescales)
-		}
-		newMap[newsk] = c
+// WriteLastLogRow writes the last row of table to file, if File != nil
+func (lg *Logs) WriteLastLogRow(ld *LogTable) {
+	if ld.File == nil {
+		return
 	}
-	item.Compute = newMap
+	dt := ld.Table
+	if !ld.WroteHeaders {
+		dt.WriteCSVHeaders(ld.File, etable.Tab)
+		ld.WroteHeaders = true
+	}
+	dt.WriteCSVRow(ld.File, dt.Rows-1, etable.Tab)
 }
 
-func (lg *Logs) ProcessLogItems() {
+// ProcessItems is called in CreateTables, after all items have been added.
+// It instantiates All scopes, and compiles multi-list scopes into
+// single mode, item pairs
+func (lg *Logs) ProcessItems() {
 	for _, item := range lg.Items {
 		if item.Plot == DUnknown {
 			item.Plot = DTrue
@@ -115,75 +191,82 @@ func (lg *Logs) ProcessLogItems() {
 		if item.FixMax == DUnknown {
 			item.FixMax = DFalse
 		}
-		for scope, _ := range item.Compute {
-			item.UpdateModesAndTimesFromScope(scope)
-		}
 	}
 	lg.CompileAllModesAndTimes()
 	for _, item := range lg.Items {
-		// This needs to go after CompileAllModesAndTimes
-		lg.UpdateItemForAll(item)
-		// This needs to happen after UpdateItemForAll
-		item.ExpandModesAndTimesIfNecessary()
+		lg.ItemBindAllScopes(item)
+		item.SetEachScopeKey()
+		item.CompileModesAndTimes()
 	}
 }
 
-func (lg *Logs) configLogTable(dt *etable.Table, mode EvalModes, time Times) {
+// CompileAllModesAndTimes gathers all the modes and times used across all items
+func (lg *Logs) CompileAllModesAndTimes() {
+	lg.Modes = make(map[EvalModes]bool)
+	lg.Times = make(map[Times]bool)
+	for _, item := range lg.Items {
+		for sk, _ := range item.Compute {
+			modes, times := sk.ModesAndTimes()
+			for _, m := range modes {
+				if m == AllEvalModes || m == UnknownEvalMode {
+					continue
+				}
+				lg.Modes[m] = true
+			}
+			for _, t := range times {
+				if t == AllTimes || t == UnknownTime {
+					continue
+				}
+				lg.Times[t] = true
+			}
+		}
+	}
+}
+
+// ItemBindAllScopes translates the AllEvalModes or AllTimes scopes into
+// a concrete list of actual Modes and Times used across all items
+func (lg *Logs) ItemBindAllScopes(item *Item) {
+	newMap := ComputeMap{}
+	for sk, c := range item.Compute {
+		newsk := sk
+		useAllModes := false
+		useAllTimes := false
+		modes, times := sk.ModesAndTimesMap()
+		for m := range modes {
+			if m == AllEvalModes {
+				useAllModes = true
+			}
+		}
+		for t := range times {
+			if t == AllTimes {
+				useAllTimes = true
+			}
+		}
+		if useAllModes && useAllTimes {
+			newsk = GenScopesKeyMap(lg.Modes, lg.Times)
+		} else if useAllModes {
+			newsk = GenScopesKeyMap(lg.Modes, times)
+		} else if useAllTimes {
+			newsk = GenScopesKeyMap(modes, lg.Times)
+		}
+		newMap[newsk] = c
+	}
+	item.Compute = newMap
+}
+
+// ConfigTable configures given table for given unique mode, time scope
+func (lg *Logs) ConfigTable(dt *etable.Table, mode EvalModes, time Times) {
 	dt.SetMetaData("name", mode.String()+time.String()+"Log")
 	dt.SetMetaData("desc", "Record of performance over "+time.String()+" of "+mode.String())
 	dt.SetMetaData("read-only", "true")
 	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 	sch := etable.Schema{}
-	if len(lg.TableFuncs) == 0 {
-		lg.TableFuncs = make(ComputeMap)
-	}
 	for _, val := range lg.Items {
-		// Compute records which timescales are logged. It also records how, but we don't need that here.
-		theFunction, ok := val.GetComputeFunc(mode, time)
-		if ok {
-			lg.TableFuncs[GenScopeKey(mode, time)] = theFunction
+		// Compute is the definive record for which timescales are logged.
+		// It also records how, but we don't need that here.
+		if _, ok := val.ComputeFunc(mode, time); ok {
 			sch = append(sch, etable.Column{val.Name, val.Type, val.CellShape, val.DimNames})
 		}
 	}
 	dt.SetFromSchema(sch, 0)
-}
-
-func (lg *Logs) CreateTables() {
-	uniqueTables := make(map[ScopeKey]LogTable)
-	tableOrder := make([]ScopeKey, 0) //initial size
-	for _, item := range lg.Items {
-		for scope, _ := range item.Compute {
-			_, ok := uniqueTables[scope]
-			modes, times := scope.GetModesAndTimes()
-			if len(modes) != 1 || len(times) != 1 {
-				fmt.Errorf("Unexpected too long modes or times in " + string(scope))
-			}
-			if ok == false {
-				uniqueTables[scope] = LogTable{Table: &etable.Table{}}
-				tableOrder = append(tableOrder, scope)
-				lg.configLogTable(uniqueTables[scope].Table, modes[0], times[0])
-			}
-		}
-	}
-	lg.Tables = uniqueTables
-	lg.TableOrder = tableOrder
-}
-
-func (lg *Logs) GetTable(mode EvalModes, time Times) *etable.Table {
-	tempScopeKey := ScopeKey("")
-	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
-	return lg.Tables[tempScopeKey].Table
-}
-
-func (lg *Logs) GetTableView(mode EvalModes, time Times) *etable.IdxView {
-	tempScopeKey := ScopeKey("")
-	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
-	// TODO(optimize) Cache this in the TableView
-	return etable.NewIdxView(lg.Tables[tempScopeKey].Table)
-}
-
-func (lg *Logs) GetTableDetails(mode EvalModes, time Times) LogTable {
-	tempScopeKey := ScopeKey("")
-	tempScopeKey.FromScopes([]EvalModes{mode}, []Times{time})
-	return lg.Tables[tempScopeKey]
 }
