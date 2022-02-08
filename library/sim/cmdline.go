@@ -32,7 +32,7 @@ func (ss *Sim) ParseArgs() {
 	flag.BoolVar(&saveEpcLog, "epclog", true, "if true, save train epoch log to file")
 	flag.BoolVar(&saveRunLog, "runlog", true, "if true, save run epoch log to file")
 	flag.BoolVar(&saveNetData, "netdata", false, "if true, save network activation etc data from testing trials, for later viewing in netview")
-	flag.BoolVar(&ss.NoGui, "nogui", true, "if not passing any other args and want to run nogui, use nogui")
+	flag.BoolVar(&ss.NoGui, "nogui", false, "if not passing any other args and want to run nogui, use nogui")
 	flag.StringVar(&hyperFile, "hyperFile", "", "Name of the file to output hyperparameter data. If not empty string, program should write and then exit")
 	flag.StringVar(&paramsFile, "paramsFile", "", "Name of the file to input parameters from.")
 	flag.Parse()

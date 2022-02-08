@@ -179,13 +179,27 @@ func SortScopes(scopes []ScopeKey) []ScopeKey {
 		case len(ti) == 1 && len(tj) != 1:
 			return true
 		}
-		if mi[0] < mj[0] {
+		var emi, emj EvalModes
+		var eti, etj Times
+		if emi.FromString(mi[0]) != nil {
+			emi = 1000
+		}
+		if emj.FromString(mj[0]) != nil {
+			emj = 1000
+		}
+		if eti.FromString(ti[0]) != nil {
+			eti = 1000
+		}
+		if etj.FromString(tj[0]) != nil {
+			etj = 1000
+		}
+		if emi < emj {
 			return true
 		}
-		if mi[0] > mj[0] {
+		if emi > emj {
 			return false
 		}
-		return ti[0] < tj[0]
+		return eti < etj
 	})
 	return scopes
 }
