@@ -117,7 +117,7 @@ def main():
     updated_parameters = (create_hyperonly(params))
 
     with open("../hyperparams.json", "w") as outfile:
-        json_object = json.dumps(updated_parameters)
+        json_object = json.dump(updated_parameters,outfile)
     ##faux optuna
     # for source, duplicate in zip(listofhypers, hyperparameterlist):
     #    pass
