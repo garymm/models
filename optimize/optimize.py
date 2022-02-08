@@ -4,7 +4,7 @@ import copy
 
 
 # TODO These are the steps for hyperparameter optimization
-#  Find an optimizer package like optuna and import it
+#  ✅ Find an optimizer package like optuna and import it
 #  Take our Hypers object and translate it into the hyperparameters
 #  Get the test performance from logs as a val function
 #  Connect hyperspace (hyperparameter space) and val function to package

@@ -31,7 +31,7 @@ func TestItem(t *testing.T) {
 		}},
 	}
 	item.SetEachScopeKey()
-	_, ok := item.ComputeFunc(Train, Epoch)
+	_, ok := item.ComputeFunc("Train", "Epoch")
 	if !ok {
 		t.Errorf("Error getting compute function")
 	}
