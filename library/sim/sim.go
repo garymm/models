@@ -102,7 +102,7 @@ func (ss *Sim) New() {
 	ss.ViewOn = true
 	ss.TrainUpdt = axon.AlphaCycle
 	ss.TestUpdt = axon.Cycle
-	ss.TestInterval = 500
+	ss.TestInterval = 500 // TODO this should be a value we update or save, seems to log every epoch
 	ss.LayStatNms = []string{"Hidden1", "Hidden2", "Output"}
 	ss.SpikeRecLays = []string{"Input", "Hidden1", "Hidden2", "Output"}
 	ss.Time.Defaults()

@@ -116,11 +116,11 @@ def main():
             json.dump(updated_parameters, outfile)
 
         # Run go program with -params arg
-        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=3 -epochs=1")
+        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=5 -epochs=1")
 
         # Get valuation from logs
         # TODO Make sure this name is unique for parallelization.
-        with open('One2Many_Searching_testepc.tsv', newline='') as csvfile:
+        with open('One2Many_Searching_testepc.tsv', newline='') as csvfile: # TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
             f = csv.reader(csvfile, delimiter='\t', quotechar='|')
             rows = []
             for row in f:

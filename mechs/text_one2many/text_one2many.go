@@ -217,7 +217,7 @@ func ConfigPats(ss *sim2.Sim) {
 }
 
 func ConfigNet(ss *sim2.Sim, net *axon.Network) {
-	net.InitName(net, "One2Many")
+	net.InitName(net, "One2Many") // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
 	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
