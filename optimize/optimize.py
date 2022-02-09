@@ -52,6 +52,14 @@ def run_model(args):
     os.system("/private/var/folders/wq/b74k_01n1v14krlqryxn2_s80000gn/T/GoLand/___textone2many_nogui -nogui=true " + args)
 
 
+def run_model_one2many(args):
+    os.system("GOROOT=/usr/local/opt/go/libexec") #gosetup
+    os.system("GOPATH=/Users/garbar/go") #gosetup
+    # TODO Make this more general.
+    os.system("/usr/local/opt/go/libexec/bin/go build -o /private/var/folders/wq/b74k_01n1v14krlqryxn2_s80000gn/T/GoLand/___one2many_nogui github.com/Astera-org/models/mechs/one2many")
+    os.system("/private/var/folders/wq/b74k_01n1v14krlqryxn2_s80000gn/T/GoLand/___one2many_nogui -nogui=true " + args)
+
+
 def get_opt_value(trial: Trial, parametername, guidelines):
     val = float(guidelines["Val"])
     if guidelines.get("Min") is not None and guidelines.get("Max") is not None:
@@ -112,7 +120,7 @@ def main():
 
         # Get valuation from logs
         # TODO Make sure this name is unique for parallelization.
-        with open('One2Many_Searching_epc.tsv', newline='') as csvfile:
+        with open('One2Many_Searching_testepc.tsv', newline='') as csvfile:
             f = csv.reader(csvfile, delimiter='\t', quotechar='|')
             rows = []
             for row in f:
