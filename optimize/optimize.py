@@ -41,16 +41,16 @@ def create_hyperonly(params):
                         del dup_element["Params"][pname]
                 del dup_element["Hypers"]
                 duplicate["Sheets"][name].append(dup_element)
-
+    #
     return [duplicate]
 
 
 def run_model(args):
-    os.system("GOROOT=/usr/local/go #gosetup")
-    os.system("GOPATH=/home/keenan/go #gosetup")
+    os.system("GOROOT=/usr/local/opt/go/libexec") #gosetup
+    os.system("GOPATH=/Users/garbar/go") #gosetup
     # TODO Make this more general.
-    os.system("/usr/local/go/bin/go build -o /tmp/GoLand/___text_one2many_load_params_from_file github.com/Astera-org/models/mechs/text_one2many #gosetup")
-    os.system("/tmp/GoLand/___text_one2many_load_params_from_file " + args)
+    os.system("/usr/local/opt/go/libexec/bin/go build -o /private/var/folders/wq/b74k_01n1v14krlqryxn2_s80000gn/T/GoLand/___textone2many_nogui github.com/Astera-org/models/mechs/text_one2many")
+    os.system("/private/var/folders/wq/b74k_01n1v14krlqryxn2_s80000gn/T/GoLand/___textone2many_nogui -nogui=true " + args)
 
 
 def get_opt_value(trial: Trial, parametername, guidelines):
