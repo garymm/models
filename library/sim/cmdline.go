@@ -80,6 +80,10 @@ func (ss *Sim) RunFromArgs() {
 	if saveEpcLog {
 		fnm := ss.LogFileName("epc")
 		ss.Logs.SetLogFile(elog.Train, elog.Epoch, fnm)
+
+		//Save test as well as train epoch logs
+		testfnm := ss.LogFileName("testepc")
+		ss.Logs.SetLogFile(elog.Test, elog.Epoch, testfnm)
 	}
 	if saveRunLog {
 		fnm := ss.LogFileName("run")
