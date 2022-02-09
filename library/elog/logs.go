@@ -52,7 +52,7 @@ func (lg *Logs) AddItem(item *Item) {
 	if _, has := lg.ItemIdxMap[item.Name]; has {
 		// This error is not currently a problem as this map is not used.
 		// TODO: If we want to use this map, we need to clean up logging_content.go.
-		log.Printf("elog.AddItem Warning: item name repeated: %s\n", item.Name)
+		// log.Printf("elog.AddItem Warning: item name repeated: %s\n", item.Name)
 	}
 	lg.ItemIdxMap[item.Name] = len(lg.Items) - 1
 }
