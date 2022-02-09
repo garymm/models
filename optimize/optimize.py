@@ -3,7 +3,6 @@ import json
 import copy
 import csv
 import os
-
 from optuna import Trial
 
 
@@ -109,7 +108,7 @@ def main():
             json.dump(updated_parameters, outfile)
 
         # Run go program with -params arg
-        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=1 -epochs=3")
+        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=3 -epochs=1")
 
         # Get valuation from logs
         # TODO Make sure this name is unique for parallelization.
