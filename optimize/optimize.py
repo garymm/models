@@ -1,4 +1,4 @@
-# import optuna
+import optuna
 import json
 import copy
 import csv
@@ -20,6 +20,8 @@ import csv
 # When go model finishes, python reads output from file, getting objective metric
 # Python iterates
 import os
+
+from optuna import Trial
 
 
 def generate_list_iterate(params: list):
@@ -89,8 +91,9 @@ def create_hyperonly(params):
 #     return newset
 
 
-def optimizer(parametername, guidelines: {}):
-    return str(float(guidelines["Val"]) + 6666)
+# def optimizer(parametername, guidelines: {}):
+#     print("DOING OPTIMIZATION: " + str(parametername) + " " + str(guidelines))
+#     return str(float(guidelines["Val"]) + 6666)
 
 
 def generate_parameters(params: dict, hyperparams: dict, optimizer_func):
@@ -104,14 +107,29 @@ def run_model(args):
     os.system("/tmp/GoLand/___text_one2many_load_params_from_file " + args)
 
 
+def get_opt_value(trial: Trial, parametername, guidelines):
+    val = float(guidelines["Val"])
+    if guidelines.get("Min") is not None and guidelines.get("Max") is not None:
+        print("GUIDELINES")
+        print(guidelines)
+        mino = float(guidelines["Min"])
+        maxo = float(guidelines["Max"])
+    else:
+        # TODO Make this better
+        mino = val * .5
+        maxo = val * 1.5
+    return trial.suggest_float(parametername, mino, maxo)
+
+
+
 def main():
     # TODO(andrew and michael) Clean up this file
 
-    # os.system("pwd") # DO NOT SUBMIT
     os.chdir('../')  # Move into the models/ directory
 
     hyperFile = "hyperparamsExample.json"
     # Run go with -hyperFile cmd arg to save them to file
+    print("GETTING HYPERPARAMETERS")
     run_model("-hyperFile=" + hyperFile)
     # Load hypers from file
     f = open(hyperFile)
@@ -120,26 +138,20 @@ def main():
     print("GOT PARAMS")
     print(params)
 
-    # Iterate through many runs
-    # TODO Parallelization
-    maxtries = 1
-    i = 0
-    while i < maxtries:
-        i += 1
-        print("EVALUATING PARAMS TRY " + str(i))
+    # Study definition
+    study = optuna.create_study(direction='minimize')
 
-        # hyperparameterlist = generate_hyperlist(params)
-        # # TODO(michael) Why isn't this parameter used? Can this code be deleted?
-        # print("GOT HYPERPARAMS")
-        # print(hyperparameterlist)
-
+    def optimize(trial: Trial):
+        print("BEGIN OPTIMIZE")
         # This block modifies params in place to include the new optimized values
+        # TODO Don't modify in place
         parameters_to_modify = generate_list_iterate(params)
-        # print("PARAMETERS TO MODIFY")
-        # print(parameters_to_modify)
+        print("PARAMETERS TO MODIFY")
+        print(parameters_to_modify)
         for info in parameters_to_modify:
             # TODO Invoke Optuna or Bones here
-            value_to_assign = optimizer(info["uniquename"], info["values"]["Hypers"][info["paramname"]])
+            # value_to_assign = optimizer(info["uniquename"], info["values"]["Hypers"][info["paramname"]])
+            value_to_assign = get_opt_value(trial, info["uniquename"], info["values"]["Hypers"][info["paramname"]])
             info["values"]["Params"][info["paramname"]] = value_to_assign
         # print("OPTIMIZED PARAMETERS")
         # print(parameters_to_modify)
@@ -171,6 +183,23 @@ def main():
             # TODO Parse this tsv file more carefully
             score = rows[-1][2]
             print("GOT SCORE: " + str(score))
+        return float(score)
+
+    # Starts optimization
+    study.optimize(optimize, n_trials=4)
+
+    # Iterate through many runs
+    # TODO Parallelization
+    # maxtries = 1
+    # i = 0
+    # while i < maxtries:
+    #     i += 1
+    #     print("EVALUATING PARAMS TRY " + str(i))
+
+        # hyperparameterlist = generate_hyperlist(params)
+        # # TODO(michael) Why isn't this parameter used? Can this code be deleted?
+        # print("GOT HYPERPARAMS")
+        # print(hyperparameterlist)
 
         # TODO Communicate with optimizer
 
@@ -188,5 +217,5 @@ def main():
 
 
 if __name__ == '__main__':
-    print("Starting optimization")
+    print("Starting optimization main func")
     main()
