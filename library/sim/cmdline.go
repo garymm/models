@@ -19,6 +19,7 @@ var saveNetData bool
 var note string
 var hyperFile string
 var paramsFile string
+var noRun bool
 
 // ParseArgs updates the Sim object with command line arguments.
 func (ss *Sim) ParseArgs() {
@@ -41,7 +42,7 @@ func (ss *Sim) ParseArgs() {
 	if hyperFile != "" {
 		file, _ := json.MarshalIndent(ss.Params, "", "  ")
 		_ = ioutil.WriteFile(hyperFile, file, 0644)
-		// TODO This no longer prevents the run
+		noRun = true
 		return
 	}
 	if paramsFile != "" {
@@ -64,6 +65,9 @@ func (ss *Sim) ParseArgs() {
 
 // RunFromArgs uses command line arguments to run the model.
 func (ss *Sim) RunFromArgs() {
+	if noRun {
+		return
+	}
 	ss.Init()
 
 	if note != "" {

@@ -97,20 +97,28 @@ def generate_parameters(params: dict, hyperparams: dict, optimizer_func):
     pass
 
 
+def run_model(args):
+    os.system("GOROOT=/usr/local/go #gosetup")
+    os.system("GOPATH=/home/keenan/go #gosetup")
+    os.system("/usr/local/go/bin/go build -o /tmp/GoLand/___text_one2many_load_params_from_file github.com/Astera-org/models/mechs/text_one2many #gosetup")
+    os.system("/tmp/GoLand/___text_one2many_load_params_from_file " + args)
+
+
 def main():
     # TODO(andrew and michael) Clean up this file
 
+    # os.system("pwd") # DO NOT SUBMIT
+    os.chdir('../')  # Move into the models/ directory
+
+    hyperFile = "hyperparamsExample.json"
+    # Run go with -hyperFile cmd arg to save them to file
+    run_model("-hyperFile=" + hyperFile)
     # Load hypers from file
-    hyperFile = "../hyperparamsExample.json"
-    # TODO Run go with -hyperFile cmd arg
     f = open(hyperFile)
     params = json.load(f)
     f.close()
     print("GOT PARAMS")
     print(params)
-
-    # os.system("pwd") # DO NOT SUBMIT
-    os.chdir('../')  # Move into the models/ directory
 
     # Iterate through many runs
     # TODO Parallelization
@@ -121,7 +129,7 @@ def main():
         print("EVALUATING PARAMS TRY " + str(i))
 
         # hyperparameterlist = generate_hyperlist(params)
-        # # TODO Why isn't this parameter used?
+        # # TODO(michael) Why isn't this parameter used? Can this code be deleted?
         # print("GOT HYPERPARAMS")
         # print(hyperparameterlist)
 
@@ -148,11 +156,8 @@ def main():
         with open("hyperparams.json", "w") as outfile:
             json.dump(updated_parameters, outfile)
 
-        # TODO Run go program with -params arg
-        os.system("GOROOT=/usr/local/go #gosetup")
-        os.system("GOPATH=/home/keenan/go #gosetup")
-        os.system("/usr/local/go/bin/go build -o /tmp/GoLand/___text_one2many_load_params_from_file github.com/Astera-org/models/mechs/text_one2many #gosetup")
-        os.system("/tmp/GoLand/___text_one2many_load_params_from_file -paramsFile=hyperparams.json -nogui=true -params=Searching -runs=1 -epochs=3")
+        # Run go program with -params arg
+        run_model("-paramsFile=hyperparams.json -nogui=true -params=Searching -runs=1 -epochs=3")
 
         # Get valuation from logs
         score = 0
@@ -165,7 +170,7 @@ def main():
             # Get the last UnitErr
             # TODO Parse this tsv file more carefully
             score = rows[-1][2]
-            print(score)
+            print("GOT SCORE: " + str(score))
 
         # TODO Communicate with optimizer
 
