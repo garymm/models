@@ -190,9 +190,6 @@ func ConfigEnv(ss *sim2.Sim) {
 
 	TrainEnv.Init(0)
 	TestEnv.Init(0)
-
-	ss.TestTrialLength = len(TestEnv.NGrams)
-
 }
 
 func ConfigPats(ss *sim2.Sim) {

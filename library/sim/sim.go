@@ -19,42 +19,50 @@ import (
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
 type Sim struct {
-	Net  *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
+	// TODO Net maybe shouldn't be in Sim because it won't always be an axon.Network
+	Net *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
+	// TODO This should be moved to the environment or the Sim extension
 	Pats *etable.Table `view:"no-inline" desc:"the training patterns to use"`
 
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 	GUI  egui.GUI
-	//This block is not general enough to go into logs and should stay in sim
+	// TODO These should be moved into elog.Logs as a SpecialLogs object or something
 	TstErrLog      *etable.Table                 `view:"no-inline" desc:"log of all test trials where errors were made"`
 	TstErrStats    *etable.Table                 `view:"no-inline" desc:"stats on test trials where errors were made"`
 	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
 	SpikeRastGrids map[string]*etview.TensorGrid `desc:"spike raster plots for different layers"`
 	RunStats       *etable.Table                 `view:"no-inline" desc:"aggregate stats on all runs"`
-	ErrLrMod       axon.LrateMod                 `view:"inline" desc:"learning rate modulation as function of error"`
 
-	TrialStatsFunc  func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
-	TestTrialLength int                       `view:"inline" desc:"provides the expected length of a table slice"`
+	TrialStatsFunc func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
 
-	Params    params.Sets `view:"no-inline" desc:"full collection of param sets"`
-	ParamSet  string      `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set -- can use multiple names separated by spaces (don't put spaces in ParamSet names!)"`
-	Tag       string      `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	StartRun  int         `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
-	MaxRuns   int         `desc:"maximum number of model runs to perform (starting from StartRun)"`
-	MaxEpcs   int         `desc:"maximum number of epochs to run per model run"`
-	NZeroStop int         `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
+	// TODO Create a control or parameterization object to control all this
+	// TODO Params and ParamSet should be combined
+	Params   params.Sets `view:"no-inline" desc:"full collection of param sets"`
+	ParamSet string      `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set -- can use multiple names separated by spaces (don't put spaces in ParamSet names!)"`
+	Tag      string      `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
+	StartRun int         `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
+	MaxRuns  int         `desc:"maximum number of model runs to perform (starting from StartRun)"`
 
-	TrainEnv     Environment     `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
-	TestEnv      Environment     `desc:"Testing environment -- manages iterating over testing"`
+	// TODO These are specific to each model
+	MaxEpcs   int `desc:"maximum number of epochs to run per model run"`
+	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
+
+	// TODO Maybe these should go into the Sim extension
+	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
+	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
+
 	Time         axon.Time       `desc:"axon timing parameters and state"`
 	ViewOn       bool            `desc:"whether to update the network view while running"`
 	TrainUpdt    axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 	TestUpdt     axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 	TestInterval int             `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
-	LayStatNms   []string        `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
-	SpikeRecLays []string        `desc:"names of layers to record spikes of during testing"`
+
+	// TODO These maybe don't need to be stored on Sim at all
+	LayStatNms   []string `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
+	SpikeRecLays []string `desc:"names of layers to record spikes of during testing"`
 
 	// statistics: note use float64 as that is best for etable.Table
-	// TODO Leave the Trial stats here on Sim, but remove the Epoch stats completely
+	// TODO Maybe put this on a Stats object
 	TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
 	TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
 	TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
@@ -71,8 +79,9 @@ type Sim struct {
 	SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
 
 	// TODO Move this to Logs
-	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"A buffer for holding layer values. This helps avoid reallocating memory every time"`
+	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"Value Tensors. A buffer for holding layer values. This helps avoid reallocating memory every time"`
 
+	// TODO Move these to an Args object
 	SaveWts      bool             `view:"-" desc:"for command-line run only, auto-save final weights after each run"`
 	NoGui        bool             `view:"-" desc:"if true, runing in no GUI mode"`
 	LogSetParams bool             `view:"-" desc:"if true, print message for all params that are set"`
@@ -86,9 +95,6 @@ func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
 	ss.RunStats = &etable.Table{}
-	ss.ErrLrMod.Defaults()
-	ss.ErrLrMod.Base = 0.5 // 0.5 > 0.2 -- not very useful in this model, but key in larger nets
-	ss.ErrLrMod.Range.Set(0, 0.5)
 	ss.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
 		ss.RndSeeds[i] = int64(i) + 1 // exclude 0

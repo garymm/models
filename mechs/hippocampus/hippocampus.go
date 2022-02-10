@@ -2,16 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// one2many is a copy of ra25, but instead of a single output
-// associated with each input, there are multiple. The Correl
-// metric that's reported is computed based on correlation with
-// the closest found pattern.
+// Simulation of the hippocampus
 
 package main
 
 import (
 	"fmt"
-	"github.com/Astera-org/models/library/sim"
+	sim2 "github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/params"
@@ -32,7 +29,7 @@ var TrainEnv = EnvOne2Many{}
 // core algorithm side remains as simple as possible, and doesn't need to worry about
 // different time-scales over which stats could be accumulated etc.
 // You can also aggregate directly from log data, as is done for testing stats
-func TrialStats(ss *sim.Sim, accum bool) {
+func TrialStats(ss *sim2.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
 
@@ -56,8 +53,8 @@ func TrialStats(ss *sim.Sim, accum bool) {
 	}
 }
 
-type One2Sim struct {
-	sim.Sim
+type Hip2Sim struct {
+	sim2.Sim
 	// Specific to the one2many module
 	NInputs  int `desc:"Number of input/output pattern pairs"`
 	NOutputs int `desc:"The number of output patterns potentially associated with each input pattern."`
@@ -65,7 +62,7 @@ type One2Sim struct {
 
 func main() {
 	// TheSim is the overall state for this simulation
-	var TheSim One2Sim
+	var TheSim Hip2Sim
 	TheSim.New()
 	TheSim.NInputs = 25
 	TheSim.NOutputs = 2
@@ -76,14 +73,14 @@ func main() {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim.Sim, ProgramName, "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim2.GuiRun(&TheSim.Sim, ProgramName, "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
 
 }
 
 // Config configures all the elements using the standard functions
-func Config(ss *One2Sim) {
+func Config(ss *Hip2Sim) {
 	ConfigPats(ss)
 	OpenPats(&ss.Sim)
 	ConfigParams(&ss.Sim)
@@ -96,10 +93,12 @@ func Config(ss *One2Sim) {
 	ss.ConfigLogSpec()
 	ss.ConfigLogs()
 	ss.ConfigSpikeRasts()
+
 }
 
 // ConfigParams configure the parameters
-func ConfigParams(ss *sim.Sim) {
+func ConfigParams(ss *sim2.Sim) {
+
 	// ParamSetsMin sets the minimal non-default params
 	// Base is always applied, and others can be optionally selected to apply on top of that
 	ss.Params = params.Sets{
@@ -118,19 +117,17 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.Dt.GeTau":      "5",
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
-					}, Hypers: params.Hypers{
-					"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
-				}},
+					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
-						"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0
-						"Layer.Act.Clamp.Ge":   "1.0", // 1.0 > 0.6 >= 0.7 == 0.5
-						// This should only be 0.04 in one-hot encoding
+						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
+						"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
 						"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-						"Layer.Act.Clamp.Ge":   {"Val": "1.0", "StdDev": ".2"},
+						// TODO Set these numbers to be less random
+						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "Min": "1", "Max": "3", "Sigma": ".45", "Priority": "5"},
+						"Layer.Act.Clamp.Ge":   {"Val": "1.0"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
@@ -149,23 +146,12 @@ func ConfigParams(ss *sim.Sim) {
 				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
 					Params: params.Params{
 						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
-					},
-					Hypers: params.Hypers{
-						"Prjn.PrjnScale.Rel": {"Val": "0.3", "StdDev": ".05"},
 					}},
 			},
 			"Sim": &params.Sheet{ // sim params apply to sim object
 				{Sel: "Sim", Desc: "best params always finish in this time",
 					Params: params.Params{
 						"Sim.MaxEpcs": "100",
-					}},
-			},
-			// TODO Use this for a Net Schema that is used to build the network
-			"NetArch": &params.Sheet{
-				{Sel: ".Hidden", Desc: "all defaults",
-					Params: params.Params{
-						"ShapeX": "10",
-						"ShapeY": "10",
 					}},
 			},
 		}},
@@ -175,7 +161,7 @@ func ConfigParams(ss *sim.Sim) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 //// 		Configs
 
-func ConfigEnv(ss *sim.Sim) {
+func ConfigEnv(ss *sim2.Sim) {
 
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
@@ -216,7 +202,7 @@ func ConfigEnv(ss *sim.Sim) {
 }
 
 //ConfigPats used to configure patterns
-func ConfigPats(ss *One2Sim) {
+func ConfigPats(ss *Hip2Sim) {
 	dt := ss.Pats
 	dt.SetMetaData("name", "TrainPats")
 	dt.SetMetaData("desc", "Training patterns")
@@ -238,7 +224,7 @@ func ConfigPats(ss *One2Sim) {
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
-func OpenPats(ss *sim.Sim) {
+func OpenPats(ss *sim2.Sim) {
 	dt := ss.Pats
 	dt.SetMetaData("name", "TrainPats")
 	dt.SetMetaData("desc", "Training patterns")
@@ -248,9 +234,8 @@ func OpenPats(ss *sim.Sim) {
 	}
 }
 
-func ConfigNet(ss *sim.Sim, net *axon.Network) {
+func ConfigNet(ss *sim2.Sim, net *axon.Network) {
 	net.InitName(net, ProgramName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
-	// TODO Something like this GetParam(params, "ShapeX", "Hidden2", emer.Hidden)
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
 	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
