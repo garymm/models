@@ -6,7 +6,7 @@ import copy
 import csv
 import os
 import optimize
-
+import pandas as pd
 
 #NOTE bones must be pulled and installed locally from
 #https://gitlab.com/generally-intelligent/bones/
@@ -47,15 +47,7 @@ def optimize_bones(params, suggestions:dict):
     optimize.run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=5 -epochs=1")
     # Get valuation from logs
     # TODO Make sure this name is unique for parallelization.
-    with open('One2Many_Searching_testepc.tsv', newline='') as csvfile: # TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
-        f = csv.reader(csvfile, delimiter='\t', quotechar='|')
-        rows = []
-        for row in f:
-            rows.append(row)
-        # Get the last UnitErr
-        # TODO Parse this tsv file more carefully
-        score = rows[-1][3]
-        print("GOT SCORE: " + str(score))
+    score = pd.read_csv('logs/{}_Searching_testepc.tsv'.format(optimize.MECHNAME), sep="\t")[optimize.VARIABLE_TO_OPTIMIZE].values[-1]
     return float(score)
 
 
@@ -106,6 +98,11 @@ def run_bones(bones_obj,trialnumber, params, optimize_fn):
 
 if __name__ == '__main__':
     os.chdir('../')  # Move into the models/ directory
+
+    optimize.MECHNAME = "TextOne2Many" #"One2Many", "RA25", these are app names defined at the top of each mech file
+    optimize.EXECUTABLE_PATH = "text_one2many" #the directory the file comes from
+    optimize.VARIABLE_TO_OPTIMIZE = "#PctErr"
+
     hyperFile = "hyperparamsExample.json"
     # Run go with -hyperFile cmd arg to save them to file
     print("GETTING HYPERPARAMETERS")

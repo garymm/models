@@ -7,11 +7,12 @@ import csv
 import os
 from optuna import Trial
 import pandas as pd
+#todo integrate so that can easily swap between bones and optuna
 #todo specify the number iterations per epoch and epochs
 #todo oneday wrap this in a clear object with comments
-mechname = "RA25" #"One2Many", "RA25", these are app names defined at the top of each mech file
-executable_path = "ra25" #the directory the file comes from
-variable_to_optimize = "#PctErr"
+MECHNAME = "RA25" #"One2Many", "RA25", these are app names defined at the top of each mech file
+EXECUTABLE_PATH = "ra25" #the directory the file comes from
+VARIABLE_TO_OPTIMIZE = "#PctErr"
 
 def generate_list_iterate(params: list):
     params_relations = []
@@ -58,7 +59,7 @@ def run_model(args):
         gocommand = "/usr/local/go/bin/go"
     elif str(os.popen("test -f /usr/local/opt/go/libexec/bin/go && echo mac").read()).strip() == "mac":
         gocommand = "/usr/local/opt/go/libexec/bin/go"
-    os.system(gocommand + " run mechs/{}/*.go ".format(executable_path) + args)
+    os.system(gocommand + " run mechs/{}/*.go ".format(EXECUTABLE_PATH) + args)
 
 
 def get_opt_value(trial: Trial, parametername, guidelines):
@@ -121,7 +122,7 @@ def main():
 
         # Get valuation from logs
         # TODO Make sure this name is unique for parallelization.
-        score = pd.read_csv('{}_Searching_testepc.tsv'.format(mechname),sep="\t")[variable_to_optimize].values[-1]
+        score = pd.read_csv('logs/{}_Searching_testepc.tsv'.format(MECHNAME), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
         return float(score)
 
     # Starts optimization
