@@ -54,7 +54,7 @@ def optimize_bones(params, suggestions:dict):
             rows.append(row)
         # Get the last UnitErr
         # TODO Parse this tsv file more carefully
-        score = rows[-1][2]
+        score = rows[-1][3]
         print("GOT SCORE: " + str(score))
     return float(score)
 
@@ -78,7 +78,10 @@ def prepare_hyperparams_bones(the_params):
         else: max = float(relevantvalues["Max"])
         if ("Sigma" in relevantvalues) == False: sigma = .5
         else: sigma = float(relevantvalues["Sigma"])
-        min = 0
+        if min > value:
+            min = 0
+        if max < value:
+            max = value * 1.5
         initial_params.update({uniquename:value})
         distribution_type =  LinearSpace(scale=sigma,min=min,max = max) #this is naive, and assume int false
         params_space_by_name.update([(uniquename,distribution_type)])
@@ -87,10 +90,16 @@ def prepare_hyperparams_bones(the_params):
 
 
 def run_bones(bones_obj,trialnumber, params, optimize_fn):
+    best_suggest = {}
+    best_score = 1000
     for i in range(trialnumber):
         suggestions = bones_obj.suggest().suggestion
         observed_value = optimize_fn(params, suggestions)
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
+        if observed_value < best_score:
+            best_score = observed_value
+            best_suggest = suggestions
+    return best_suggest, best_score
 
 
 
@@ -100,7 +109,7 @@ if __name__ == '__main__':
     hyperFile = "hyperparamsExample.json"
     # Run go with -hyperFile cmd arg to save them to file
     print("GETTING HYPERPARAMETERS")
-    #optimize.run_model("-hyperFile=" + hyperFile)
+    optimize.run_model("-hyperFile=" + hyperFile)
     # Load hypers from file
     f = open(hyperFile)
     params = json.load(f)
@@ -115,4 +124,5 @@ if __name__ == '__main__':
     )
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
-    run_bones(bones,2,params,optimize_fn=optimize_bones)
+    best, best_score = run_bones(bones,2,params,optimize_fn=optimize_bones)
+    print("Best parameters at: " + str(best) + " with score: " + str(best_score))
