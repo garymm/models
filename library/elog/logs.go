@@ -149,7 +149,7 @@ func (lg *Logs) ResetLog(mode EvalModes, time Times) {
 func (lg *Logs) SetLogFile(mode EvalModes, time Times, fnm string) {
 	lt := lg.TableDetails(mode, time)
 	var err error
-	lt.File, err = os.Create(fnm)
+	lt.File, err = os.Create("logs/" + fnm)
 	if err != nil {
 		log.Println(err)
 		lt.File = nil
