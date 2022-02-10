@@ -6,7 +6,12 @@ import copy
 import csv
 import os
 from optuna import Trial
-
+import pandas as pd
+#todo specify the number iterations per epoch and epochs
+#todo oneday wrap this in a clear object with comments
+mechname = "RA25" #"One2Many", "RA25", these are app names defined at the top of each mech file
+executable_path = "ra25" #the directory the file comes from
+variable_to_optimize = "#PctErr"
 
 def generate_list_iterate(params: list):
     params_relations = []
@@ -53,7 +58,7 @@ def run_model(args):
         gocommand = "/usr/local/go/bin/go"
     elif str(os.popen("test -f /usr/local/opt/go/libexec/bin/go && echo mac").read()).strip() == "mac":
         gocommand = "/usr/local/opt/go/libexec/bin/go"
-    os.system(gocommand + " run mechs/text_one2many/*.go " + args)
+    os.system(gocommand + " run mechs/{}/*.go ".format(executable_path) + args)
 
 
 def get_opt_value(trial: Trial, parametername, guidelines):
@@ -116,15 +121,7 @@ def main():
 
         # Get valuation from logs
         # TODO Make sure this name is unique for parallelization.
-        with open('One2Many_Searching_testepc.tsv', newline='') as csvfile: # TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
-            f = csv.reader(csvfile, delimiter='\t', quotechar='|')
-            rows = []
-            for row in f:
-                rows.append(row)
-            # Get the last UnitErr
-            # TODO Parse this tsv file more carefully
-            score = rows[-1][2]
-            print("GOT SCORE: " + str(score))
+        score = pd.read_csv('{}_Searching_testepc.tsv'.format(mechname),sep="\t")[variable_to_optimize].values[-1]
         return float(score)
 
     # Starts optimization

@@ -23,6 +23,8 @@ import (
 	"strings"
 )
 
+var programName = "TextOne2Many"
+
 func main() {
 	// TheSim is the overall state for this simulation
 	var TheSim sim2.Sim
@@ -34,7 +36,7 @@ func main() {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim2.GuiRun(&TheSim, "text_one2many", "Text One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim2.GuiRun(&TheSim, programName, "Text One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
 }
@@ -218,7 +220,7 @@ func ConfigPats(ss *sim2.Sim) {
 }
 
 func ConfigNet(ss *sim2.Sim, net *axon.Network) {
-	net.InitName(net, "One2Many") // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
+	net.InitName(net, programName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
 	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
