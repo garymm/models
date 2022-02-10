@@ -22,10 +22,6 @@ type Sim struct {
 	Net  *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
 	Pats *etable.Table `view:"no-inline" desc:"the training patterns to use"`
 
-	// Specific to the one2many module
-	NInputs  int `desc:"Number of input/output pattern pairs"`
-	NOutputs int `desc:"The number of output patterns potentially associated with each input pattern."`
-
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 	GUI  egui.GUI
 	//This block is not general enough to go into logs and should stay in sim
@@ -89,8 +85,6 @@ type Sim struct {
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
-	ss.NInputs = 25
-	ss.NOutputs = 2
 	ss.RunStats = &etable.Table{}
 	ss.ErrLrMod.Defaults()
 	ss.ErrLrMod.Base = 0.5 // 0.5 > 0.2 -- not very useful in this model, but key in larger nets

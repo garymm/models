@@ -55,10 +55,19 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	}
 }
 
+type One2Sim struct {
+	sim2.Sim
+	// Specific to the one2many module
+	NInputs  int `desc:"Number of input/output pattern pairs"`
+	NOutputs int `desc:"The number of output patterns potentially associated with each input pattern."`
+}
+
 func main() {
 	// TheSim is the overall state for this simulation
-	var TheSim sim2.Sim
+	var TheSim One2Sim
 	TheSim.New()
+	TheSim.NInputs = 25
+	TheSim.NOutputs = 2
 
 	Config(&TheSim)
 
@@ -66,21 +75,21 @@ func main() {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim2.GuiRun(&TheSim, "one2many", "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim2.GuiRun(&TheSim.Sim, "one2many", "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
 
 }
 
 // Config configures all the elements using the standard functions
-func Config(ss *sim2.Sim) {
+func Config(ss *One2Sim) {
 	ConfigPats(ss)
-	OpenPats(ss)
-	ConfigParams(ss)
+	OpenPats(&ss.Sim)
+	ConfigParams(&ss.Sim)
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
-	ConfigEnv(ss)
-	ConfigNet(ss, ss.Net)
+	ConfigEnv(&ss.Sim)
+	ConfigNet(&ss.Sim, ss.Net)
 	// LogSpec needs to be configured after Net
 
 	ss.ConfigLogSpec()
@@ -195,7 +204,7 @@ func ConfigEnv(ss *sim2.Sim) {
 }
 
 //ConfigPats used to configure patterns
-func ConfigPats(ss *sim2.Sim) {
+func ConfigPats(ss *One2Sim) {
 	dt := ss.Pats
 	dt.SetMetaData("name", "TrainPats")
 	dt.SetMetaData("desc", "Training patterns")
