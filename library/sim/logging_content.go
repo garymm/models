@@ -88,7 +88,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Range:  minmax.F64{Max: 1},
 		Compute: elog.ComputeMap{
 			elog.GenScopeKey(elog.Train, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, ss.TrlErr)
+				dt.SetCellFloat(item.Name, row, ss.Stats.FloatMetric("TrlErr"))
 			}, elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				dt.SetCellFloat(item.Name, row, agg.Mean(ss.Logs.IdxView(elog.Train, elog.Trial), item.Name)[0])
 			}, elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
@@ -262,7 +262,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Type: etensor.FLOAT64,
 		Compute: elog.ComputeMap{
 			elog.GenScopeKey(elog.Test, elog.Trial): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, float64(ss.TrlErr))
+				dt.SetCellFloat(item.Name, row, float64(ss.Stats.FloatMetric("TrlErr")))
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "UnitErr",

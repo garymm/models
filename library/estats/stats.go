@@ -6,18 +6,23 @@ type Stats struct {
 	IntMetrics    map[string]int
 }
 
-func (stats *Stats) Init() {
-	floatMetrics := make(map[string]float64)
-	stringMetrics := make(map[string]string)
-	intMetrics := make(map[string]int)
-	stats.FloatMetrics = floatMetrics
-	stats.StringMetrics = stringMetrics
-	stats.IntMetrics = intMetrics
+func InitStats() Stats {
+	stats := Stats{}
+	stats.FloatMetrics = make(map[string]float64)
+	stats.StringMetrics = make(map[string]string)
+	stats.IntMetrics = make(map[string]int)
+	return stats
 }
 
-func (stats *Stats) SetFloatMetric(name string)  {}
-func (stats *Stats) SetStringMetric(name string) {}
-func (stats *Stats) SetIntMetric(name string)    {}
+func (stats *Stats) SetFloatMetric(name string, value float64) {
+	stats.FloatMetrics[name] = value
+}
+func (stats *Stats) SetStringMetric(name string, value string) {
+	stats.StringMetrics[name] = value
+}
+func (stats *Stats) SetIntMetric(name string, value int) {
+	stats.IntMetrics[name] = value
+}
 
 func (stats *Stats) FloatMetric(name string) float64 {
 	return stats.FloatMetrics[name]

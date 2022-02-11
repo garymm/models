@@ -1,15 +1,15 @@
 package sim
 
 import (
-	"math/rand"
-	"time"
-
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
+	"github.com/Astera-org/models/library/estats"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
 	"github.com/emer/etable/etable"
+	"math/rand"
+	"time"
 )
 
 // Sim encapsulates the entire simulation model, and we define all the
@@ -26,7 +26,8 @@ type Sim struct {
 	Logs   elog.Logs   `desc:"Contains all the logs and information about the logs.'"`
 	Params emer.Params `view:"inline" desc:"all parameter management"`
 
-	GUI egui.GUI
+	GUI   egui.GUI
+	Stats estats.Stats
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
 
@@ -51,7 +52,7 @@ type Sim struct {
 
 	// statistics: note use float64 as that is best for etable.Table
 	// TODO Maybe put this on a Stats object - moved to map
-	TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
+	//TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
 	TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
 	TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
 	TrlUnitErr float64 `inactive:"+" desc:"current trial's unit-level pct error"`
@@ -73,6 +74,7 @@ type Sim struct {
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
+	ss.Stats = estats.InitStats()
 	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
 		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0

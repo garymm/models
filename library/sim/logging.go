@@ -226,11 +226,23 @@ func (ss *Sim) AvgLayVal(ly *axon.Layer, vnm string) float32 {
 // InitStats initializes all the statistics, especially important for the
 // cumulative epoch stats -- called at start of new run
 func (ss *Sim) InitStats() {
+
 	// accumulators
 	ss.SumErr = 0
 	ss.FirstZero = -1
 	ss.NZero = 0
 	// clear rest just to make Sim look initialized
-	ss.TrlErr = 0
+
 	ss.TrlUnitErr = 0
+
+	ss.SumErr = 0
+	ss.Stats.SetFloatMetric("TrlErr", 0.0)
+	ss.Stats.SetStringMetric("TrlClosest", "")
+	ss.Stats.SetFloatMetric("TrlCorrel", 0.0)
+	ss.Stats.SetFloatMetric("TrlUnitErr", 0.0)
+	ss.Stats.SetFloatMetric("TrlCosDiff", 0.0)
+
+	ss.Stats.SetIntMetric("FirstZero", 0)
+	ss.Stats.SetIntMetric("NZero", 0)
+	//stats.SetFloatMetric("TrlCosDiff", 0, 0)
 }

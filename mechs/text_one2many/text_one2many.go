@@ -56,20 +56,20 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	ss.TrlUnitErr = out.PctUnitErr()
 
 	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
-	ss.TrlClosest = closestWord
-	ss.TrlCorrel = float64(cor)
+
+	ss.Stats.SetStringMetric("TrlClosest", closestWord)
 	contextWords := strings.Join(TrainEnv.CurWords, " ")
 
 	//Check if the closest word that is found is one of the potential following words
 	_, ok := TrainEnv.NGrams[contextWords][closestWord]
 	if ok {
-		ss.TrlErr = 0
+		ss.Stats.SetFloatMetric("TrlErr", 1)
 	} else {
-		ss.TrlErr = 1
+		ss.Stats.SetFloatMetric("TrlErr", 0)
 	}
 
 	if accum {
-		ss.SumErr += ss.TrlErr
+		ss.SumErr += (ss.Stats.FloatMetric("TrlErr"))
 	}
 }
 

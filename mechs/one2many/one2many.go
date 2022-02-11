@@ -38,7 +38,8 @@ func TrialStats(ss *sim.Sim, accum bool) {
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
 
 	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
-	ss.TrlClosest = cnm
+
+	ss.Stats.SetStringMetric("TrlClosest", cnm)
 	ss.TrlCorrel = float64(cor)
 	tnm := ""
 	if accum { // really train
@@ -47,13 +48,13 @@ func TrialStats(ss *sim.Sim, accum bool) {
 		tnm = ss.TestEnv.TrialName().Cur
 	}
 	if cnm == tnm {
-		ss.TrlErr = 0
+		ss.Stats.SetFloatMetric("TrlErr", 0)
 	} else {
-		ss.TrlErr = 1
+		ss.Stats.SetFloatMetric("TrlErr", 1)
 	}
 
 	if accum {
-		ss.SumErr += ss.TrlErr
+		ss.SumErr += ss.Stats.FloatMetric("TrlErr")
 	}
 }
 
@@ -131,8 +132,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
-					}},
+					"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
+				}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0
