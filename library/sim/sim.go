@@ -6,8 +6,6 @@ import (
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/params"
 	"github.com/emer/etable/etable"
-	"github.com/emer/etable/etensor"
-	"github.com/emer/etable/etview"
 	"math/rand"
 	"time"
 )
@@ -25,10 +23,6 @@ type Sim struct {
 
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 	GUI  egui.GUI
-	// TODO These should be moved into elog.Logs as a SpecialLogs object or something
-	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
-	SpikeRastGrids map[string]*etview.TensorGrid `desc:"spike raster plots for different layers"`
-	RunStats       *etable.Table                 `view:"no-inline" desc:"aggregate stats on all runs"`
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
 

@@ -156,26 +156,26 @@ func (ss *Sim) UpdateRun(dt *etable.Table) {
 
 // SpikeRastTsr gets spike raster tensor of given name, creating if not yet made
 func (ss *Sim) SpikeRastTsr(name string) *etensor.Float32 {
-	if ss.SpikeRasters == nil {
-		ss.SpikeRasters = make(map[string]*etensor.Float32)
+	if ss.Logs.SpikeRasters == nil {
+		ss.Logs.SpikeRasters = make(map[string]*etensor.Float32)
 	}
-	tsr, ok := ss.SpikeRasters[name]
+	tsr, ok := ss.Logs.SpikeRasters[name]
 	if !ok {
 		tsr = &etensor.Float32{}
-		ss.SpikeRasters[name] = tsr
+		ss.Logs.SpikeRasters[name] = tsr
 	}
 	return tsr
 }
 
 // SpikeRastGrid gets spike raster grid of given name, creating if not yet made
 func (ss *Sim) SpikeRastGrid(name string) *etview.TensorGrid {
-	if ss.SpikeRastGrids == nil {
-		ss.SpikeRastGrids = make(map[string]*etview.TensorGrid)
+	if ss.Logs.SpikeRastGrids == nil {
+		ss.Logs.SpikeRastGrids = make(map[string]*etview.TensorGrid)
 	}
-	tsr, ok := ss.SpikeRastGrids[name]
+	tsr, ok := ss.Logs.SpikeRastGrids[name]
 	if !ok {
 		tsr = &etview.TensorGrid{}
-		ss.SpikeRastGrids[name] = tsr
+		ss.Logs.SpikeRastGrids[name] = tsr
 	}
 	return tsr
 }
