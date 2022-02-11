@@ -155,33 +155,27 @@ func ConfigEnv(ss *sim2.Sim) {
 	ss.TestEnv = &TestEnv
 
 	ss.TrialStatsFunc = TrialStats
-	//ss = *sim.Sim
-	if ss.MaxRuns == 0 { // allow user override
-		ss.MaxRuns = 5
-	}
-	if ss.MaxEpcs == 0 { // allow user override
-		ss.MaxEpcs = 100
-		ss.NZeroStop = 5
-	}
+
+	ss.NZeroStop = 5
 
 	TrainEnv.SetName("TrainEnv")
 	TrainEnv.SetDesc("training params and state")
 	//TrainEnv.Table = etable.NewIdxView(ss.Pats)
 	//TrainEnv.Con
 	TrainEnv.Validate()
-	TrainEnv.Run().Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
+	TrainEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
 
 	TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	TrainEnv.Trial().Max = len(TrainEnv.NGrams)
-	TrainEnv.Epoch().Max = ss.MaxEpcs
+	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
 	TestEnv.Validate()
-	TestEnv.Run().Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
+	TestEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
 	TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	TestEnv.Trial().Max = len(TestEnv.NGrams)
-	TestEnv.Epoch().Max = ss.MaxEpcs
+	TestEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 	// note: to create a train / test split of pats, do this:
 	// all := etable.NewIdxView(ss.Pats)
 	// splits, _ := split.Permuted(all, []float64{.8, .2}, []string{"Train", "Test"})

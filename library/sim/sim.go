@@ -40,13 +40,11 @@ type Sim struct {
 	ParamSet string      `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set -- can use multiple names separated by spaces (don't put spaces in ParamSet names!)"`
 	Tag      string      `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
 	StartRun int         `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
-	MaxRuns  int         `desc:"maximum number of model runs to perform (starting from StartRun)"`
 
 	// TODO These are specific to each model
-	MaxEpcs   int `desc:"maximum number of epochs to run per model run"`
 	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
-	// TODO Maybe these should go into the Sim extension
+	// TODO Move Run out of the Env
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
 

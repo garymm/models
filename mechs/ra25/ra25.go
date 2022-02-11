@@ -149,28 +149,22 @@ func ConfigEnv(ss *sim.Sim) {
 
 	ss.TrialStatsFunc = TrialStats
 
-	if ss.MaxRuns == 0 { // allow user override
-		ss.MaxRuns = 5
-	}
-	if ss.MaxEpcs == 0 { // allow user override
-		ss.MaxEpcs = 100
-		ss.NZeroStop = 5
-	}
+	ss.NZeroStop = 5
 
 	TrainEnv.Nm = "TrainEnv"
 	TrainEnv.Dsc = "training params and state"
 	TrainEnv.Table = etable.NewIdxView(ss.Pats)
 	ss.TrainEnv.Validate()
-	ss.TrainEnv.Run().Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	TrainEnv.Epoch().Max = ss.MaxEpcs
+	ss.TrainEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
+	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
 	TestEnv.Table = etable.NewIdxView(ss.Pats)
 	TestEnv.SetSequential(true)
 	ss.TestEnv.Validate()
-	TestEnv.Epoch().Max = ss.MaxEpcs
-	TestEnv.Run().Max = ss.MaxRuns
+	TestEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
+	TestEnv.Run().Max = ss.CmdArgs.MaxRuns
 
 	// note: to create a train / test split of pats, do this:
 	// all := etable.NewIdxView(ss.Pats)
