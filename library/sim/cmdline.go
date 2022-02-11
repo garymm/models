@@ -29,15 +29,16 @@ type CmdArgs struct {
 	paramsFile  string
 	noRun       bool
 
-	MaxRuns int `desc:"maximum number of model runs to perform (starting from StartRun)"`
-	MaxEpcs int `desc:"maximum number of epochs to run per model run"`
+	MaxRuns  int `desc:"maximum number of model runs to perform (starting from StartRun)"`
+	MaxEpcs  int `desc:"maximum number of epochs to run per model run"`
+	StartRun int `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
 }
 
 // ParseArgs updates the Sim object with command line arguments.
 func (ss *Sim) ParseArgs() {
 	flag.StringVar(&ss.ParamSet, "params", "", "ParamSet name to use -- must be valid name as listed in compiled-in params or loaded params")
 	flag.StringVar(&ss.Tag, "tag", "", "extra tag to add to file names saved from this run")
-	flag.IntVar(&ss.StartRun, "run", 0, "starting run number -- determines the random seed -- runs counts from there -- can do all runs in parallel by launching separate jobs with each run, runs = 1")
+	flag.IntVar(&ss.CmdArgs.StartRun, "run", 0, "starting run number -- determines the random seed -- runs counts from there -- can do all runs in parallel by launching separate jobs with each run, runs = 1")
 	flag.IntVar(&ss.CmdArgs.MaxRuns, "runs", 10, "number of runs to do (note that MaxEpcs is in paramset)")
 	flag.IntVar(&ss.CmdArgs.MaxEpcs, "epochs", 100, "number of epochs per trial")
 	flag.BoolVar(&ss.CmdArgs.LogSetParams, "setparams", false, "if true, print a record of each parameter that is set")
@@ -114,9 +115,9 @@ func (ss *Sim) RunFromArgs() {
 	if ss.CmdArgs.SaveWts {
 		fmt.Printf("Saving final weights per run\n")
 	}
-	fmt.Printf("Running %d Runs starting at %d\n", ss.CmdArgs.MaxRuns, ss.StartRun)
-	(ss.TrainEnv).Run().Set(ss.StartRun)
-	(ss.TrainEnv).Run().Max = ss.StartRun + ss.CmdArgs.MaxRuns
+	fmt.Printf("Running %d Runs starting at %d\n", ss.CmdArgs.MaxRuns, ss.CmdArgs.StartRun)
+	ss.Run.Set(ss.CmdArgs.StartRun)
+	ss.Run.Max = ss.CmdArgs.StartRun + ss.CmdArgs.MaxRuns
 	ss.NewRun()
 	ss.Train()
 

@@ -181,7 +181,7 @@ package main
 //	TrainEnv.Dsc = "training params and state"
 //	TrainEnv.Table = etable.NewIdxView(ss.Pats)
 //	ss.TrainEnv.Validate()
-//	ss.TrainEnv.Run().Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
+//	ss.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
 //	TrainEnv.Epoch().Max = ss.MaxEpcs
 //
 //	TestEnv.Nm = "TestEnv"

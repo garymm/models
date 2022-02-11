@@ -4,6 +4,7 @@ import (
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/env"
 	"github.com/emer/emergent/params"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -37,12 +38,11 @@ type Sim struct {
 	Params   params.Sets `view:"no-inline" desc:"full collection of param sets"`
 	ParamSet string      `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set -- can use multiple names separated by spaces (don't put spaces in ParamSet names!)"`
 	Tag      string      `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	StartRun int         `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
+	Run      env.Ctr     `desc:"Information about the current run."`
 
 	// TODO These are specific to each model
 	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
-	// TODO Move Run out of the Env
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
 
@@ -108,7 +108,7 @@ func (ss *Sim) Init() {
 
 // InitRndSeed initializes the random seed based on current training run number
 func (ss *Sim) InitRndSeed() {
-	run := (ss.TrainEnv).Run().Cur
+	run := ss.Run.Cur
 	rand.Seed(ss.CmdArgs.RndSeeds[run])
 }
 

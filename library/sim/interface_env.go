@@ -16,7 +16,6 @@ type Environment interface {
 	Sequential() bool
 	SetSequential(s bool)
 
-	Run() *env.Ctr
 	Epoch() *env.Ctr
 	Trial() *env.Ctr
 
