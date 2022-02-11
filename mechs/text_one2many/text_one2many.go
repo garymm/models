@@ -55,7 +55,7 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	ss.TrlCosDiff = float64(out.CosDiff.Cos)
 	ss.TrlUnitErr = out.PctUnitErr()
 
-	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
+	_, _, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 
 	ss.Stats.SetStringMetric("TrlClosest", closestWord)
 	contextWords := strings.Join(TrainEnv.CurWords, " ")
