@@ -32,16 +32,19 @@ var numInputs = 30
 // You can also aggregate directly from log data, as is done for testing stats
 func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
-	ss.TrlCosDiff = float64(out.CosDiff.Cos)
-	ss.TrlUnitErr = out.PctUnitErr()
-	if ss.TrlUnitErr > 0 {
+
+	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
+
+	if ss.Stats.FloatMetric("TrlUnitErr") > 0 {
 		ss.Stats.SetFloatMetric("TrlErr", 1)
 	} else {
 		ss.Stats.SetFloatMetric("TrlErr", 0)
 	}
 
 	if accum {
-		ss.SumErr += (ss.Stats.FloatMetric("TrlErr"))
+		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
+		ss.Stats.SetFloatMetric("SumErr", sumErr)
 	}
 }
 

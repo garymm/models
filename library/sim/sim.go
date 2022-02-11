@@ -50,22 +50,7 @@ type Sim struct {
 	LayStatNms   []string `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
 	SpikeRecLays []string `desc:"names of layers to record spikes of during testing"`
 
-	// statistics: note use float64 as that is best for etable.Table
-	// TODO Maybe put this on a Stats object - moved to map
-	//TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
-	TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
-	TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
-	TrlUnitErr float64 `inactive:"+" desc:"current trial's unit-level pct error"`
-	TrlCosDiff float64 `inactive:"+" desc:"current trial's cosine difference"`
-
-	// TODO Move these to a newly created func EpochStats
-	// State about how long there's been zero error.
-	FirstZero   int       `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
-	NZero       int       `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
 	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
-
-	// internal state - view:"-"
-	SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
 
 	CmdArgs CmdArgs `desc:"Arguments passed in through the command line"`
 }

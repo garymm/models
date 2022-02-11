@@ -10,8 +10,8 @@ import pandas as pd
 #todo integrate so that can easily swap between bones and optuna
 #todo specify the number iterations per epoch and epochs
 #todo oneday wrap this in a clear object with comments
-MECHNAME = "RA25" #"One2Many", "RA25", these are app names defined at the top of each mech file
-EXECUTABLE_PATH = "ra25" #the directory the file comes from
+MECHNAME = "One2Many" #"One2Many", "RA25", these are app names defined at the top of each mech file
+EXECUTABLE_PATH = "one2many" #the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "#PctErr"
 
 def generate_list_iterate(params: list):
@@ -119,11 +119,11 @@ def main():
             json.dump(updated_parameters, outfile)
 
         # Run go program with -params arg
-        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=5 -epochs=1")
+        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=5 -epochs=100")
 
         # Get valuation from logs
         # TODO Make sure this name is unique for parallelization.
-        score = pd.read_csv('logs/{}_Searching_testepc.tsv'.format(MECHNAME), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
+        score = pd.read_csv('logs/{}_Searching_run.tsv'.format(MECHNAME), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
         return float(score)
 
     # Starts optimization

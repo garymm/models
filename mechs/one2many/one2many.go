@@ -35,12 +35,13 @@ var TrainEnv = EnvOne2Many{}
 // You can also aggregate directly from log data, as is done for testing stats
 func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
-	ss.TrlCosDiff = float64(out.CosDiff.Cos)
+
+	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
 
 	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
 
 	ss.Stats.SetStringMetric("TrlClosest", cnm)
-	ss.TrlCorrel = float64(cor)
+	ss.Stats.SetFloatMetric("TrialCorrel", float64(cor))
 	tnm := ""
 	if accum { // really train
 		tnm = ss.TrainEnv.TrialName().Cur
@@ -54,7 +55,8 @@ func TrialStats(ss *sim.Sim, accum bool) {
 	}
 
 	if accum {
-		ss.SumErr += ss.Stats.FloatMetric("TrlErr")
+		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
+		ss.Stats.SetFloatMetric("SumErr", sumErr)
 	}
 }
 
@@ -132,8 +134,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
 					}, Hypers: params.Hypers{
-					"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
-				}},
+						"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
+					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0
