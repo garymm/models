@@ -50,7 +50,7 @@ type Sim struct {
 	SpikeRecLays []string `desc:"names of layers to record spikes of during testing"`
 
 	// statistics: note use float64 as that is best for etable.Table
-	// TODO Maybe put this on a Stats object
+	// TODO Maybe put this on a Stats object - moved to map
 	TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
 	TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
 	TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
