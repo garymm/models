@@ -57,6 +57,7 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
 	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 
+
 	ss.Stats.SetStringMetric("TrlClosest", closestWord)
 	ss.Stats.SetFloatMetric("TrlCorrel", float64(cor))
 
