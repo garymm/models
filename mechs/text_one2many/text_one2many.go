@@ -57,7 +57,6 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
 	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 
-
 	ss.Stats.SetStringMetric("TrlClosest", closestWord)
 	ss.Stats.SetFloatMetric("TrlCorrel", float64(cor))
 
@@ -155,7 +154,7 @@ func ConfigParams(ss *sim2.Sim) {
 			"Sim": &params.Sheet{ // sim params apply to sim object
 				{Sel: "Sim", Desc: "best params always finish in this time",
 					Params: params.Params{
-						"Sim.MaxEpcs": "100",
+						"Sim.CmdArgs.MaxEpcs": "100",
 					}},
 			},
 		}},
