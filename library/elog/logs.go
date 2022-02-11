@@ -42,6 +42,9 @@ type Logs struct {
 
 	TableOrder []ScopeKey `view:"-" desc:"sorted order of table scopes"`
 
+	// TODO Move this to Logs
+	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"Value Tensors. A buffer for holding layer values. This helps avoid reallocating memory every time"`
+
 	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
 	SpikeRastGrids map[string]*etview.TensorGrid `desc:"spike raster plots for different layers"`
 

@@ -52,7 +52,7 @@ func main() {
 
 	Config(&TheSim)
 
-	if TheSim.NoGui {
+	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
@@ -149,28 +149,22 @@ func ConfigEnv(ss *sim.Sim) {
 
 	ss.TrialStatsFunc = TrialStats
 
-	if ss.MaxRuns == 0 { // allow user override
-		ss.MaxRuns = 5
-	}
-	if ss.MaxEpcs == 0 { // allow user override
-		ss.MaxEpcs = 100
-		ss.NZeroStop = 5
-	}
+	ss.NZeroStop = 5
 
 	TrainEnv.Nm = "TrainEnv"
 	TrainEnv.Dsc = "training params and state"
 	TrainEnv.Table = etable.NewIdxView(ss.Pats)
 	ss.TrainEnv.Validate()
-	ss.TrainEnv.Run().Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
-	TrainEnv.Epoch().Max = ss.MaxEpcs
+	ss.TrainEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
+	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
 	TestEnv.Table = etable.NewIdxView(ss.Pats)
 	TestEnv.SetSequential(true)
 	ss.TestEnv.Validate()
-	TestEnv.Epoch().Max = ss.MaxEpcs
-	TestEnv.Run().Max = ss.MaxRuns
+	TestEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
+	TestEnv.Run().Max = ss.CmdArgs.MaxRuns
 
 	// note: to create a train / test split of pats, do this:
 	// all := etable.NewIdxView(ss.Pats)
@@ -244,7 +238,7 @@ func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
-	ss.SetParams("Network", ss.LogSetParams) // only set Network params
+	ss.SetParams("Network", ss.CmdArgs.LogSetParams) // only set Network params
 	err := net.Build()
 	if err != nil {
 		log.Println(err)

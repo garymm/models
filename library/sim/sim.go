@@ -4,7 +4,6 @@ import (
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
-	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -39,13 +38,11 @@ type Sim struct {
 	ParamSet string      `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set -- can use multiple names separated by spaces (don't put spaces in ParamSet names!)"`
 	Tag      string      `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
 	StartRun int         `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
-	MaxRuns  int         `desc:"maximum number of model runs to perform (starting from StartRun)"`
 
 	// TODO These are specific to each model
-	MaxEpcs   int `desc:"maximum number of epochs to run per model run"`
 	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
-	// TODO Maybe these should go into the Sim extension
+	// TODO Move Run out of the Env
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
 
@@ -76,25 +73,16 @@ type Sim struct {
 	// internal state - view:"-"
 	SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
 
-	// TODO Move this to Logs
-	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"Value Tensors. A buffer for holding layer values. This helps avoid reallocating memory every time"`
-
-	// TODO Move these to an Args object
-	SaveWts      bool             `view:"-" desc:"for command-line run only, auto-save final weights after each run"`
-	NoGui        bool             `view:"-" desc:"if true, runing in no GUI mode"`
-	LogSetParams bool             `view:"-" desc:"if true, print message for all params that are set"`
-	NeedsNewRun  bool             `view:"-" desc:"flag to initialize NewRun if last one finished"`
-	RndSeeds     []int64          `view:"-" desc:"a list of random seeds to use for each run"`
-	NetData      *netview.NetData `view:"-" desc:"net data for recording in nogui mode"`
+	CmdArgs CmdArgs `desc:"Arguments passed in through the command line"`
 }
 
 // New creates new blank elements and initializes defaults
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
-	ss.RndSeeds = make([]int64, 100) // make enough for plenty of runs
+	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
-		ss.RndSeeds[i] = int64(i) + 1 // exclude 0
+		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0
 	}
 	ss.ViewOn = true
 	ss.TrainUpdt = axon.AlphaCycle
@@ -113,7 +101,7 @@ func (ss *Sim) Init() {
 	//ss.ConfigEnv()  // re-config env just in case a different set of patterns was
 	// selected or patterns have been modified etc
 	ss.GUI.StopNow = false
-	ss.SetParams("", ss.LogSetParams) // all sheets
+	ss.SetParams("", ss.CmdArgs.LogSetParams) // all sheets
 	ss.NewRun()
 	ss.UpdateView(true)
 }
@@ -121,7 +109,7 @@ func (ss *Sim) Init() {
 // InitRndSeed initializes the random seed based on current training run number
 func (ss *Sim) InitRndSeed() {
 	run := (ss.TrainEnv).Run().Cur
-	rand.Seed(ss.RndSeeds[run])
+	rand.Seed(ss.CmdArgs.RndSeeds[run])
 }
 
 // NewRndSeed gets a new set of random seeds based on current time -- otherwise uses
@@ -129,6 +117,6 @@ func (ss *Sim) InitRndSeed() {
 func (ss *Sim) NewRndSeed() {
 	rs := time.Now().UnixNano()
 	for i := 0; i < 100; i++ {
-		ss.RndSeeds[i] = rs + int64(i)
+		ss.CmdArgs.RndSeeds[i] = rs + int64(i)
 	}
 }
