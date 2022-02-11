@@ -41,8 +41,8 @@ func (ss *Sim) RunName() string {
 		rn += ss.Tag + "_"
 	}
 	rn += ss.ParamsName()
-	if ss.StartRun > 0 {
-		rn += fmt.Sprintf("_%03d", ss.StartRun)
+	if ss.CmdArgs.StartRun > 0 {
+		rn += fmt.Sprintf("_%03d", ss.CmdArgs.StartRun)
 	}
 	return rn
 }
@@ -55,7 +55,7 @@ func (ss *Sim) RunEpochName(run, epc int) string {
 
 // WeightsFileName returns default current weights file name
 func (ss *Sim) WeightsFileName() string {
-	return ss.Net.Nm + "_" + ss.RunName() + "_" + ss.RunEpochName((ss.TrainEnv).Run().Cur, (ss.TrainEnv).Epoch().Cur) + ".wts"
+	return ss.Net.Nm + "_" + ss.RunName() + "_" + ss.RunEpochName(ss.Run.Cur, (ss.TrainEnv).Epoch().Cur) + ".wts"
 }
 
 // LogFileName returns default log file name

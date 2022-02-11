@@ -147,7 +147,7 @@ func (ss *Sim) TrainTrial() {
 		if epc == 0 || (ss.NZeroStop > 0 && ss.NZero >= ss.NZeroStop) {
 			// done with training..
 			ss.RunEnd()
-			if TrainEnv.Run().Incr() { // we are done!
+			if ss.Run.Incr() { // we are done!
 				ss.GUI.StopNow = true
 				return
 			} else {
@@ -181,7 +181,7 @@ func (ss *Sim) NewRun() {
 	TrainEnv := ss.TrainEnv
 	TestEnv := ss.TestEnv
 
-	run := TrainEnv.Run().Cur
+	run := ss.Run.Cur
 	TrainEnv.Init(run)
 	TestEnv.Init(run)
 	ss.Time.Reset()
@@ -208,12 +208,11 @@ func (ss *Sim) TrainEpoch() {
 
 // TrainRun runs training trials for remainder of run
 func (ss *Sim) TrainRun() {
-	TrainEnv := ss.TrainEnv
 	ss.GUI.StopNow = false
-	curRun := TrainEnv.Run().Cur
+	curRun := ss.Run.Cur
 	for {
 		ss.TrainTrial()
-		if ss.GUI.StopNow || TrainEnv.Run().Cur != curRun {
+		if ss.GUI.StopNow || ss.Run.Cur != curRun {
 			break
 		}
 	}
@@ -307,8 +306,7 @@ func (ss *Sim) TestItem(idx int) {
 // TestAll runs through the full set of testing items
 func (ss *Sim) TestAll() {
 	TestEnv := ss.TestEnv
-	TrainEnv := ss.TrainEnv
-	TestEnv.Init(TrainEnv.Run().Cur)
+	TestEnv.Init(ss.Run.Cur)
 	for {
 		ss.TestTrial(true) // return on change -- don't wrap
 		_, _, chg := TestEnv.Counter(env.Epoch)

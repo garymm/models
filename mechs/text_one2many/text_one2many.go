@@ -163,7 +163,7 @@ func ConfigEnv(ss *sim2.Sim) {
 	//TrainEnv.Table = etable.NewIdxView(ss.Pats)
 	//TrainEnv.Con
 	TrainEnv.Validate()
-	TrainEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
+	ss.Run.Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
 
 	TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	TrainEnv.Trial().Max = len(TrainEnv.NGrams)

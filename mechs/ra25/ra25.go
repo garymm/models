@@ -155,7 +155,7 @@ func ConfigEnv(ss *sim.Sim) {
 	TrainEnv.Dsc = "training params and state"
 	TrainEnv.Table = etable.NewIdxView(ss.Pats)
 	ss.TrainEnv.Validate()
-	ss.TrainEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
+	ss.Run.Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
 	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 
 	TestEnv.Nm = "TestEnv"
