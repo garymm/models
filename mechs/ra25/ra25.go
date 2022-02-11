@@ -52,7 +52,7 @@ func main() {
 
 	Config(&TheSim)
 
-	if TheSim.NoGui {
+	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
@@ -244,7 +244,7 @@ func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
-	ss.SetParams("Network", ss.LogSetParams) // only set Network params
+	ss.SetParams("Network", ss.CmdArgs.LogSetParams) // only set Network params
 	err := net.Build()
 	if err != nil {
 		log.Println(err)

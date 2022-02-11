@@ -45,7 +45,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 				ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
 			}
 		}
-		if !ss.NoGui {
+		if !ss.CmdArgs.NoGui {
 			ss.RecSpikes(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
@@ -76,7 +76,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 			}
 
 		}
-		if !ss.NoGui {
+		if !ss.CmdArgs.NoGui {
 			ss.RecSpikes(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
@@ -123,7 +123,7 @@ func (ss *Sim) ApplyInputs(en Environment) {
 
 // TrainTrial runs one trial of training using TrainEnv
 func (ss *Sim) TrainTrial() {
-	if ss.NeedsNewRun {
+	if ss.CmdArgs.NeedsNewRun {
 		ss.NewRun()
 	}
 
@@ -151,7 +151,7 @@ func (ss *Sim) TrainTrial() {
 				ss.GUI.StopNow = true
 				return
 			} else {
-				ss.NeedsNewRun = true
+				ss.CmdArgs.NeedsNewRun = true
 				return
 			}
 		}
@@ -167,7 +167,7 @@ func (ss *Sim) TrainTrial() {
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
 	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Run))
-	if ss.SaveWts {
+	if ss.CmdArgs.SaveWts {
 		fnm := ss.WeightsFileName()
 		fmt.Printf("Saving Weights to: %s\n", fnm)
 		ss.Net.SaveWtsJSON(gi.FileName(fnm))
@@ -189,7 +189,7 @@ func (ss *Sim) NewRun() {
 	ss.InitStats()
 	ss.Logs.Table(elog.Train, elog.Epoch).SetNumRows(0)
 	ss.Logs.Table(elog.Test, elog.Epoch).SetNumRows(0)
-	ss.NeedsNewRun = false
+	ss.CmdArgs.NeedsNewRun = false
 }
 
 // TrainEpoch runs training trials for remainder of this epoch
@@ -289,8 +289,8 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	ss.ThetaCyc(false) // !train
 	ss.Log(elog.Test, elog.Trial)
 	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Trial))
-	if ss.NetData != nil { // offline record net data from testing, just final state
-		ss.NetData.Record(ss.Counters(false))
+	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
+		ss.CmdArgs.NetData.Record(ss.Counters(false))
 	}
 }
 

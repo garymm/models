@@ -4,7 +4,6 @@ import (
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
-	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -78,13 +77,7 @@ type Sim struct {
 	// internal state - view:"-"
 	SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
 
-	// TODO Move these to an Args object
-	SaveWts      bool             `view:"-" desc:"for command-line run only, auto-save final weights after each run"`
-	NoGui        bool             `view:"-" desc:"if true, runing in no GUI mode"`
-	LogSetParams bool             `view:"-" desc:"if true, print message for all params that are set"`
-	NeedsNewRun  bool             `view:"-" desc:"flag to initialize NewRun if last one finished"`
-	RndSeeds     []int64          `view:"-" desc:"a list of random seeds to use for each run"`
-	NetData      *netview.NetData `view:"-" desc:"net data for recording in nogui mode"`
+	CmdArgs CmdArgs `desc:"Arguments passed in through the command line"`
 }
 
 // New creates new blank elements and initializes defaults
@@ -92,9 +85,9 @@ func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
 	ss.RunStats = &etable.Table{}
-	ss.RndSeeds = make([]int64, 100) // make enough for plenty of runs
+	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
-		ss.RndSeeds[i] = int64(i) + 1 // exclude 0
+		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0
 	}
 	ss.ViewOn = true
 	ss.TrainUpdt = axon.AlphaCycle
@@ -113,7 +106,7 @@ func (ss *Sim) Init() {
 	//ss.ConfigEnv()  // re-config env just in case a different set of patterns was
 	// selected or patterns have been modified etc
 	ss.GUI.StopNow = false
-	ss.SetParams("", ss.LogSetParams) // all sheets
+	ss.SetParams("", ss.CmdArgs.LogSetParams) // all sheets
 	ss.NewRun()
 	ss.UpdateView(true)
 }
@@ -121,7 +114,7 @@ func (ss *Sim) Init() {
 // InitRndSeed initializes the random seed based on current training run number
 func (ss *Sim) InitRndSeed() {
 	run := (ss.TrainEnv).Run().Cur
-	rand.Seed(ss.RndSeeds[run])
+	rand.Seed(ss.CmdArgs.RndSeeds[run])
 }
 
 // NewRndSeed gets a new set of random seeds based on current time -- otherwise uses
@@ -129,6 +122,6 @@ func (ss *Sim) InitRndSeed() {
 func (ss *Sim) NewRndSeed() {
 	rs := time.Now().UnixNano()
 	for i := 0; i < 100; i++ {
-		ss.RndSeeds[i] = rs + int64(i)
+		ss.CmdArgs.RndSeeds[i] = rs + int64(i)
 	}
 }

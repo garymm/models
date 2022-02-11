@@ -13,13 +13,22 @@ import (
 	"github.com/goki/gi/gi"
 )
 
-var saveEpcLog bool
-var saveRunLog bool
-var saveNetData bool
-var note string
-var hyperFile string
-var paramsFile string
-var noRun bool
+type CmdArgs struct {
+	SaveWts      bool             `desc:"for command-line run only, auto-save final weights after each run"`
+	NoGui        bool             `desc:"if true, runing in no GUI mode"`
+	LogSetParams bool             `desc:"if true, print message for all params that are set"`
+	NeedsNewRun  bool             `desc:"flag to initialize NewRun if last one finished"`
+	RndSeeds     []int64          `desc:"a list of random seeds to use for each run"`
+	NetData      *netview.NetData `desc:"net data for recording in nogui mode"`
+
+	saveEpcLog  bool
+	saveRunLog  bool
+	saveNetData bool
+	note        string
+	hyperFile   string
+	paramsFile  string
+	noRun       bool
+}
 
 // ParseArgs updates the Sim object with command line arguments.
 func (ss *Sim) ParseArgs() {
@@ -28,25 +37,25 @@ func (ss *Sim) ParseArgs() {
 	flag.IntVar(&ss.StartRun, "run", 0, "starting run number -- determines the random seed -- runs counts from there -- can do all runs in parallel by launching separate jobs with each run, runs = 1")
 	flag.IntVar(&ss.MaxRuns, "runs", 10, "number of runs to do (note that MaxEpcs is in paramset)")
 	flag.IntVar(&ss.MaxEpcs, "epochs", 100, "number of epochs per trial")
-	flag.BoolVar(&ss.LogSetParams, "setparams", false, "if true, print a record of each parameter that is set")
-	flag.BoolVar(&ss.SaveWts, "wts", false, "if true, save final weights after each run")
-	flag.StringVar(&note, "note", "", "user note -- describe the run params etc")
-	flag.BoolVar(&saveEpcLog, "epclog", true, "if true, save train epoch log to file")
-	flag.BoolVar(&saveRunLog, "runlog", true, "if true, save run epoch log to file")
-	flag.BoolVar(&saveNetData, "netdata", false, "if true, save network activation etc data from testing trials, for later viewing in netview")
-	flag.BoolVar(&ss.NoGui, "nogui", len(os.Args) > 1, "if not passing any other args and want to run nogui, use nogui")
-	flag.StringVar(&hyperFile, "hyperFile", "", "Name of the file to output hyperparameter data. If not empty string, program should write and then exit")
-	flag.StringVar(&paramsFile, "paramsFile", "", "Name of the file to input parameters from.")
+	flag.BoolVar(&ss.CmdArgs.LogSetParams, "setparams", false, "if true, print a record of each parameter that is set")
+	flag.BoolVar(&ss.CmdArgs.SaveWts, "wts", false, "if true, save final weights after each run")
+	flag.StringVar(&ss.CmdArgs.note, "note", "", "user note -- describe the run params etc")
+	flag.BoolVar(&ss.CmdArgs.saveEpcLog, "epclog", true, "if true, save train epoch log to file")
+	flag.BoolVar(&ss.CmdArgs.saveRunLog, "runlog", true, "if true, save run epoch log to file")
+	flag.BoolVar(&ss.CmdArgs.saveNetData, "netdata", false, "if true, save network activation etc data from testing trials, for later viewing in netview")
+	flag.BoolVar(&ss.CmdArgs.NoGui, "nogui", len(os.Args) > 1, "if not passing any other args and want to run nogui, use nogui")
+	flag.StringVar(&ss.CmdArgs.hyperFile, "hyperFile", "", "Name of the file to output hyperparameter data. If not empty string, program should write and then exit")
+	flag.StringVar(&ss.CmdArgs.paramsFile, "paramsFile", "", "Name of the file to input parameters from.")
 	flag.Parse()
 
-	if hyperFile != "" {
+	if ss.CmdArgs.hyperFile != "" {
 		file, _ := json.MarshalIndent(ss.Params, "", "  ")
-		_ = ioutil.WriteFile(hyperFile, file, 0644)
-		noRun = true
+		_ = ioutil.WriteFile(ss.CmdArgs.hyperFile, file, 0644)
+		ss.CmdArgs.noRun = true
 		return
 	}
-	if paramsFile != "" {
-		jsonFile, err := os.Open(paramsFile)
+	if ss.CmdArgs.paramsFile != "" {
+		jsonFile, err := os.Open(ss.CmdArgs.paramsFile)
 		if err != nil {
 			fmt.Println("Params file error: " + err.Error())
 			return
@@ -56,7 +65,7 @@ func (ss *Sim) ParseArgs() {
 		loadedParams := params.Sets{}
 		json.Unmarshal(byteValue, &loadedParams)
 		if len(loadedParams) == 0 {
-			fmt.Println("Unable to load parameters from file: " + paramsFile)
+			fmt.Println("Unable to load parameters from file: " + ss.CmdArgs.paramsFile)
 			return
 		}
 		ss.Params = append(ss.Params, loadedParams[0])
@@ -65,19 +74,19 @@ func (ss *Sim) ParseArgs() {
 
 // RunFromArgs uses command line arguments to run the model.
 func (ss *Sim) RunFromArgs() {
-	if noRun {
+	if ss.CmdArgs.noRun {
 		return
 	}
 	ss.Init()
 
-	if note != "" {
-		fmt.Printf("note: %s\n", note)
+	if ss.CmdArgs.note != "" {
+		fmt.Printf("note: %s\n", ss.CmdArgs.note)
 	}
 	if ss.ParamSet != "" {
 		fmt.Printf("Using ParamSet: %s\n", ss.ParamSet)
 	}
 
-	if saveEpcLog {
+	if ss.CmdArgs.saveEpcLog {
 		fnm := ss.LogFileName("epc")
 		ss.Logs.SetLogFile(elog.Train, elog.Epoch, fnm)
 
@@ -85,15 +94,15 @@ func (ss *Sim) RunFromArgs() {
 		testfnm := ss.LogFileName("testepc")
 		ss.Logs.SetLogFile(elog.Test, elog.Epoch, testfnm)
 	}
-	if saveRunLog {
+	if ss.CmdArgs.saveRunLog {
 		fnm := ss.LogFileName("run")
 		ss.Logs.SetLogFile(elog.Train, elog.Run, fnm)
 	}
-	if saveNetData {
-		ss.NetData = &netview.NetData{}
-		ss.NetData.Init(ss.Net, 200) // 200 = amount to save
+	if ss.CmdArgs.saveNetData {
+		ss.CmdArgs.NetData = &netview.NetData{}
+		ss.CmdArgs.NetData.Init(ss.Net, 200) // 200 = amount to save
 	}
-	if ss.SaveWts {
+	if ss.CmdArgs.SaveWts {
 		fmt.Printf("Saving final weights per run\n")
 	}
 	fmt.Printf("Running %d Runs starting at %d\n", ss.MaxRuns, ss.StartRun)
@@ -104,8 +113,8 @@ func (ss *Sim) RunFromArgs() {
 
 	ss.Logs.CloseLogFiles()
 
-	if saveNetData {
+	if ss.CmdArgs.saveNetData {
 		ndfn := ss.Net.Nm + "_" + ss.RunName() + ".netdata.gz"
-		ss.NetData.SaveJSON(gi.FileName(ndfn))
+		ss.CmdArgs.NetData.SaveJSON(gi.FileName(ndfn))
 	}
 }
