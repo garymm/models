@@ -61,7 +61,7 @@ def run_model(args):
         gocommand = "/usr/local/go/bin/go"
     elif str(os.popen("test -f /usr/local/opt/go/libexec/bin/go && echo mac").read()).strip() == "mac":
         gocommand = "/usr/local/opt/go/libexec/bin/go"
-    os.system(gocommand + " run mechs/{}/*.go ".format(EXECUTABLE_PATH) + args)
+    os.system(gocommand + " run mechs/{}/*[^test].go ".format(EXECUTABLE_PATH) + args)
 
 
 def get_opt_value(trial: Trial, parametername, guidelines):
