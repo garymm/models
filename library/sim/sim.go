@@ -33,7 +33,7 @@ type Sim struct {
 	Tag      string      `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
 	StartRun int         `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
 
-	// TODO These are specific to each model
+	// TODO This refactor will have to happen later
 	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
 	// TODO Move Run out of the Env
@@ -81,9 +81,9 @@ func (ss *Sim) New() {
 	ss.ViewOn = true
 	ss.TrainUpdt = axon.AlphaCycle
 	ss.TestUpdt = axon.Cycle
-	ss.TestInterval = 500 // TODO this should be a value we update or save, seems to log every epoch
-	ss.LayStatNms = []string{"Hidden1", "Hidden2", "Output"}
-	ss.SpikeRecLays = []string{"Input", "Hidden1", "Hidden2", "Output"}
+	ss.TestInterval = 500                                               // TODO this should be a value we update or save, seems to log every epoch
+	ss.LayStatNms = []string{"Hidden1", "Hidden2", "Output"}            // TODO randy is gonna refactor out
+	ss.SpikeRecLays = []string{"Input", "Hidden1", "Hidden2", "Output"} //TODO randy is gonna refactor out
 	ss.Time.Defaults()
 }
 
