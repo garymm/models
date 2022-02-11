@@ -6,6 +6,7 @@ package elog
 
 import (
 	"fmt"
+	"github.com/emer/etable/etensor"
 	"log"
 	"os"
 	"strconv"
@@ -39,6 +40,9 @@ type Logs struct {
 	Times  map[string]bool        `view:"-" desc:"All the timescales that appear in any of the items of this log."`
 
 	TableOrder []ScopeKey `view:"-" desc:"sorted order of table scopes"`
+
+	// TODO Move this to Logs
+	ValsTsrs map[string]*etensor.Float32 `view:"-" desc:"Value Tensors. A buffer for holding layer values. This helps avoid reallocating memory every time"`
 }
 
 // AddItem adds an item to the list

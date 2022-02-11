@@ -22,13 +22,13 @@ func (ss *Sim) ConfigLogs() {
 
 // ValsTsr gets value tensor of given name, creating if not yet made
 func (ss *Sim) ValsTsr(name string) *etensor.Float32 {
-	if ss.ValsTsrs == nil {
-		ss.ValsTsrs = make(map[string]*etensor.Float32)
+	if ss.Logs.ValsTsrs == nil {
+		ss.Logs.ValsTsrs = make(map[string]*etensor.Float32)
 	}
-	tsr, ok := ss.ValsTsrs[name]
+	tsr, ok := ss.Logs.ValsTsrs[name]
 	if !ok {
 		tsr = &etensor.Float32{}
-		ss.ValsTsrs[name] = tsr
+		ss.Logs.ValsTsrs[name] = tsr
 	}
 	return tsr
 }
