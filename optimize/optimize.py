@@ -86,7 +86,8 @@ def create_suggested_params(params, trial):
         info["values"]["Params"][info["paramname"]] = value_to_assign
     # This creates a version of Params that has stripped out everything that didn't have Hypers
     updated_parameters = (create_hyperonly(cparams))
-    # print(updated_parameters)
+    print("UPDATED PARAMS")
+    print(updated_parameters)
     return updated_parameters
 
 
