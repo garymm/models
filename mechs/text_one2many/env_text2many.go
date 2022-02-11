@@ -1,15 +1,16 @@
 package main
 
 import (
-	sim2 "github.com/Astera-org/models/library/sim"
+	"strings"
+
+	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/emergent/env"
 	"github.com/emer/etable/etensor"
-	"strings"
 )
 
 type EnvText2Many struct {
-	sim2.CorpusEnv
-	sim2.Environment
+	sim.CorpusEnv
+	sim.Environment
 }
 
 func (env *EnvText2Many) SetName(name string) {

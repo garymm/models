@@ -166,15 +166,15 @@ func (ss *Sim) ConfigLogSpec() {
 				elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 					dt.SetCellFloat(item.Name, row, float64(ly.ActAvg.ActMAvg))
 				}}})
-		ss.Logs.AddItem(&elog.Item{
-			Name:  curlname + "_MaxGeM",
-			Type:  etensor.FLOAT64,
-			Plot:  elog.DFalse,
-			Range: minmax.F64{Max: 1},
-			Compute: elog.ComputeMap{
-				elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-					dt.SetCellFloat(item.Name, row, float64(ly.ActAvg.AvgMaxGeM))
-				}}})
+		// ss.Logs.AddItem(&elog.Item{
+		// 	Name:  curlname + "_MaxGeM",
+		// 	Type:  etensor.FLOAT64,
+		// 	Plot:  elog.DFalse,
+		// 	Range: minmax.F64{Max: 1},
+		// 	Compute: elog.ComputeMap{
+		// 		elog.GenScopeKey(elog.Train, elog.Epoch): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
+		// 			dt.SetCellFloat(item.Name, row, float64(ly.ActAvg.AvgMaxGeM))
+		// 		}}})
 		ss.Logs.AddItem(&elog.Item{
 			Name:  curlname + "_AvgGe",
 			Type:  etensor.FLOAT64,

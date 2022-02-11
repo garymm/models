@@ -1,14 +1,15 @@
 package sim
 
 import (
+	"math/rand"
+	"time"
+
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
-	"github.com/emer/emergent/params"
 	"github.com/emer/etable/etable"
-	"math/rand"
-	"time"
 )
 
 // Sim encapsulates the entire simulation model, and we define all the
@@ -22,17 +23,15 @@ type Sim struct {
 	// TODO This should be moved to the environment or the Sim extension
 	Pats *etable.Table `view:"no-inline" desc:"the training patterns to use"`
 
-	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
-	GUI  egui.GUI
+	Logs   elog.Logs   `desc:"Contains all the logs and information about the logs.'"`
+	Params emer.Params `view:"inline" desc:"all parameter management"`
+
+	GUI egui.GUI
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
 
-	// TODO Create a control or parameterization object to control all this
-	// TODO Params and ParamSet should be combined
-	Params   params.Sets `view:"no-inline" desc:"full collection of param sets"`
-	ParamSet string      `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set -- can use multiple names separated by spaces (don't put spaces in ParamSet names!)"`
-	Tag      string      `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	Run      env.Ctr     `desc:"Information about the current run."`
+	Tag string  `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
+	Run env.Ctr `desc:"Information about the current run."`
 
 	// TODO This refactor will have to happen later
 	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
@@ -95,7 +94,10 @@ func (ss *Sim) Init() {
 	//ss.ConfigEnv()  // re-config env just in case a different set of patterns was
 	// selected or patterns have been modified etc
 	ss.GUI.StopNow = false
-	ss.SetParams("", ss.CmdArgs.LogSetParams) // all sheets
+	ss.Params.SetMsg = ss.CmdArgs.LogSetParams
+	ss.Params.SetAll()
+	// NOTE uncomment following to see the compiled hyper params
+	// fmt.Println(ss.Params.NetHypers.JSONString())
 	ss.NewRun()
 	ss.UpdateView(true)
 }

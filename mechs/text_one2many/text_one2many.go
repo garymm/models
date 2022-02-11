@@ -9,6 +9,9 @@
 package main
 
 import (
+	"log"
+	"strings"
+
 	sim2 "github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
@@ -19,8 +22,6 @@ import (
 	"github.com/emer/etable/etensor"
 	_ "github.com/emer/etable/etview" // include to get gui views
 	"github.com/goki/gi/gimain"
-	"log"
-	"strings"
 )
 
 var programName = "TextOne2Many"
@@ -86,10 +87,21 @@ func Config(ss *sim2.Sim) {
 }
 
 func ConfigParams(ss *sim2.Sim) {
+	ss.Params.AddNetwork(ss.Net)
+	ss.Params.AddSim(ss)
+	ss.Params.AddNetSize()
+
 	// ParamSetsMin sets the minimal non-default params
 	// Base is always applied, and others can be optionally selected to apply on top of that
-	ss.Params = params.Sets{
+	ss.Params.Params = params.Sets{
 		{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
+			"NetSize": &params.Sheet{
+				{Sel: ".Hidden", Desc: "all hidden layers",
+					Params: params.Params{
+						"Layer.X": "12",
+						"Layer.Y": "12",
+					}},
+			},
 			"Network": &params.Sheet{
 				{Sel: "Layer", Desc: "all defaults",
 					Params: params.Params{
@@ -211,10 +223,13 @@ func ConfigPats(ss *sim2.Sim) {
 }
 
 func ConfigNet(ss *sim2.Sim, net *axon.Network) {
+	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
+	ss.Params.SetObject("NetSize")
+
 	net.InitName(net, programName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
-	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
-	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
+	hid1 := net.AddLayer2D("Hidden1", ss.Params.LayY("Hidden1", 10), ss.Params.LayX("Hidden1", 10), emer.Hidden)
+	hid2 := net.AddLayer2D("Hidden2", ss.Params.LayY("Hidden2", 10), ss.Params.LayX("Hidden2", 10), emer.Hidden)
 	out := net.AddLayer2D("Output", 5, 5, emer.Target)
 
 	// use this to position layers relative to each other
@@ -244,7 +259,7 @@ func ConfigNet(ss *sim2.Sim, net *axon.Network) {
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
-	ss.SetParams("Network", ss.CmdArgs.LogSetParams) // only set Network params
+	ss.Params.SetObject("Network") // only set Network params
 	err := net.Build()
 	if err != nil {
 		log.Println(err)

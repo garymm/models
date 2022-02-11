@@ -40,7 +40,7 @@ func (ss *Sim) RunName() string {
 	if ss.Tag != "" {
 		rn += ss.Tag + "_"
 	}
-	rn += ss.ParamsName()
+	rn += ss.Params.Name()
 	if ss.CmdArgs.StartRun > 0 {
 		rn += fmt.Sprintf("_%03d", ss.CmdArgs.StartRun)
 	}

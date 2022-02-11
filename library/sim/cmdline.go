@@ -36,7 +36,7 @@ type CmdArgs struct {
 
 // ParseArgs updates the Sim object with command line arguments.
 func (ss *Sim) ParseArgs() {
-	flag.StringVar(&ss.ParamSet, "params", "", "ParamSet name to use -- must be valid name as listed in compiled-in params or loaded params")
+	flag.StringVar(&ss.Params.ExtraSets, "params", "", "ParamSet name to use -- must be valid name as listed in compiled-in params or loaded params")
 	flag.StringVar(&ss.Tag, "tag", "", "extra tag to add to file names saved from this run")
 	flag.IntVar(&ss.CmdArgs.StartRun, "run", 0, "starting run number -- determines the random seed -- runs counts from there -- can do all runs in parallel by launching separate jobs with each run, runs = 1")
 	flag.IntVar(&ss.CmdArgs.MaxRuns, "runs", 10, "number of runs to do (note that MaxEpcs is in paramset)")
@@ -72,7 +72,7 @@ func (ss *Sim) ParseArgs() {
 			fmt.Println("Unable to load parameters from file: " + ss.CmdArgs.paramsFile)
 			return
 		}
-		ss.Params = append(ss.Params, loadedParams[0])
+		ss.Params.Params = append(ss.Params.Params, loadedParams[0])
 	}
 }
 
@@ -86,8 +86,8 @@ func (ss *Sim) RunFromArgs() {
 	if ss.CmdArgs.note != "" {
 		fmt.Printf("note: %s\n", ss.CmdArgs.note)
 	}
-	if ss.ParamSet != "" {
-		fmt.Printf("Using ParamSet: %s\n", ss.ParamSet)
+	if ss.Params.ExtraSets != "" {
+		fmt.Printf("Using ParamSet: %s\n", ss.Params.ExtraSets)
 	}
 	if ss.CmdArgs.MaxRuns == 0 { // allow user override
 		ss.CmdArgs.MaxRuns = 5

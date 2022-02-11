@@ -11,6 +11,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
@@ -20,7 +22,6 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
-	"log"
 )
 
 var ProgramName = "One2Many"
@@ -100,10 +101,21 @@ func Config(ss *One2Sim) {
 
 // ConfigParams configure the parameters
 func ConfigParams(ss *sim.Sim) {
+	ss.Params.AddNetwork(ss.Net)
+	ss.Params.AddSim(ss)
+	ss.Params.AddNetSize()
+
 	// ParamSetsMin sets the minimal non-default params
 	// Base is always applied, and others can be optionally selected to apply on top of that
-	ss.Params = params.Sets{
+	ss.Params.Params = params.Sets{
 		{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
+			"NetSize": &params.Sheet{
+				{Sel: ".Hidden", Desc: "all hidden layers",
+					Params: params.Params{
+						"Layer.X": "8",
+						"Layer.Y": "8",
+					}},
+			},
 			"Network": &params.Sheet{
 				{Sel: "Layer", Desc: "all defaults",
 					Params: params.Params{
@@ -158,14 +170,6 @@ func ConfigParams(ss *sim.Sim) {
 				{Sel: "Sim", Desc: "best params always finish in this time",
 					Params: params.Params{
 						"Sim.CmdArgs.MaxEpcs": "100",
-					}},
-			},
-			// TODO Use this for a Net Schema that is used to build the network
-			"NetArch": &params.Sheet{
-				{Sel: ".Hidden", Desc: "all defaults",
-					Params: params.Params{
-						"ShapeX": "10",
-						"ShapeY": "10",
 					}},
 			},
 		}},
@@ -243,11 +247,14 @@ func OpenPats(ss *sim.Sim) {
 }
 
 func ConfigNet(ss *sim.Sim, net *axon.Network) {
+	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
+	ss.Params.SetObject("NetSize")
+
 	net.InitName(net, ProgramName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
-	// TODO Something like this GetParam(params, "ShapeX", "Hidden2", emer.Hidden)
+
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
-	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
-	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
+	hid1 := net.AddLayer2D("Hidden1", ss.Params.LayY("Hidden1", 10), ss.Params.LayX("Hidden1", 10), emer.Hidden)
+	hid2 := net.AddLayer2D("Hidden2", ss.Params.LayY("Hidden2", 10), ss.Params.LayX("Hidden2", 10), emer.Hidden)
 	out := net.AddLayer2D("Output", 5, 5, emer.Target)
 
 	// use this to position layers relative to each other
@@ -277,7 +284,7 @@ func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
-	ss.SetParams("Network", ss.CmdArgs.LogSetParams) // only set Network params
+	ss.Params.SetObject("Network")
 	err := net.Build()
 	if err != nil {
 		log.Println(err)
