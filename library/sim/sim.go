@@ -27,8 +27,6 @@ type Sim struct {
 	Logs elog.Logs `desc:"Contains all the logs and information about the logs.'"`
 	GUI  egui.GUI
 	// TODO These should be moved into elog.Logs as a SpecialLogs object or something
-	TstErrLog      *etable.Table                 `view:"no-inline" desc:"log of all test trials where errors were made"`
-	TstErrStats    *etable.Table                 `view:"no-inline" desc:"stats on test trials where errors were made"`
 	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
 	SpikeRastGrids map[string]*etview.TensorGrid `desc:"spike raster plots for different layers"`
 	RunStats       *etable.Table                 `view:"no-inline" desc:"aggregate stats on all runs"`
@@ -94,7 +92,6 @@ type Sim struct {
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
-	ss.RunStats = &etable.Table{}
 	ss.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
 		ss.RndSeeds[i] = int64(i) + 1 // exclude 0

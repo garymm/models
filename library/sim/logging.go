@@ -126,13 +126,16 @@ func (ss *Sim) UpdateTstEpcErrors() {
 	trlix.Filter(func(et *etable.Table, row int) bool {
 		return et.CellFloat("UnitErr", row) > 0 // include error trials
 	})
-	ss.TstErrLog = trlix.NewTable()
+
+	ss.Logs.MiscTables["TestErrorLog"] = trlix.NewTable()
+
 	allsp := split.All(trlix)
 	split.Agg(allsp, "UnitErr", agg.AggSum)
 	split.Agg(allsp, "InAct", agg.AggMean)
 	split.Agg(allsp, "OutActM", agg.AggMean)
 	split.Agg(allsp, "OutActP", agg.AggMean)
-	ss.TstErrStats = allsp.AggsToTable(etable.AddAggName)
+
+	ss.Logs.MiscTables["TestErrorStats"] = allsp.AggsToTable(etable.AddAggName)
 }
 
 //////////////////////////////////////////////
@@ -144,7 +147,8 @@ func (ss *Sim) UpdateRun(dt *etable.Table) {
 	spl := split.GroupBy(runix, []string{"Params"})
 	split.Desc(spl, "FirstZero")
 	split.Desc(spl, "PctCor")
-	ss.RunStats = spl.AggsToTable(etable.AddAggName)
+
+	ss.Logs.MiscTables["RunStats"] = spl.AggsToTable(etable.AddAggName)
 }
 
 //////////////////////////////////////////////

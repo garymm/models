@@ -6,6 +6,8 @@ package elog
 
 import (
 	"fmt"
+	"github.com/emer/etable/etensor"
+	"github.com/emer/etable/etview"
 	"log"
 	"os"
 	"strconv"
@@ -39,6 +41,16 @@ type Logs struct {
 	Times  map[string]bool        `view:"-" desc:"All the timescales that appear in any of the items of this log."`
 
 	TableOrder []ScopeKey `view:"-" desc:"sorted order of table scopes"`
+
+	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
+	SpikeRastGrids map[string]*etview.TensorGrid `desc:"spike raster plots for different layers"`
+
+	MiscTables map[string]*etable.Table `desc:"gets additional tables that are not typical"`
+}
+
+// MiscTable gets a miscellaneous table that is not specified or typically expected
+func (lg *Logs) MiscTable(name string) *etable.Table {
+	return lg.MiscTables[name]
 }
 
 // AddItem adds an item to the list
@@ -108,6 +120,8 @@ func (lg *Logs) CreateTables() error {
 	}
 	lg.Tables = uniqueTables
 	lg.TableOrder = SortScopes(tableOrder)
+	lg.MiscTables = make(map[string]*etable.Table)
+
 	return err
 }
 
