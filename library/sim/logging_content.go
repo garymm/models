@@ -59,7 +59,8 @@ func (ss *Sim) ConfigLogSpec() {
 		Compute: elog.ComputeMap{
 			elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
 				dt.SetCellFloat(item.Name, row, float64(ss.Stats.FloatMetric("FirstZero")))
-			}}})
+			},
+		}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Epoch",
 		Type: etensor.INT64,
