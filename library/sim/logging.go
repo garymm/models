@@ -107,15 +107,19 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 
 func (ss *Sim) UpdateTrnEpc() {
 	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
-	epcSumErr := float64(ss.SumErr)
-	ss.SumErr = 0
-	if ss.FirstZero < 0 && epcSumErr == 0 {
-		ss.FirstZero = epc
+
+	sumErr := ss.Stats.FloatMetric("SumErr")
+	epcSumErr := float64(sumErr)
+	ss.Stats.SetFloatMetric("SumErr", 0)
+
+	if ss.Stats.IntMetric("FirstZero") < 0 && epcSumErr == 0 {
+		ss.Stats.SetIntMetric("FirstZero", epc)
 	}
 	if epcSumErr == 0 {
-		ss.NZero++
+		nzero := ss.Stats.IntMetric("NZero")
+		ss.Stats.SetIntMetric("NZero", nzero+1)
 	} else {
-		ss.NZero = 0
+		ss.Stats.SetIntMetric("NZero", 0)
 	}
 }
 
@@ -228,21 +232,31 @@ func (ss *Sim) AvgLayVal(ly *axon.Layer, vnm string) float32 {
 func (ss *Sim) InitStats() {
 
 	// accumulators
-	ss.SumErr = 0
-	ss.FirstZero = -1
-	ss.NZero = 0
 	// clear rest just to make Sim look initialized
-
-	ss.TrlUnitErr = 0
-
-	ss.SumErr = 0
+	ss.Stats.SetFloatMetric("Sumerr", 0.0)
 	ss.Stats.SetFloatMetric("TrlErr", 0.0)
 	ss.Stats.SetStringMetric("TrlClosest", "")
 	ss.Stats.SetFloatMetric("TrlCorrel", 0.0)
 	ss.Stats.SetFloatMetric("TrlUnitErr", 0.0)
 	ss.Stats.SetFloatMetric("TrlCosDiff", 0.0)
 
-	ss.Stats.SetIntMetric("FirstZero", 0)
+	ss.Stats.SetIntMetric("FirstZero", -1)
 	ss.Stats.SetIntMetric("NZero", 0)
 	//stats.SetFloatMetric("TrlCosDiff", 0, 0)
+	// internal state - view:"-"
+	//SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
+
+	// statistics: note use float64 as that is best for etable.Table
+	// TODO Maybe put this on a Stats object - moved to map
+	//TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
+	//TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
+	//TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
+	//TrlUnitErr float64 `inactive:"+" desc:"current trial's unit-level pct error"`
+	//TrlCosDiff float64 `inactive:"+" desc:"current trial's cosine difference"`
+
+	// TODO Move these to a newly created func EpochStats
+	// State about how long there's been zero error.
+	//FirstZero   int       `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
+	//NZero       int       `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
+
 }

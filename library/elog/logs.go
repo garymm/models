@@ -6,13 +6,12 @@ package elog
 
 import (
 	"fmt"
+	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
 	"log"
 	"os"
 	"strconv"
-
-	"github.com/emer/etable/etable"
 )
 
 // LogPrec is precision for saving float values in logs

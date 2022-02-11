@@ -144,7 +144,7 @@ func (ss *Sim) TrainTrial() {
 		if ss.TestInterval > 0 && epc%ss.TestInterval == 0 { // note: epc is *next* so won't trigger first time
 			ss.TestAll()
 		}
-		if epc == 0 || (ss.NZeroStop > 0 && ss.NZero >= ss.NZeroStop) {
+		if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.IntMetric("NZero") >= ss.NZeroStop) {
 			// done with training..
 			ss.RunEnd()
 			if ss.Run.Incr() { // we are done!

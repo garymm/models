@@ -52,12 +52,14 @@ var TestEnv = EnvText2Many{}
 // You can also aggregate directly from log data, as is done for testing stats
 func TrialStats(ss *sim2.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
-	ss.TrlCosDiff = float64(out.CosDiff.Cos)
-	ss.TrlUnitErr = out.PctUnitErr()
 
+	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
 	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 
 	ss.Stats.SetStringMetric("TrlClosest", closestWord)
+	ss.Stats.SetFloatMetric("TrlCorrel", float64(cor))
+
 	contextWords := strings.Join(TrainEnv.CurWords, " ")
 
 	//Check if the closest word that is found is one of the potential following words
@@ -69,7 +71,8 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	}
 
 	if accum {
-		ss.SumErr += (ss.Stats.FloatMetric("TrlErr"))
+		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
+		ss.Stats.SetFloatMetric("SumErr", sumErr)
 	}
 }
 
