@@ -134,7 +134,7 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
+						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
@@ -144,8 +144,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-						"Layer.Act.Clamp.Ge":   {"Val": "1.0", "StdDev": ".2"},
+						"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
+						"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
@@ -166,7 +166,7 @@ func ConfigParams(ss *sim.Sim) {
 						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
 					},
 					Hypers: params.Hypers{
-						"Prjn.PrjnScale.Rel": {"Val": "0.3", "StdDev": ".05"},
+						"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
 					}},
 			},
 			"Sim": &params.Sheet{ // sim params apply to sim object

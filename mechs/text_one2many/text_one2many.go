@@ -129,8 +129,8 @@ func ConfigParams(ss *sim2.Sim) {
 					},
 					Hypers: params.Hypers{
 						// TODO Set these numbers to be less random
-						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "Min": "1", "Max": "3", "Sigma": ".45", "Priority": "5"},
-						"Layer.Act.Clamp.Ge":   {"Val": "1.0"},
+						"Layer.Inhib.Layer.Gi": {"Sigma": ".45", "Priority": "5"},
+						"Layer.Act.Clamp.Ge":   {"Sigma": "0.2"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{

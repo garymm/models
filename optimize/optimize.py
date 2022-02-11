@@ -25,9 +25,10 @@ def generate_list_iterate(params: list):
                 for paramname in element["Hypers"]:
                     uniquename = "{}_{}".format(index, paramname)
                     index += 1
+                    if paramname in element["Params"]:
+                        element["Hypers"][paramname]["Val"] = element["Params"][paramname]
                     params_relations.append(
                         {"uniquename": uniquename, "paramname": paramname, "sheetidx": idx, "values": element})
-
     return params_relations
 
 
@@ -86,7 +87,7 @@ def create_suggested_params(params, trial):
     for info in parameters_to_modify:
         value_to_assign = get_opt_value(trial, info["uniquename"], info["values"]["Hypers"][info["paramname"]])
         info["values"]["Params"][info["paramname"]] = value_to_assign
-    # This creates a version of Params that has stripped out everything that didn't have Hypers
+    # create_hyperonly creates a version of Params that has stripped out everything that didn't have Hypers
     updated_parameters = (create_hyperonly(cparams))
     print("UPDATED PARAMS")
     print(updated_parameters)
