@@ -53,7 +53,7 @@ func (ss *Sim) ParseArgs() {
 	flag.Parse()
 
 	if ss.CmdArgs.hyperFile != "" {
-		file, _ := json.MarshalIndent(ss.Params, "", "  ")
+		file, _ := json.MarshalIndent(ss.Params.Params, "", "  ")
 		_ = ioutil.WriteFile(ss.CmdArgs.hyperFile, file, 0644)
 		ss.CmdArgs.noRun = true
 		return
