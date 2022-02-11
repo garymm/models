@@ -58,7 +58,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Range: minmax.F64{Min: -1},
 		Compute: elog.ComputeMap{
 			elog.GenScopeKey(elog.Train, elog.Run): func(item *elog.Item, scope elog.ScopeKey, dt *etable.Table, row int) {
-				dt.SetCellFloat(item.Name, row, float64(ss.Stats.FloatMetric("FirstZero")))
+				dt.SetCellFloat(item.Name, row, float64(ss.Stats.IntMetric("FirstZero")))
 			},
 		}})
 	ss.Logs.AddItem(&elog.Item{

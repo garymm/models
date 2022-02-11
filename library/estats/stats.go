@@ -1,5 +1,7 @@
 package estats
 
+import "fmt"
+
 type Stats struct {
 	FloatMetrics  map[string]float64
 	StringMetrics map[string]string
@@ -25,11 +27,26 @@ func (stats *Stats) SetIntMetric(name string, value int) {
 }
 
 func (stats *Stats) FloatMetric(name string) float64 {
-	return stats.FloatMetrics[name]
+	val, has := stats.FloatMetrics[name]
+	if has {
+		return val
+	}
+	fmt.Println("Value not found in map!")
+	return 0
 }
 func (stats *Stats) StringMetric(name string) string {
-	return stats.StringMetrics[name]
+	val, has := stats.StringMetrics[name]
+	if has {
+		return val
+	}
+	fmt.Println("Value not found in map!")
+	return ""
 }
 func (stats *Stats) IntMetric(name string) int {
-	return stats.IntMetrics[name]
+	val, has := stats.IntMetrics[name]
+	if has {
+		return val
+	}
+	fmt.Println("Value not found in map!")
+	return 0
 }

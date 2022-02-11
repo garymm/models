@@ -233,7 +233,7 @@ func (ss *Sim) InitStats() {
 
 	// accumulators
 	// clear rest just to make Sim look initialized
-	ss.Stats.SetFloatMetric("Sumerr", 0.0)
+	ss.Stats.SetFloatMetric("SumErr", 0.0)
 	ss.Stats.SetFloatMetric("TrlErr", 0.0)
 	ss.Stats.SetStringMetric("TrlClosest", "")
 	ss.Stats.SetFloatMetric("TrlCorrel", 0.0)

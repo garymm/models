@@ -40,7 +40,7 @@ func (ss *Sim) ParseArgs() {
 	flag.StringVar(&ss.Tag, "tag", "", "extra tag to add to file names saved from this run")
 	flag.IntVar(&ss.CmdArgs.StartRun, "run", 0, "starting run number -- determines the random seed -- runs counts from there -- can do all runs in parallel by launching separate jobs with each run, runs = 1")
 	flag.IntVar(&ss.CmdArgs.MaxRuns, "runs", 10, "number of runs to do (note that MaxEpcs is in paramset)")
-	flag.IntVar(&ss.CmdArgs.MaxEpcs, "epochs", 100, "number of epochs per trial")
+	flag.IntVar(&ss.CmdArgs.MaxEpcs, "epochs", 3, "number of epochs per trial")
 	flag.BoolVar(&ss.CmdArgs.LogSetParams, "setparams", false, "if true, print a record of each parameter that is set")
 	flag.BoolVar(&ss.CmdArgs.SaveWts, "wts", false, "if true, save final weights after each run")
 	flag.StringVar(&ss.CmdArgs.note, "note", "", "user note -- describe the run params etc")
