@@ -10,8 +10,8 @@ import pandas as pd
 #todo integrate so that can easily swap between bones and optuna
 #todo specify the number iterations per epoch and epochs
 #todo oneday wrap this in a clear object with comments
-MECHNAME = "One2Many" #"One2Many", "RA25", these are app names defined at the top of each mech file
-EXECUTABLE_PATH = "one2many" #the directory the file comes from
+MECHNAME = "RA25" #"One2Many", "RA25", these are app names defined at the top of each mech file
+EXECUTABLE_PATH = "ra25" #the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "#PctErr"
 
 def generate_list_iterate(params: list):
@@ -29,6 +29,8 @@ def generate_list_iterate(params: list):
                         {"uniquename": uniquename, "paramname": paramname, "sheetidx": idx, "values": element})
 
     return params_relations
+
+
 
 
 def create_hyperonly(params):
