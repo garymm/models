@@ -157,7 +157,7 @@ func ConfigParams(ss *sim.Sim) {
 			"Sim": &params.Sheet{ // sim params apply to sim object
 				{Sel: "Sim", Desc: "best params always finish in this time",
 					Params: params.Params{
-						"Sim.MaxEpcs": "100",
+						"Sim.CmdArgs.MaxEpcs": "100",
 					}},
 			},
 			// TODO Use this for a Net Schema that is used to build the network
