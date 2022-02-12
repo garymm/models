@@ -97,7 +97,7 @@ def create_suggested_params(params, trial):
 def main():
     os.chdir('../')  # Move into the models/ directory
 
-    hyperFile = "hyperparamsExample.json"
+    hyperFile = "hyperparamsExample.json" #this
     # Run go with -hyperFile cmd arg to save them to file
     print("GETTING HYPERPARAMETERS")
     run_model("-hyperFile=" + hyperFile)
@@ -121,7 +121,7 @@ def main():
             json.dump(updated_parameters, outfile)
 
         # Run go program with -params arg
-        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=5 -epochs=100")
+        run_model("-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs=5 -epochs=1")
 
         # Get valuation from logs
         # TODO Make sure this name is unique for parallelization.
