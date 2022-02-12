@@ -104,6 +104,11 @@ func ConfigParams(ss *sim2.Sim) {
 						"Layer.X": "12",
 						"Layer.Y": "12",
 					}},
+				{Sel: "#Output", Desc: "outputlayer, demosntration compare to  one2many param file",
+					Params: params.Params{
+						"Layer.X": "5",
+						"Layer.Y": "5",
+					}},
 			},
 			"Network": &params.Sheet{
 				{Sel: "Layer", Desc: "all defaults",
@@ -227,13 +232,14 @@ func ConfigPats(ss *sim2.Sim) {
 
 func ConfigNet(ss *sim2.Sim, net *axon.Network) {
 	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
+	ss.Params.AddLayers([]string{"Output"}, "")
 	ss.Params.SetObject("NetSize")
 
 	net.InitName(net, programName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
-	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
+	inp := net.AddLayer2D("Input", ss.Params.LayY("Input", 5), ss.Params.LayX("Input", 5), emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", ss.Params.LayY("Hidden1", 10), ss.Params.LayX("Hidden1", 10), emer.Hidden)
 	hid2 := net.AddLayer2D("Hidden2", ss.Params.LayY("Hidden2", 10), ss.Params.LayX("Hidden2", 10), emer.Hidden)
-	out := net.AddLayer2D("Output", 5, 5, emer.Target)
+	out := net.AddLayer2D("Output", ss.Params.LayY("Output", 666), ss.Params.LayY("Output", 666), emer.Target)
 
 	// use this to position layers relative to each other
 	// default is Above, YAlign = Front, XAlign = Center

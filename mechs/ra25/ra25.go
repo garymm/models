@@ -87,6 +87,18 @@ func ConfigParams(ss *sim.Sim) {
 	// Base is always applied, and others can be optionally selected to apply on top of that
 	ss.Params.Params = params.Sets{
 		{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
+			"NetSize": &params.Sheet{
+				{Sel: ".Hidden", Desc: "all hidden layers",
+					Params: params.Params{
+						"Layer.X": "7",
+						"Layer.Y": "7",
+					},
+					Hypers: params.Hypers{
+						"Layer.X": {"Val": "5", "StdDev": "0.3", "Min": "2"},
+						"Layer.Y": {"Val": "5", "StdDev": "0.3", "Min": "2"},
+					},
+				},
+			},
 			"Network": &params.Sheet{
 				{Sel: "Layer", Desc: "all defaults",
 					Params: params.Params{
@@ -212,10 +224,13 @@ func OpenPats(ss *sim.Sim) {
 }
 
 func ConfigNet(ss *sim.Sim, net *axon.Network) {
+	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
+	ss.Params.SetObject("NetSize")
+
 	net.InitName(net, programName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
 	inp := net.AddLayer2D("Input", sizeOfGrid, sizeOfGrid, emer.Input)
-	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
-	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
+	hid1 := net.AddLayer2D("Hidden1", ss.Params.LayY("Hidden1", 10), ss.Params.LayX("Hidden1", 10), emer.Hidden)
+	hid2 := net.AddLayer2D("Hidden2", ss.Params.LayY("Hidden2", 10), ss.Params.LayX("Hidden2", 10), emer.Hidden)
 	out := net.AddLayer2D("Output", sizeOfGrid, sizeOfGrid, emer.Target)
 
 	// use this to position layers relative to each other

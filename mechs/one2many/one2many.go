@@ -25,6 +25,7 @@ import (
 )
 
 var ProgramName = "One2Many"
+
 var TestEnv = EnvOne2Many{}
 var TrainEnv = EnvOne2Many{}
 
@@ -117,6 +118,11 @@ func ConfigParams(ss *sim.Sim) {
 					Params: params.Params{
 						"Layer.X": "8",
 						"Layer.Y": "8",
+					}},
+				{Sel: ".InputAndOutput", Desc: "all input and output layers",
+					Params: params.Params{
+						"Layer.X": "5",
+						"Layer.Y": "5",
 					}},
 			},
 			"Network": &params.Sheet{
@@ -251,14 +257,15 @@ func OpenPats(ss *sim.Sim) {
 
 func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
+	ss.Params.AddLayers([]string{"Input", "Output"}, "InputAndOutput")
 	ss.Params.SetObject("NetSize")
 
 	net.InitName(net, ProgramName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
-
-	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
+	// TODO need some param unit tests even if it's just incorporated inot htis project
+	inp := net.AddLayer2D("Input", ss.Params.LayY("Input", 666), ss.Params.LayX("Input", 666), emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", ss.Params.LayY("Hidden1", 10), ss.Params.LayX("Hidden1", 10), emer.Hidden)
 	hid2 := net.AddLayer2D("Hidden2", ss.Params.LayY("Hidden2", 10), ss.Params.LayX("Hidden2", 10), emer.Hidden)
-	out := net.AddLayer2D("Output", 5, 5, emer.Target)
+	out := net.AddLayer2D("Output", ss.Params.LayY("Output", 666), ss.Params.LayY("Output", 666), emer.Target)
 
 	// use this to position layers relative to each other
 	// default is Above, YAlign = Front, XAlign = Center

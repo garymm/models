@@ -51,13 +51,14 @@ func (ss *Sim) ParseArgs() {
 	flag.StringVar(&ss.CmdArgs.hyperFile, "hyperFile", "", "Name of the file to output hyperparameter data. If not empty string, program should write and then exit")
 	flag.StringVar(&ss.CmdArgs.paramsFile, "paramsFile", "", "Name of the file to input parameters from.")
 	flag.Parse()
-
+	// TODO reformat jsonl to be strings only, causing a read issue
 	if ss.CmdArgs.hyperFile != "" {
 		file, _ := json.MarshalIndent(ss.Params.Params, "", "  ")
 		_ = ioutil.WriteFile(ss.CmdArgs.hyperFile, file, 0644)
 		ss.CmdArgs.noRun = true
 		return
 	}
+
 	if ss.CmdArgs.paramsFile != "" {
 		jsonFile, err := os.Open(ss.CmdArgs.paramsFile)
 		if err != nil {

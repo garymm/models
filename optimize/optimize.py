@@ -10,8 +10,8 @@ import pandas as pd
 #todo integrate so that can easily swap between bones and optuna
 #todo specify the number iterations per epoch and epochs
 #todo oneday wrap this in a clear object with comments
-MECHNAME = "RA25" #"One2Many", "RA25", these are app names defined at the top of each mech file
-EXECUTABLE_PATH = "ra25" #the directory the file comes from
+MECHNAME = "TextOne2Many" #"One2Many", "RA25", these are app names defined at the top of each mech file
+EXECUTABLE_PATH = "text_one2many" #the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "#PctErr"
 
 def generate_list_iterate(params: list):
@@ -116,6 +116,7 @@ def main():
         # This creates a version of Params that has stripped out everything that didn't have Hypers
         updated_parameters = create_suggested_params(params, trial)
 
+        #todo check with randy how he is logging warnings/ errors i.e invalid sheets
         # Save the hyperparameters so that they can be read by the model
         with open("hyperparams.json", "w") as outfile:
             json.dump(updated_parameters, outfile)
