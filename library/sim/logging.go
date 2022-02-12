@@ -9,7 +9,6 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
-	"github.com/emer/etable/norm"
 	"github.com/emer/etable/split"
 )
 
@@ -18,19 +17,7 @@ import (
 
 func (ss *Sim) ConfigLogs() {
 	ss.Logs.CreateTables()
-}
-
-// ValsTsr gets value tensor of given name, creating if not yet made
-func (ss *Sim) ValsTsr(name string) *etensor.Float32 {
-	if ss.Logs.ValsTsrs == nil {
-		ss.Logs.ValsTsrs = make(map[string]*etensor.Float32)
-	}
-	tsr, ok := ss.Logs.ValsTsrs[name]
-	if !ok {
-		tsr = &etensor.Float32{}
-		ss.Logs.ValsTsrs[name] = tsr
-	}
-	return tsr
+	ss.Logs.SetContext(&ss.Stats, ss.Net)
 }
 
 // RunName returns a name for this run that combines Tag and Params -- add this to
@@ -108,18 +95,18 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 func (ss *Sim) UpdateTrnEpc() {
 	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
 
-	sumErr := ss.Stats.FloatMetric("SumErr")
+	sumErr := ss.Stats.Float("SumErr")
 	epcSumErr := float64(sumErr)
-	ss.Stats.SetFloatMetric("SumErr", 0)
+	ss.Stats.SetFloat("SumErr", 0)
 
-	if ss.Stats.IntMetric("FirstZero") < 0 && epcSumErr == 0 {
-		ss.Stats.SetIntMetric("FirstZero", epc)
+	if ss.Stats.Int("FirstZero") < 0 && epcSumErr == 0 {
+		ss.Stats.SetInt("FirstZero", epc)
 	}
 	if epcSumErr == 0 {
-		nzero := ss.Stats.IntMetric("NZero")
-		ss.Stats.SetIntMetric("NZero", nzero+1)
+		nzero := ss.Stats.Int("NZero")
+		ss.Stats.SetInt("NZero", nzero+1)
 	} else {
-		ss.Stats.SetIntMetric("NZero", 0)
+		ss.Stats.SetInt("NZero", 0)
 	}
 }
 
@@ -158,32 +145,6 @@ func (ss *Sim) UpdateRun(dt *etable.Table) {
 //////////////////////////////////////////////
 //  SpikeRasters
 
-// SpikeRastTsr gets spike raster tensor of given name, creating if not yet made
-func (ss *Sim) SpikeRastTsr(name string) *etensor.Float32 {
-	if ss.Logs.SpikeRasters == nil {
-		ss.Logs.SpikeRasters = make(map[string]*etensor.Float32)
-	}
-	tsr, ok := ss.Logs.SpikeRasters[name]
-	if !ok {
-		tsr = &etensor.Float32{}
-		ss.Logs.SpikeRasters[name] = tsr
-	}
-	return tsr
-}
-
-// SpikeRastGrid gets spike raster grid of given name, creating if not yet made
-func (ss *Sim) SpikeRastGrid(name string) *etview.TensorGrid {
-	if ss.Logs.SpikeRastGrids == nil {
-		ss.Logs.SpikeRastGrids = make(map[string]*etview.TensorGrid)
-	}
-	tsr, ok := ss.Logs.SpikeRastGrids[name]
-	if !ok {
-		tsr = &etview.TensorGrid{}
-		ss.Logs.SpikeRastGrids[name] = tsr
-	}
-	return tsr
-}
-
 // SetSpikeRastCol sets column of given spike raster from data
 func (ss *Sim) SetSpikeRastCol(sr, vl *etensor.Float32, col int) {
 	for ni, v := range vl.Values {
@@ -204,7 +165,7 @@ func (ss *Sim) ConfigSpikeRasts() {
 	// spike rast
 	for _, lnm := range ss.SpikeRecLays {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		sr := ss.SpikeRastTsr(lnm)
+		sr := ss.Stats.F32Tensor("Raster_" + lnm)
 		sr.SetShape([]int{ly.Shp.Len(), ncy}, nil, []string{"Nrn", "Cyc"})
 	}
 }
@@ -213,18 +174,11 @@ func (ss *Sim) ConfigSpikeRasts() {
 func (ss *Sim) RecSpikes(cyc int) {
 	for _, lnm := range ss.SpikeRecLays {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		tv := ss.ValsTsr(lnm)
+		tv := ss.Stats.F32Tensor(lnm)
 		ly.UnitValsTensor(tv, "Spike")
-		sr := ss.SpikeRastTsr(lnm)
+		sr := ss.Stats.F32Tensor("Raster_" + lnm)
 		ss.SetSpikeRastCol(sr, tv, cyc)
 	}
-}
-
-// AvgLayVal returns average of given layer variable value
-func (ss *Sim) AvgLayVal(ly *axon.Layer, vnm string) float32 {
-	tv := ss.ValsTsr(ly.Name())
-	ly.UnitValsTensor(tv, vnm)
-	return norm.Mean32(tv.Values)
 }
 
 // InitStats initializes all the statistics, especially important for the
@@ -233,16 +187,16 @@ func (ss *Sim) InitStats() {
 
 	// accumulators
 	// clear rest just to make Sim look initialized
-	ss.Stats.SetFloatMetric("SumErr", 0.0)
-	ss.Stats.SetFloatMetric("TrlErr", 0.0)
-	ss.Stats.SetStringMetric("TrlClosest", "")
-	ss.Stats.SetFloatMetric("TrlCorrel", 0.0)
-	ss.Stats.SetFloatMetric("TrlUnitErr", 0.0)
-	ss.Stats.SetFloatMetric("TrlCosDiff", 0.0)
+	ss.Stats.SetFloat("SumErr", 0.0)
+	ss.Stats.SetFloat("TrlErr", 0.0)
+	ss.Stats.SetString("TrlClosest", "")
+	ss.Stats.SetFloat("TrlCorrel", 0.0)
+	ss.Stats.SetFloat("TrlUnitErr", 0.0)
+	ss.Stats.SetFloat("TrlCosDiff", 0.0)
 
-	ss.Stats.SetIntMetric("FirstZero", -1)
-	ss.Stats.SetIntMetric("NZero", 0)
-	//stats.SetFloatMetric("TrlCosDiff", 0, 0)
+	ss.Stats.SetInt("FirstZero", -1)
+	ss.Stats.SetInt("NZero", 0)
+	//stats.SetFloat("TrlCosDiff", 0, 0)
 	// internal state - view:"-"
 	//SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
 

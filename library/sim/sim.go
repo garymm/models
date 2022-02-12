@@ -1,6 +1,9 @@
 package sim
 
 import (
+	"math/rand"
+	"time"
+
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/Astera-org/models/library/estats"
@@ -8,8 +11,6 @@ import (
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
 	"github.com/emer/etable/etable"
-	"math/rand"
-	"time"
 )
 
 // Sim encapsulates the entire simulation model, and we define all the
@@ -59,7 +60,7 @@ type Sim struct {
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
-	ss.Stats = estats.InitStats()
+	ss.Stats.Init()
 	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
 		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0

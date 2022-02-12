@@ -122,36 +122,36 @@ func (sk *ScopeKey) ModesAndTimesMap() (modes, times map[string]bool) {
 //////////////////////////////////////////////////
 // Standalone funcs
 
-// GenScopeKey generates a scope key string from one mode and time
-func GenScopeKey(mode EvalModes, time Times) ScopeKey {
+// GenKey generates a scope key string from one mode and time
+func GenKey(mode EvalModes, time Times) ScopeKey {
 	var ss ScopeKey
 	ss.FromScope(mode, time)
 	return ss
 }
 
-// GenScopeKeyStr generates a scope key string from string
+// GenKeyStr generates a scope key string from string
 // values for mode, time
-func GenScopeKeyStr(mode, time string) ScopeKey {
+func GenKeyStr(mode, time string) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopeStr(mode, time)
 	return ss
 }
 
-// GenScopesKey generates a scope key string from multiple modes, times
-func GenScopesKey(modes []EvalModes, times []Times) ScopeKey {
+// GenKeys generates a scope key string from multiple modes, times
+func GenKeys(modes []EvalModes, times []Times) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopes(modes, times)
 	return ss
 }
 
-// GenScopesKeyStr generates a scope key string from multiple modes, times
-func GenScopesKeyStr(modes, times []string) ScopeKey {
+// GenKeysStr generates a scope key string from multiple modes, times
+func GenKeysStr(modes, times []string) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopesStr(modes, times)
 	return ss
 }
 
-func GenScopesKeyMap(modes, times map[string]bool) ScopeKey {
+func GenKeysMap(modes, times map[string]bool) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopesMap(modes, times)
 	return ss

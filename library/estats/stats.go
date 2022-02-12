@@ -1,52 +1,104 @@
+// Copyright (c) 2022, The Emergent Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package estats
 
-import "fmt"
+import (
+	"fmt"
 
+	"github.com/emer/etable/etensor"
+	"github.com/emer/etable/pca"
+	"github.com/emer/etable/simat"
+)
+
+// Stats provides maps for storing statistics as named scalar and tensor values.
+// These stats are available in the elog.Context for use during logging
 type Stats struct {
-	FloatMetrics  map[string]float64
-	StringMetrics map[string]string
-	IntMetrics    map[string]int
+	Floats     map[string]float64
+	Strings    map[string]string
+	Ints       map[string]int
+	F32Tensors map[string]*etensor.Float32 `desc:"float32 tensor used for grabbing values from layers"`
+	F64Tensors map[string]*etensor.Float64 `desc:"float64 tensor as needed for other computations"`
+	SimMats    map[string]*simat.SimMat    `desc:"similarity matrix for comparing pattern similarities"`
+	PCA        pca.PCA                     `desc:"one PCA object can be reused for all PCA computations"`
 }
 
-func InitStats() Stats {
-	stats := Stats{}
-	stats.FloatMetrics = make(map[string]float64)
-	stats.StringMetrics = make(map[string]string)
-	stats.IntMetrics = make(map[string]int)
-	return stats
+// Init must be called before use to create all the maps
+func (st *Stats) Init() {
+	st.Floats = make(map[string]float64)
+	st.Strings = make(map[string]string)
+	st.Ints = make(map[string]int)
+	st.F32Tensors = make(map[string]*etensor.Float32)
+	st.F64Tensors = make(map[string]*etensor.Float64)
+	st.SimMats = make(map[string]*simat.SimMat)
 }
 
-func (stats *Stats) SetFloatMetric(name string, value float64) {
-	stats.FloatMetrics[name] = value
-}
-func (stats *Stats) SetStringMetric(name string, value string) {
-	stats.StringMetrics[name] = value
-}
-func (stats *Stats) SetIntMetric(name string, value int) {
-	stats.IntMetrics[name] = value
+func (st *Stats) SetFloat(name string, value float64) {
+	st.Floats[name] = value
 }
 
-func (stats *Stats) FloatMetric(name string) float64 {
-	val, has := stats.FloatMetrics[name]
+func (st *Stats) SetString(name string, value string) {
+	st.Strings[name] = value
+}
+
+func (st *Stats) SetInt(name string, value int) {
+	st.Ints[name] = value
+}
+
+func (st *Stats) Float(name string) float64 {
+	val, has := st.Floats[name]
 	if has {
 		return val
 	}
-	fmt.Println("Value not found in map!")
+	fmt.Printf("Value named: %s not found in Stats\n", name)
 	return 0
 }
-func (stats *Stats) StringMetric(name string) string {
-	val, has := stats.StringMetrics[name]
+
+func (st *Stats) String(name string) string {
+	val, has := st.Strings[name]
 	if has {
 		return val
 	}
-	fmt.Println("Value not found in map!")
+	fmt.Printf("Value named: %s not found in Stats\n", name)
 	return ""
 }
-func (stats *Stats) IntMetric(name string) int {
-	val, has := stats.IntMetrics[name]
+
+func (st *Stats) Int(name string) int {
+	val, has := st.Ints[name]
 	if has {
 		return val
 	}
-	fmt.Println("Value not found in map!")
+	fmt.Printf("Value named: %s not found in Stats\n", name)
 	return 0
+}
+
+// F32Tensor returns a float32 tensor of given name, creating if not yet made
+func (st *Stats) F32Tensor(name string) *etensor.Float32 {
+	tsr, has := st.F32Tensors[name]
+	if !has {
+		tsr = &etensor.Float32{}
+		st.F32Tensors[name] = tsr
+	}
+	return tsr
+}
+
+// F64Tensor returns a float64 tensor of given name, creating if not yet made
+func (st *Stats) F64Tensor(name string) *etensor.Float64 {
+	tsr, has := st.F64Tensors[name]
+	if !has {
+		tsr = &etensor.Float64{}
+		st.F64Tensors[name] = tsr
+	}
+	return tsr
+}
+
+// SimMat returns a SimMat similarity matrix of given name, creating if not yet made
+func (st *Stats) SimMat(name string) *simat.SimMat {
+	sm, has := st.SimMats[name]
+	if !has {
+		sm = &simat.SimMat{}
+		st.SimMats[name] = sm
+	}
+	return sm
 }

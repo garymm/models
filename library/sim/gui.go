@@ -31,8 +31,8 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	stb.Lay = gi.LayoutVert
 	stb.SetStretchMax()
 	for _, lnm := range ss.SpikeRecLays {
-		sr := ss.SpikeRastTsr(lnm)
-		tg := ss.SpikeRastGrid(lnm)
+		sr := ss.Stats.F32Tensor("Raster_" + lnm)
+		tg := ss.GUI.RasterGrid(lnm)
 		tg.SetName(lnm + "Spikes")
 		gi.AddNewLabel(stb, lnm, lnm+":")
 		stb.AddChild(tg)
@@ -170,7 +170,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Active:  egui.ActiveAlways,
 		Func: func() {
 			ss.Logs.Table(elog.Train, elog.Run).SetNumRows(0)
-			runPlot := ss.GUI.PlotMap[elog.GenScopeKey(elog.Train, elog.Run)]
+			runPlot := ss.GUI.PlotMap[elog.GenKey(elog.Train, elog.Run)]
 			runPlot.Update()
 		},
 	})

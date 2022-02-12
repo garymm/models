@@ -3,16 +3,15 @@ package elog
 import (
 	"testing"
 
-	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 )
 
 func TestScopeKeyStringing(t *testing.T) {
-	sk := GenScopeKey(Train, Epoch)
+	sk := GenKey(Train, Epoch)
 	if sk != "Train&Epoch" {
 		t.Errorf("Got unexpected scopekey " + string(sk))
 	}
-	sk2 := GenScopesKey([]EvalModes{Train, Test}, []Times{Epoch, Cycle})
+	sk2 := GenKeys([]EvalModes{Train, Test}, []Times{Epoch, Cycle})
 	if sk2 != "Train|Test&Epoch|Cycle" {
 		t.Errorf("Got unexpected scopekey " + string(sk2))
 	}
@@ -26,7 +25,7 @@ func TestItem(t *testing.T) {
 	item := Item{
 		Name: "Testo",
 		Type: etensor.STRING,
-		Compute: ComputeMap{"Train|Test&Epoch|Cycle": func(item *Item, scope ScopeKey, dt *etable.Table, row int) {
+		Compute: ComputeMap{"Train|Test&Epoch|Cycle": func(ctx *Context) {
 			// DO NOTHING
 		}},
 	}

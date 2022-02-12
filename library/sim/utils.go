@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/etable/etable"
@@ -27,7 +28,7 @@ func (ss *Sim) Counters(train bool) string {
 // correlation value, and value of a column named namecol for that row if non-empty.
 // Column must be etensor.Float32
 func (ss *Sim) ClosestStat(net emer.Network, lnm, varnm string, dt *etable.Table, colnm, namecol string) (int, float32, string) {
-	vt := ss.ValsTsr(lnm)
+	vt := ss.Stats.F32Tensor(lnm)
 	ly := net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
 	ly.UnitValsTensor(vt, varnm)
 	col := dt.ColByName(colnm)

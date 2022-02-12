@@ -4,6 +4,7 @@ import (
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
+	"github.com/emer/etable/etview"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki/ki"
@@ -24,6 +25,8 @@ type GUI struct {
 
 	PlotMap map[elog.ScopeKey]*eplot.Plot2D
 	PlotAry []*eplot.Plot2D
+
+	RasterGrids map[string]*etview.TensorGrid `desc:"spike raster grid views"`
 
 	CycleUpdateRate int
 }
@@ -120,7 +123,19 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 			}
 		}
 	}
+}
 
+// RasterGrid gets spike raster grid of given name, creating if not yet made
+func (gui *GUI) RasterGrid(name string) *etview.TensorGrid {
+	if gui.RasterGrids == nil {
+		gui.RasterGrids = make(map[string]*etview.TensorGrid)
+	}
+	tsr, ok := gui.RasterGrids[name]
+	if !ok {
+		tsr = &etview.TensorGrid{}
+		gui.RasterGrids[name] = tsr
+	}
+	return tsr
 }
 
 // UpdatePlot wrapper for updating each plot

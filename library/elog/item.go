@@ -5,13 +5,9 @@
 package elog
 
 import (
-	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/minmax"
 )
-
-// ComputeFunc function that computes value at the
-type ComputeFunc func(item *Item, scope ScopeKey, dt *etable.Table, row int)
 
 type DefaultBool int64
 
@@ -35,7 +31,7 @@ type Item struct {
 	Type      etensor.Type `desc:"data type, using etensor types which are isomorphic with arrow.Type"`
 	CellShape []int        `desc:"shape of a single cell in the column (i.e., without the row dimension) -- for scalars this is nil -- tensor column will add the outer row dimension to this shape"`
 	DimNames  []string     `desc:"names of the dimensions within the CellShape -- 'Row' will be added to outer dimension"`
-	Compute   ComputeMap   `desc:"For each timescale and mode, how is this value computed? The key should be a single mode and timescale, from GenScopeKey(mode, time) -- use All* when used across all instances of a given scope -- map will be updated with specific cases during final processing of items."`
+	Compute   ComputeMap   `desc:"For each timescale and mode, how is this value computed? The key should be a single mode and timescale, from GenKey(mode, time) -- use All* when used across all instances of a given scope -- map will be updated with specific cases during final processing of items."`
 	Plot      DefaultBool  `desc:"Whether or not to plot it"`
 	FixMin    DefaultBool  `desc:"Whether to fix the minimum in the display"`
 	FixMax    DefaultBool  `desc:"Whether to fix the maximum in the display"`
@@ -47,7 +43,7 @@ type Item struct {
 }
 
 func (item *Item) ComputeFunc(mode, time string) (ComputeFunc, bool) {
-	val, ok := item.Compute[GenScopeKeyStr(mode, time)]
+	val, ok := item.Compute[GenKeyStr(mode, time)]
 	return val, ok
 }
 
@@ -56,7 +52,7 @@ func (item *Item) ComputeFunc(mode, time string) (ComputeFunc, bool) {
 func (item *Item) SetComputeFuncAll(theFunc ComputeFunc) {
 	for mode := range item.Modes {
 		for time := range item.Times {
-			item.Compute[GenScopeKeyStr(mode, time)] = theFunc
+			item.Compute[GenKeyStr(mode, time)] = theFunc
 		}
 	}
 }
@@ -65,7 +61,7 @@ func (item *Item) SetComputeFuncAll(theFunc ComputeFunc) {
 func (item *Item) SetComputeFuncOver(modes []EvalModes, times []Times, theFunc ComputeFunc) {
 	for _, mode := range modes {
 		for _, time := range times {
-			item.Compute[GenScopeKey(mode, time)] = theFunc
+			item.Compute[GenKey(mode, time)] = theFunc
 		}
 	}
 }
@@ -87,7 +83,7 @@ func (item *Item) SetEachScopeKey() {
 			doReplace = true
 			for _, m := range modes {
 				for _, t := range times {
-					newCompute[GenScopeKeyStr(m, t)] = c
+					newCompute[GenKeyStr(m, t)] = c
 				}
 			}
 		} else {

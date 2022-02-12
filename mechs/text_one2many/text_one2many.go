@@ -53,26 +53,26 @@ var TestEnv = EnvText2Many{}
 func TrialStats(ss *sim2.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
-	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
-	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
+	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloat("TrlUnitErr", out.PctUnitErr())
 	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 
-	ss.Stats.SetStringMetric("TrlClosest", closestWord)
-	ss.Stats.SetFloatMetric("TrlCorrel", float64(cor))
+	ss.Stats.SetString("TrlClosest", closestWord)
+	ss.Stats.SetFloat("TrlCorrel", float64(cor))
 
 	contextWords := strings.Join(TrainEnv.CurWords, " ")
 
 	//Check if the closest word that is found is one of the potential following words
 	_, ok := TrainEnv.NGrams[contextWords][closestWord]
 	if ok {
-		ss.Stats.SetFloatMetric("TrlErr", 1)
+		ss.Stats.SetFloat("TrlErr", 1)
 	} else {
-		ss.Stats.SetFloatMetric("TrlErr", 0)
+		ss.Stats.SetFloat("TrlErr", 0)
 	}
 
 	if accum {
-		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
-		ss.Stats.SetFloatMetric("SumErr", sumErr)
+		sumErr := ss.Stats.Float("SumErr") + ss.Stats.Float("TrlErr")
+		ss.Stats.SetFloat("SumErr", sumErr)
 	}
 }
 

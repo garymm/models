@@ -16,8 +16,8 @@ func (ev *EvalModes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSO
 const (
 	NoEvalMode EvalModes = iota
 
-	// AllEvalModes indicates that the log should occur over all modes present in other items.
-	AllEvalModes
+	// AllModes indicates that the log should occur over all modes present in other items.
+	AllModes
 
 	// Train is this a training mode for the env
 	Train

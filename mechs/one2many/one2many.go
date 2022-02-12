@@ -36,12 +36,12 @@ var TrainEnv = EnvOne2Many{}
 func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
-	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
 
 	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
 
-	ss.Stats.SetStringMetric("TrlClosest", cnm)
-	ss.Stats.SetFloatMetric("TrialCorrel", float64(cor))
+	ss.Stats.SetString("TrlClosest", cnm)
+	ss.Stats.SetFloat("TrialCorrel", float64(cor))
 	tnm := ""
 	if accum { // really train
 		tnm = ss.TrainEnv.TrialName().Cur
@@ -49,14 +49,14 @@ func TrialStats(ss *sim.Sim, accum bool) {
 		tnm = ss.TestEnv.TrialName().Cur
 	}
 	if cnm == tnm {
-		ss.Stats.SetFloatMetric("TrlErr", 0)
+		ss.Stats.SetFloat("TrlErr", 0)
 	} else {
-		ss.Stats.SetFloatMetric("TrlErr", 1)
+		ss.Stats.SetFloat("TrlErr", 1)
 	}
 
 	if accum {
-		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
-		ss.Stats.SetFloatMetric("SumErr", sumErr)
+		sumErr := ss.Stats.Float("SumErr") + ss.Stats.Float("TrlErr")
+		ss.Stats.SetFloat("SumErr", sumErr)
 	}
 }
 
