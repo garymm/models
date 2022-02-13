@@ -199,7 +199,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 // UpdateView updates the gui visualization of the network
 func (ss *Sim) UpdateView(train bool) {
 	if ss.GUI.NetView != nil && ss.GUI.NetView.IsVisible() {
-		ss.GUI.NetView.Record(ss.StateString(train))
+		ss.GUI.NetView.Record(ss.StateString())
 
 		// note: essential to use Go version of update when called from another goroutine
 		ss.GUI.NetView.GoUpdate() // note: using counters is significantly slower..

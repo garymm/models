@@ -18,7 +18,7 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.AllTimes): func(ctx *elog.Context) {
-				ctx.SetInt(ss.Run.Cur)
+				ctx.SetStatInt("Run")
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Params",
@@ -44,28 +44,28 @@ func (ss *Sim) ConfigLogSpec() {
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
 			elog.Scopes([]elog.EvalModes{elog.AllModes}, []elog.Times{elog.Epoch, elog.Trial}): func(ctx *elog.Context) {
-				ctx.SetInt(ss.TrainEnv.Epoch().Prv)
+				ctx.SetStatInt("Epoch")
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Trial",
 		Type: etensor.INT64,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-				ctx.SetInt(ss.TrainEnv.Trial().Cur) // TODO need generic version
+				ctx.SetStatInt("Trial")
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "TrialName",
 		Type: etensor.STRING,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-				ctx.SetString(ss.TestEnv.GetCurrentTrialName()) // TODO need generic version
+				ctx.SetStatString("TrialName")
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Cycle",
 		Type: etensor.INT64,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Cycle): func(ctx *elog.Context) {
-				ctx.SetInt(ctx.Row)
+				ctx.SetStatInt("Cycle")
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "UnitErr",

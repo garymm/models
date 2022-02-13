@@ -39,6 +39,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	ss.Time.NewState()
 	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
+		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
 			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
@@ -69,6 +70,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	}
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
+		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
 			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
@@ -289,7 +291,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	ss.Log(elog.Test, elog.Trial)
 	ss.GUI.UpdatePlot(elog.Scope(elog.Test, elog.Trial))
 	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
-		ss.CmdArgs.NetData.Record(ss.StateString(false))
+		ss.CmdArgs.NetData.Record(ss.StateString())
 	}
 }
 

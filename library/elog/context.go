@@ -111,7 +111,7 @@ func (ctx *Context) SetAggItemScope(scope ScopeKey, itemNm string, ag agg.Aggs) 
 	ix := ctx.Logs.IdxViewScope(scope)
 	vals := agg.Agg(ix, itemNm, ag)
 	if len(vals) == 0 {
-		fmt.Printf("elog.Context SetAggItemScope for item: %s in scope: %s -- could not aggregate item: %s from scope: %s -- check names\n")
+		fmt.Printf("elog.Context SetAggItemScope for item: %s in scope: %s -- could not aggregate item: %s from scope: %s -- check names\n", ctx.Item.Name, ctx.Scope, itemNm, scope)
 	} else {
 		ctx.SetFloat64(vals[0])
 	}

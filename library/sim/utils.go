@@ -1,8 +1,6 @@
 package sim
 
 import (
-	"fmt"
-
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/etable/etable"
@@ -10,16 +8,26 @@ import (
 	"github.com/emer/etable/metric"
 )
 
+// StatCounters saves current counters to Stats, so they are available for logging etc
+func (ss *Sim) StatCounters(train bool) {
+	ev := ss.TrainEnv
+	if !train {
+		ev = ss.TestEnv
+	}
+	ss.Stats.SetInt("Run", ss.Run.Cur)
+	ss.Stats.SetInt("Epoch", ss.TrainEnv.Epoch().Cur)
+	ss.Stats.SetInt("Trial", ev.Trial().Cur)
+	ss.Stats.SetString("TrialName", ev.CurTrialName())
+	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
+}
+
 // StateString returns a string of the current counter and stats state
 // use tabs to achieve a reasonable formatting overall
 // and add a few tabs at the end to allow for expansion.
-func (ss *Sim) StateString(train bool) string {
-	stats := ss.Stats.Print([]string{"TrlErr", "TrlCosDiff"})
-	if train {
-		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t%s\t\t\t", ss.Run.Cur, ss.TrainEnv.Epoch().Cur, ss.TrainEnv.Trial().Cur, ss.Time.Cycle, stats)
-	} else {
-		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t%s\t\t\t", ss.Run.Cur, ss.TestEnv.Epoch().Cur, ss.TestEnv.Trial().Cur, ss.Time.Cycle, stats)
-	}
+func (ss *Sim) StateString() string {
+	stats := ss.Stats.Print([]string{"Run", "Epoch", "Trial", "TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
+	stats += "\t\t\t\t"
+	return stats
 }
 
 //TODO: should be placed in a library or package pertaining to calculating stats related to one to many
