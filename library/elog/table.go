@@ -13,7 +13,7 @@ import (
 // LogTable contains all the data for one log table
 type LogTable struct {
 	Table        *etable.Table              `desc:"Actual data stored."`
-	Meta         map[string]string          `desc:"arbitrary meta-data for each table, e.g., hints for plotting"`
+	Meta         map[string]string          `desc:"arbitrary meta-data for each table, e.g., hints for plotting: Plot = false to not plot, XAxisCol, LegendCol"`
 	IdxView      *etable.IdxView            `view:"-" desc:"Index View of the table -- automatically updated when a new row of data is logged to the table."`
 	NamedViews   map[string]*etable.IdxView `view:"-" desc:"named index views onto the table that can be saved and used across multiple items -- these are reset to nil after a new row is written -- see NamedIdxView funtion for more details."`
 	File         *os.File                   `view:"-" desc:"File to store the log into."`
@@ -31,11 +31,11 @@ func NewLogTable(table *etable.Table) *LogTable {
 // GetIdxView returns the index view for the whole table.
 // It is reset to nil after log row is written, and if nil
 // then it is initialized to reflect current rows.
-func (ld *LogTable) GetIdxView() *etable.IdxView {
-	if ld.IdxView == nil {
-		ld.IdxView = etable.NewIdxView(ld.Table)
+func (lt *LogTable) GetIdxView() *etable.IdxView {
+	if lt.IdxView == nil {
+		lt.IdxView = etable.NewIdxView(lt.Table)
 	}
-	return ld.IdxView
+	return lt.IdxView
 }
 
 // NamedIdxView returns a named Index View of the table, and true
@@ -44,21 +44,21 @@ func (ld *LogTable) GetIdxView() *etable.IdxView {
 // It is reset to nil after log row is written, and if nil
 // then it is initialized to reflect current rows as a starting point (returning true).
 // Thus, the bool return value can be used for re-using cached indexes.
-func (ld *LogTable) NamedIdxView(name string) (*etable.IdxView, bool) {
-	ix, has := ld.NamedViews[name]
+func (lt *LogTable) NamedIdxView(name string) (*etable.IdxView, bool) {
+	ix, has := lt.NamedViews[name]
 	isnew := false
 	if !has || ix == nil {
-		ix = etable.NewIdxView(ld.Table)
-		ld.NamedViews[name] = ix
+		ix = etable.NewIdxView(lt.Table)
+		lt.NamedViews[name] = ix
 		isnew = true
 	}
 	return ix, isnew
 }
 
 // ResetIdxViews resets all IdxViews -- after log row is written
-func (ld *LogTable) ResetIdxViews() {
-	ld.IdxView = nil
-	for nm := range ld.NamedViews {
-		ld.NamedViews[nm] = nil
+func (lt *LogTable) ResetIdxViews() {
+	lt.IdxView = nil
+	for nm := range lt.NamedViews {
+		lt.NamedViews[nm] = nil
 	}
 }

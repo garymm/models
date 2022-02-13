@@ -7,6 +7,7 @@ package estats
 import (
 	"fmt"
 
+	"github.com/emer/emergent/timer"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/pca"
 	"github.com/emer/etable/simat"
@@ -22,6 +23,7 @@ type Stats struct {
 	F64Tensors map[string]*etensor.Float64 `desc:"float64 tensor as needed for other computations"`
 	SimMats    map[string]*simat.SimMat    `desc:"similarity matrix for comparing pattern similarities"`
 	PCA        pca.PCA                     `desc:"one PCA object can be reused for all PCA computations"`
+	Timers     map[string]*timer.Time      `desc:"named timers available for timing how long different computations take (wall-clock time)"`
 }
 
 // Init must be called before use to create all the maps
@@ -32,6 +34,7 @@ func (st *Stats) Init() {
 	st.F32Tensors = make(map[string]*etensor.Float32)
 	st.F64Tensors = make(map[string]*etensor.Float64)
 	st.SimMats = make(map[string]*simat.SimMat)
+	st.Timers = make(map[string]*timer.Time)
 }
 
 // Print returns a formatted Name: Value string of stat values,
@@ -128,4 +131,42 @@ func (st *Stats) SimMat(name string) *simat.SimMat {
 		st.SimMats[name] = sm
 	}
 	return sm
+}
+
+// Timer returns timer of given name, creating if not yet made
+func (st *Stats) Timer(name string) *timer.Time {
+	tmr, has := st.Timers[name]
+	if !has {
+		tmr = &timer.Time{}
+		st.Timers[name] = tmr
+	}
+	return tmr
+}
+
+// StartTimer starts given named timer
+func (st *Stats) StartTimer(name string) *timer.Time {
+	tmr := st.Timer(name)
+	tmr.Start()
+	return tmr
+}
+
+// StopTimer stops given timer
+func (st *Stats) StopTimer(name string) *timer.Time {
+	tmr := st.Timer(name)
+	tmr.Stop()
+	return tmr
+}
+
+// ResetTimer resets given named timer
+func (st *Stats) ResetTimer(name string) *timer.Time {
+	tmr := st.Timer(name)
+	tmr.Reset()
+	return tmr
+}
+
+// ResetStartTimer resets then starts given named timer
+func (st *Stats) ResetStartTimer(name string) *timer.Time {
+	tmr := st.Timer(name)
+	tmr.ResetStart()
+	return tmr
 }

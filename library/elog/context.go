@@ -36,10 +36,10 @@ type Context struct {
 }
 
 // SetTable sets the current table & scope -- called by WriteItems
-func (ctx *Context) SetTable(sk ScopeKey, ld *LogTable, row int) {
+func (ctx *Context) SetTable(sk ScopeKey, lt *LogTable, row int) {
 	ctx.Scope = sk
-	ctx.LogTable = ld
-	ctx.Table = ld.Table
+	ctx.LogTable = lt
+	ctx.Table = lt.Table
 	ctx.Row = row
 	ctx.Mode, ctx.Time = sk.ModeAndTime()
 }

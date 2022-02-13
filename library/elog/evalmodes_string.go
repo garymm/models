@@ -18,12 +18,13 @@ func _() {
 	_ = x[Train-2]
 	_ = x[Test-3]
 	_ = x[Validate-4]
-	_ = x[EvalModesN-5]
+	_ = x[Analyze-5]
+	_ = x[EvalModesN-6]
 }
 
-const _EvalModes_name = "NoEvalModeAllModesTrainTestValidateEvalModesN"
+const _EvalModes_name = "NoEvalModeAllModesTrainTestValidateAnalyzeEvalModesN"
 
-var _EvalModes_index = [...]uint8{0, 10, 18, 23, 27, 35, 45}
+var _EvalModes_index = [...]uint8{0, 10, 18, 23, 27, 35, 42, 52}
 
 func (i EvalModes) String() string {
 	if i < 0 || i >= EvalModes(len(_EvalModes_index)-1) {

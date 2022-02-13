@@ -42,11 +42,9 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
-				ss.GUI.UpdatePlot(elog.Scope(elog.Test, elog.Cycle))
-			}
+			ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
 		}
-		if !ss.CmdArgs.NoGui {
+		if ss.GUI.Active {
 			ss.RecSpikes(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
@@ -61,24 +59,22 @@ func (ss *Sim) ThetaCyc(train bool) {
 			ss.Net.MinusPhase(&ss.Time)
 		}
 		if ss.ViewOn {
-			ss.UpdateViewTime(train, viewUpdt)
+			ss.UpdateViewTime(viewUpdt)
 		}
 	}
 	ss.Time.NewPhase()
+	ss.StatCounters(train)
 	if viewUpdt == axon.Phase {
-		ss.UpdateView(train)
+		ss.GUI.UpdateNetView()
 	}
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
 		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
-				ss.GUI.UpdatePlot(elog.Scope(elog.Test, elog.Cycle))
-			}
-
+			ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
 		}
-		if !ss.CmdArgs.NoGui {
+		if ss.GUI.Active {
 			ss.RecSpikes(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
@@ -87,21 +83,21 @@ func (ss *Sim) ThetaCyc(train bool) {
 			ss.Net.PlusPhase(&ss.Time)
 		}
 		if ss.ViewOn {
-			ss.UpdateViewTime(train, viewUpdt)
+			ss.UpdateViewTime(viewUpdt)
 		}
 	}
 	ss.TrialStatsFunc(ss, train)
+	ss.StatCounters(train)
 
 	if train {
 		ss.Net.DWt()
 	}
 
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
-		ss.UpdateView(train)
+		ss.GUI.UpdateNetView()
 	}
-	// TODO check why this is being called here instead of in plus or minus phase
-	if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
-		ss.GUI.UpdatePlot(elog.Scope(elog.Test, elog.Cycle))
+	if !train {
+		ss.GUI.UpdatePlot(elog.Test, elog.Cycle)
 	}
 }
 
@@ -138,10 +134,10 @@ func (ss *Sim) TrainTrial() {
 	epc, _, chg := TrainEnv.Counter(env.Epoch)
 	if chg {
 		ss.Log(elog.Train, elog.Epoch)
-		ss.GUI.UpdatePlot(elog.Scope(elog.Train, elog.Epoch))
+		ss.GUI.UpdatePlot(elog.Train, elog.Epoch)
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-			ss.UpdateView(true)
+			ss.GUI.UpdateNetView()
 		}
 		if ss.TestInterval > 0 && epc%ss.TestInterval == 0 { // note: epc is *next* so won't trigger first time
 			ss.TestAll()
@@ -162,13 +158,13 @@ func (ss *Sim) TrainTrial() {
 	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
 	ss.Log(elog.Train, elog.Trial)
-	ss.GUI.UpdatePlot(elog.Scope(elog.Train, elog.Trial))
+	ss.GUI.UpdatePlot(elog.Train, elog.Trial)
 }
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
-	ss.GUI.UpdatePlot(elog.Scope(elog.Train, elog.Run))
+	ss.GUI.UpdatePlot(elog.Train, elog.Run)
 	if ss.CmdArgs.SaveWts {
 		fnm := ss.WeightsFileName()
 		fmt.Printf("Saving Weights to: %s\n", fnm)
@@ -189,8 +185,10 @@ func (ss *Sim) NewRun() {
 	ss.Time.Reset()
 	ss.Net.InitWts()
 	ss.InitStats()
-	ss.Logs.Table(elog.Train, elog.Epoch).SetNumRows(0)
-	ss.Logs.Table(elog.Test, elog.Epoch).SetNumRows(0)
+	ss.StatCounters(true)
+
+	ss.Logs.ResetLog(elog.Train, elog.Epoch)
+	ss.Logs.ResetLog(elog.Test, elog.Epoch)
 	ss.CmdArgs.NeedsNewRun = false
 }
 
@@ -277,10 +275,10 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	_, _, chg := TestEnv.Counter(env.Epoch)
 	if chg {
 		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
-			ss.UpdateView(false)
+			ss.GUI.UpdateNetView()
 		}
 		ss.Log(elog.Test, elog.Epoch)
-		ss.GUI.UpdatePlot(elog.Scope(elog.Test, elog.Epoch))
+		ss.GUI.UpdatePlot(elog.Test, elog.Epoch)
 		if returnOnChg {
 			return
 		}
@@ -289,9 +287,9 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	ss.ApplyInputs(ss.TestEnv)
 	ss.ThetaCyc(false) // !train
 	ss.Log(elog.Test, elog.Trial)
-	ss.GUI.UpdatePlot(elog.Scope(elog.Test, elog.Trial))
+	ss.GUI.UpdatePlot(elog.Test, elog.Trial)
 	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
-		ss.CmdArgs.NetData.Record(ss.StateString())
+		ss.CmdArgs.NetData.Record(ss.GUI.NetViewText)
 	}
 }
 

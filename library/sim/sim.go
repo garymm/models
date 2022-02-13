@@ -22,37 +22,30 @@ type Sim struct {
 	// TODO Net maybe shouldn't be in Sim because it won't always be an axon.Network
 	Net *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
 	// TODO This should be moved to the environment or the Sim extension
-	Pats *etable.Table `view:"no-inline" desc:"the training patterns to use"`
+	Params  emer.Params   `view:"inline" desc:"all parameter management"`
+	Tag     string        `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
+	Pats    *etable.Table `view:"no-inline" desc:"the training patterns to use"`
+	Stats   estats.Stats  `desc:"contains computed statistic values"`
+	Logs    elog.Logs     `desc:"Contains all the logs and information about the logs.'"`
+	GUI     egui.GUI      `view:"-" desc:"manages all the gui elements"`
+	CmdArgs CmdArgs       `view:"-" desc:"Arguments passed in through the command line"`
 
-	Logs   elog.Logs   `desc:"Contains all the logs and information about the logs.'"`
-	Params emer.Params `view:"inline" desc:"all parameter management"`
-
-	GUI   egui.GUI     `view:"-" desc:"manages all the gui elements"`
-	Stats estats.Stats `desc:"contains computed statistic values"`
-
-	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
-
-	Tag string  `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	Run env.Ctr `desc:"Information about the current run."`
-
-	// TODO This refactor will have to happen later
-	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
+	Run          env.Ctr `desc:"run number"`
+	TestInterval int     `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
+	NZeroStop    int     `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
 
-	Time         axon.Time       `view:"-" desc:"axon timing parameters and state"`
-	ViewOn       bool            `desc:"whether to update the network view while running"`
-	TrainUpdt    axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
-	TestUpdt     axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
-	TestInterval int             `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
+	Time      axon.Time       `view:"-" desc:"axon timing parameters and state"`
+	ViewOn    bool            `desc:"whether to update the network view while running"`
+	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
+	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
+
+	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
 
 	// TODO These maybe don't need to be stored on Sim at all
 	SpikeRecLays []string `view:"-" desc:"names of layers to record spikes of during testing"`
-
-	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
-
-	CmdArgs CmdArgs `view:"-" desc:"Arguments passed in through the command line"`
 }
 
 // New creates new blank elements and initializes defaults
@@ -86,7 +79,8 @@ func (ss *Sim) Init() {
 	// NOTE uncomment following to see the compiled hyper params
 	// fmt.Println(ss.Params.NetHypers.JSONString())
 	ss.NewRun()
-	ss.UpdateView(true)
+	ss.GUI.UpdateNetView()
+	ss.Stats.ResetTimer("PerTrlMSec")
 }
 
 // InitRndSeed initializes the random seed based on current training run number

@@ -32,6 +32,9 @@ const (
 	// Validate is this a validation mode for the env
 	Validate
 
+	// Analyze when analyzing the representations and behavior of the network
+	Analyze
+
 	EvalModesN
 )
 

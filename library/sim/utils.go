@@ -9,6 +9,7 @@ import (
 )
 
 // StatCounters saves current counters to Stats, so they are available for logging etc
+// Also saves a string rep of them to the GUI, if the GUI is active
 func (ss *Sim) StatCounters(train bool) {
 	ev := ss.TrainEnv
 	if !train {
@@ -19,15 +20,7 @@ func (ss *Sim) StatCounters(train bool) {
 	ss.Stats.SetInt("Trial", ev.Trial().Cur)
 	ss.Stats.SetString("TrialName", ev.CurTrialName())
 	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
-}
-
-// StateString returns a string of the current counter and stats state
-// use tabs to achieve a reasonable formatting overall
-// and add a few tabs at the end to allow for expansion.
-func (ss *Sim) StateString() string {
-	stats := ss.Stats.Print([]string{"Run", "Epoch", "Trial", "TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
-	stats += "\t\t\t\t"
-	return stats
+	ss.GUI.NetViewText = ss.Stats.Print([]string{"Run", "Epoch", "Trial", "TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
 }
 
 //TODO: should be placed in a library or package pertaining to calculating stats related to one to many

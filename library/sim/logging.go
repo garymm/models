@@ -18,6 +18,11 @@ import (
 func (ss *Sim) ConfigLogs() {
 	ss.Logs.CreateTables()
 	ss.Logs.SetContext(&ss.Stats, ss.Net)
+	// don't plot certain combinations we don't use
+	ss.Logs.NoPlot(elog.Train, elog.Cycle)
+	ss.Logs.NoPlot(elog.Test, elog.Run)
+	ss.Logs.NoPlot(elog.Analyze, elog.Trial)
+	ss.Logs.SetMeta(elog.Train, elog.Run, "LegendCol", "Params")
 }
 
 // RunName returns a name for this run that combines Tag and Params -- add this to
@@ -54,8 +59,6 @@ func (ss *Sim) LogFileName(lognm string) string {
 //  TrnEpcLog
 
 // TODO Unify these functions
-// TODO move these calculations to the logger add items compute function
-// Create a general Log(mode, time) function
 
 func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 	dt := ss.Logs.Table(mode, time)
@@ -184,33 +187,12 @@ func (ss *Sim) RecSpikes(cyc int) {
 // InitStats initializes all the statistics, especially important for the
 // cumulative epoch stats -- called at start of new run
 func (ss *Sim) InitStats() {
-
-	// accumulators
 	// clear rest just to make Sim look initialized
-	ss.Stats.SetFloat("SumErr", 0.0)
 	ss.Stats.SetFloat("TrlErr", 0.0)
 	ss.Stats.SetString("TrlClosest", "")
 	ss.Stats.SetFloat("TrlCorrel", 0.0)
 	ss.Stats.SetFloat("TrlUnitErr", 0.0)
 	ss.Stats.SetFloat("TrlCosDiff", 0.0)
-
 	ss.Stats.SetInt("FirstZero", -1)
 	ss.Stats.SetInt("NZero", 0)
-	//stats.SetFloat("TrlCosDiff", 0, 0)
-	// internal state - view:"-"
-	//SumErr float64 `view:"-" inactive:"+" desc:"Sum of errors throughout epoch. This way we can know when an epoch is error free, for early stopping."`
-
-	// statistics: note use float64 as that is best for etable.Table
-	// TODO Maybe put this on a Stats object - moved to map
-	//TrlErr     float64 `inactive:"+" desc:"1 if trial was error, 0 if correct -- based on UnitErr = 0 (subject to .5 unit-wise tolerance)"`
-	//TrlClosest string  `inactive:"+" desc:"Name of the pattern with the closest output"`
-	//TrlCorrel  float64 `inactive:"+" desc:"Correlation with closest output"`
-	//TrlUnitErr float64 `inactive:"+" desc:"current trial's unit-level pct error"`
-	//TrlCosDiff float64 `inactive:"+" desc:"current trial's cosine difference"`
-
-	// TODO Move these to a newly created func EpochStats
-	// State about how long there's been zero error.
-	//FirstZero   int       `inactive:"+" desc:"epoch at when all TrlErr first went to zero"`
-	//NZero       int       `inactive:"+" desc:"number of epochs in a row with no TrlErr"`
-
 }

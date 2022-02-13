@@ -92,8 +92,8 @@ func (lg *Logs) IdxView(mode EvalModes, time Times) *etable.IdxView {
 // This view should not be altered and always shows the whole table.
 // See NamedIdxView for custom index views.
 func (lg *Logs) IdxViewScope(sk ScopeKey) *etable.IdxView {
-	ld := lg.Tables[sk]
-	return ld.GetIdxView()
+	lt := lg.Tables[sk]
+	return lt.GetIdxView()
 }
 
 // NamedIdxView returns a named Index View of a log table for a given mode, time.
@@ -113,8 +113,8 @@ func (lg *Logs) NamedIdxView(mode EvalModes, time Times, name string) (*etable.I
 // You can then filter, sort, etc as needed.  Subsequent calls within same row Write will
 // return the last filtered view, and false for 2nd arg -- can then just reuse view.
 func (lg *Logs) NamedIdxViewScope(sk ScopeKey, name string) (*etable.IdxView, bool) {
-	ld := lg.Tables[sk]
-	return ld.NamedIdxView(name)
+	lt := lg.Tables[sk]
+	return lt.NamedIdxView(name)
 }
 
 // TableDetails returns the LogTable record of associated info for given table
@@ -125,6 +125,34 @@ func (lg *Logs) TableDetails(mode EvalModes, time Times) *LogTable {
 // TableDetailsScope returns the LogTable record of associated info for given table
 func (lg *Logs) TableDetailsScope(sk ScopeKey) *LogTable {
 	return lg.Tables[sk]
+}
+
+// SetMeta sets table meta data for given scope mode, time.
+func (lg *Logs) SetMeta(mode EvalModes, time Times, key, val string) {
+	lg.SetMetaScope(Scope(mode, time), key, val)
+}
+
+// SetMetaScope sets table meta data for given scope
+func (lg *Logs) SetMetaScope(sk ScopeKey, key, val string) {
+	lt, has := lg.Tables[sk]
+	if !has {
+		return
+	}
+	lt.Meta[key] = val
+}
+
+// NoPlot sets meta data to not plot for given scope mode, time.
+// Typically all combinations of mode and time end up being
+// generated, so you have to turn off plotting of cases not used.
+func (lg *Logs) NoPlot(mode EvalModes, time Times) {
+	lg.NoPlotScope(Scope(mode, time))
+}
+
+// NoPlotScope sets meta data to not plot for given scope mode, time.
+// Typically all combinations of mode and time end up being
+// generated, so you have to turn off plotting of cases not used.
+func (lg *Logs) NoPlotScope(sk ScopeKey) {
+	lg.SetMetaScope(sk, "Plot", "false")
 }
 
 // CreateTables creates the log tables based on all the specified log items
@@ -161,16 +189,16 @@ func (lg *Logs) CreateTables() error {
 // and saves data to file if open.
 func (lg *Logs) Log(mode EvalModes, time Times) *etable.Table {
 	sk := Scope(mode, time)
-	ld := lg.Tables[sk]
-	return lg.LogRow(mode, time, ld.Table.Rows)
+	lt := lg.Tables[sk]
+	return lg.LogRow(mode, time, lt.Table.Rows)
 }
 
 // LogScope performs logging for given ScopeKey
 // Adds a new row and Writes all the items.
 // and saves data to file if open.
 func (lg *Logs) LogScope(sk ScopeKey) *etable.Table {
-	ld := lg.Tables[sk]
-	return lg.LogRowScope(sk, ld.Table.Rows)
+	lt := lg.Tables[sk]
+	return lg.LogRowScope(sk, lt.Table.Rows)
 }
 
 // LogRow performs logging for given mode, time, at given row.
@@ -182,14 +210,14 @@ func (lg *Logs) LogRow(mode EvalModes, time Times, row int) *etable.Table {
 // LogRowScope performs logging for given ScopeKey, at given row.
 // Saves data to file if open.
 func (lg *Logs) LogRowScope(sk ScopeKey, row int) *etable.Table {
-	ld := lg.Tables[sk]
-	dt := ld.Table
+	lt := lg.Tables[sk]
+	dt := lt.Table
 	if dt.Rows <= row {
 		dt.SetNumRows(row + 1)
 	}
 	lg.WriteItems(sk, row)
-	ld.ResetIdxViews() // dirty that so it is regenerated later when needed
-	lg.WriteLastRowToFile(ld)
+	lt.ResetIdxViews() // dirty that so it is regenerated later when needed
+	lg.WriteLastRowToFile(lt)
 	return dt
 }
 
@@ -197,10 +225,10 @@ func (lg *Logs) LogRowScope(sk ScopeKey, row int) *etable.Table {
 // by setting number of rows = 0
 func (lg *Logs) ResetLog(mode EvalModes, time Times) {
 	sk := Scope(mode, time)
-	ld := lg.Tables[sk]
-	dt := ld.Table
+	lt := lg.Tables[sk]
+	dt := lt.Table
 	dt.SetNumRows(0)
-	ld.IdxView = nil // dirty that so it is regenerated later when needed
+	lt.IdxView = nil // dirty that so it is regenerated later when needed
 }
 
 // SetLogFile sets the log filename for given scope
@@ -218,10 +246,10 @@ func (lg *Logs) SetLogFile(mode EvalModes, time Times, fnm string) {
 
 // CloseLogFiles closes all open log files
 func (lg *Logs) CloseLogFiles() {
-	for _, ld := range lg.Tables {
-		if ld.File != nil {
-			ld.File.Close()
-			ld.File = nil
+	for _, lt := range lg.Tables {
+		if lt.File != nil {
+			lt.File.Close()
+			lt.File = nil
 		}
 	}
 }
@@ -245,16 +273,16 @@ func (lg *Logs) WriteItems(sk ScopeKey, row int) {
 }
 
 // WriteLastRowToFile writes the last row of table to file, if File != nil
-func (lg *Logs) WriteLastRowToFile(ld *LogTable) {
-	if ld.File == nil {
+func (lg *Logs) WriteLastRowToFile(lt *LogTable) {
+	if lt.File == nil {
 		return
 	}
-	dt := ld.Table
-	if !ld.WroteHeaders {
-		dt.WriteCSVHeaders(ld.File, etable.Tab)
-		ld.WroteHeaders = true
+	dt := lt.Table
+	if !lt.WroteHeaders {
+		dt.WriteCSVHeaders(lt.File, etable.Tab)
+		lt.WroteHeaders = true
 	}
-	dt.WriteCSVRow(ld.File, dt.Rows-1, etable.Tab)
+	dt.WriteCSVRow(lt.File, dt.Rows-1, etable.Tab)
 }
 
 // ProcessItems is called in CreateTables, after all items have been added.
