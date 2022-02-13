@@ -38,10 +38,10 @@ func TrialStats(ss *sim.Sim, accum bool) {
 
 	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
 
-	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
+	_, cor, cnm := ss.Stats.ClosestPat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
 
 	ss.Stats.SetString("TrlClosest", cnm)
-	ss.Stats.SetFloat("TrialCorrel", float64(cor))
+	ss.Stats.SetFloat("TrlCorrel", float64(cor))
 	tnm := ""
 	if accum { // really train
 		tnm = ss.TrainEnv.TrialName().Cur
@@ -54,10 +54,6 @@ func TrialStats(ss *sim.Sim, accum bool) {
 		ss.Stats.SetFloat("TrlErr", 1)
 	}
 
-	if accum {
-		sumErr := ss.Stats.Float("SumErr") + ss.Stats.Float("TrlErr")
-		ss.Stats.SetFloat("SumErr", sumErr)
-	}
 }
 
 type One2Sim struct {
@@ -95,9 +91,6 @@ func Config(ss *One2Sim) {
 	ss.ParseArgs()
 	ConfigEnv(&ss.Sim)
 	ConfigNet(&ss.Sim, ss.Net)
-	// LogSpec needs to be configured after Net
-
-	ss.ConfigLogSpec()
 	ss.ConfigLogs()
 	ss.ConfigSpikeRasts()
 }

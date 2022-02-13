@@ -9,7 +9,7 @@ import (
 	"github.com/emer/etable/minmax"
 )
 
-func (ss *Sim) ConfigLogSpec() {
+func (ss *Sim) ConfigLogItems() {
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Run",
 		Type: etensor.INT64,
@@ -90,7 +90,19 @@ func (ss *Sim) ConfigLogSpec() {
 		FixMax: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+			elog.Scope(elog.Train, elog.Epoch): func(ctx *elog.Context) {
+				pcterr := ctx.SetAggItem(ctx.Mode, elog.Trial, "Err", agg.AggMean)
+				epc := ctx.Stats.Int("Epoch")
+				if ss.Stats.Int("FirstZero") < 0 && pcterr == 0 {
+					ss.Stats.SetInt("FirstZero", epc)
+				}
+				if pcterr == 0 {
+					nzero := ss.Stats.Int("NZero")
+					ss.Stats.SetInt("NZero", nzero+1)
+				} else {
+					ss.Stats.SetInt("NZero", 0)
+				}
+			}, elog.Scope(elog.Test, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAggItem(ctx.Mode, elog.Trial, "Err", agg.AggMean)
 			}, elog.Scope(elog.AllModes, elog.Run): func(ctx *elog.Context) {
 				ix := ctx.LastNRows(ctx.Mode, elog.Epoch, 5) // cached

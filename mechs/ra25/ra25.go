@@ -42,11 +42,6 @@ func TrialStats(ss *sim.Sim, accum bool) {
 	} else {
 		ss.Stats.SetFloat("TrlErr", 0)
 	}
-
-	if accum {
-		sumErr := ss.Stats.Float("SumErr") + ss.Stats.Float("TrlErr")
-		ss.Stats.SetFloat("SumErr", sumErr)
-	}
 }
 
 func main() {
@@ -75,8 +70,6 @@ func Config(ss *sim.Sim) {
 	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigNet(ss, ss.Net)
-	// LogSpec needs to be configured after Net
-	ss.ConfigLogSpec()
 	ss.ConfigLogs()
 	ss.ConfigSpikeRasts()
 }

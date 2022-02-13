@@ -12,6 +12,7 @@ import (
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
+	"github.com/emer/etable/metric"
 )
 
 // WriteFunc function that computes and sets log values
@@ -88,33 +89,38 @@ func (ctx *Context) SetTensor(val etensor.Tensor) {
 //  Aggregation, data access
 
 // SetAgg sets an aggregated scalar value computed from given eval mode
-// and time scale with same Item name, to current item, row
-func (ctx *Context) SetAgg(mode EvalModes, time Times, ag agg.Aggs) {
-	ctx.SetAggScope(Scope(mode, time), ag)
+// and time scale with same Item name, to current item, row.
+// returns aggregated value
+func (ctx *Context) SetAgg(mode EvalModes, time Times, ag agg.Aggs) float64 {
+	return ctx.SetAggScope(Scope(mode, time), ag)
 }
 
 // SetAggScope sets an aggregated scalar value computed from
 // another scope (ScopeKey) with same Item name, to current item, row
-func (ctx *Context) SetAggScope(scope ScopeKey, ag agg.Aggs) {
-	ctx.SetAggItemScope(scope, ctx.Item.Name, ag)
+// returns aggregated value
+func (ctx *Context) SetAggScope(scope ScopeKey, ag agg.Aggs) float64 {
+	return ctx.SetAggItemScope(scope, ctx.Item.Name, ag)
 }
 
 // SetAggItem sets an aggregated scalar value computed from given eval mode
-// and time scale with given Item name, to current item, row
-func (ctx *Context) SetAggItem(mode EvalModes, time Times, itemNm string, ag agg.Aggs) {
-	ctx.SetAggItemScope(Scope(mode, time), itemNm, ag)
+// and time scale with given Item name, to current item, row.
+// returns aggregated value
+func (ctx *Context) SetAggItem(mode EvalModes, time Times, itemNm string, ag agg.Aggs) float64 {
+	return ctx.SetAggItemScope(Scope(mode, time), itemNm, ag)
 }
 
 // SetAggItemScope sets an aggregated scalar value computed from
-// another scope (ScopeKey) with given Item name, to current item, row
-func (ctx *Context) SetAggItemScope(scope ScopeKey, itemNm string, ag agg.Aggs) {
+// another scope (ScopeKey) with given Item name, to current item, row.
+// returns aggregated value
+func (ctx *Context) SetAggItemScope(scope ScopeKey, itemNm string, ag agg.Aggs) float64 {
 	ix := ctx.Logs.IdxViewScope(scope)
 	vals := agg.Agg(ix, itemNm, ag)
 	if len(vals) == 0 {
 		fmt.Printf("elog.Context SetAggItemScope for item: %s in scope: %s -- could not aggregate item: %s from scope: %s -- check names\n", ctx.Item.Name, ctx.Scope, itemNm, scope)
-	} else {
-		ctx.SetFloat64(vals[0])
+		return 0
 	}
+	ctx.SetFloat64(vals[0])
+	return vals[0]
 }
 
 // ItemFloat returns a float64 value of the last row of given item name
@@ -153,11 +159,29 @@ func (ctx *Context) Layer(layNm string) emer.Layer {
 }
 
 // SetLayerTensor sets tensor of Unit values on a layer for given variable
-func (ctx *Context) SetLayerTensor(layNm, unitVar string) {
+func (ctx *Context) SetLayerTensor(layNm, unitVar string) *etensor.Float32 {
 	ly := ctx.Layer(layNm)
 	tsr := ctx.Stats.F32Tensor(layNm)
 	ly.UnitValsTensor(tsr, unitVar)
 	ctx.SetTensor(tsr)
+	return tsr
+}
+
+// ClosestPat finds the closest pattern in given column of given pats table to
+// given layer activation pattern using given variable.  Returns the row number,
+// correlation value, and value of a column named namecol for that row if non-empty.
+// Column must be etensor.Float32
+func (ctx *Context) ClosestPat(layNm, unitVar string, pats *etable.Table, colnm, namecol string) (int, float32, string) {
+	tsr := ctx.SetLayerTensor(layNm, unitVar)
+	col := pats.ColByName(colnm)
+	// note: requires Increasing metric so using Inv
+	row, cor := metric.ClosestRow32(tsr, col.(*etensor.Float32), metric.InvCorrelation32)
+	cor = 1 - cor // convert back to correl
+	nm := ""
+	if namecol != "" {
+		nm = pats.CellString(namecol, row)
+	}
+	return row, cor, nm
 }
 
 ///////////////////////////////////////////////////

@@ -55,7 +55,7 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 
 	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
 	ss.Stats.SetFloat("TrlUnitErr", out.PctUnitErr())
-	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
+	_, cor, closestWord := ss.Stats.ClosestPat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 
 	ss.Stats.SetString("TrlClosest", closestWord)
 	ss.Stats.SetFloat("TrlCorrel", float64(cor))
@@ -69,11 +69,6 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 	} else {
 		ss.Stats.SetFloat("TrlErr", 0)
 	}
-
-	if accum {
-		sumErr := ss.Stats.Float("SumErr") + ss.Stats.Float("TrlErr")
-		ss.Stats.SetFloat("SumErr", sumErr)
-	}
 }
 
 // Config configures all the elements using the standard functions
@@ -83,8 +78,6 @@ func Config(ss *sim2.Sim) {
 	ConfigEnv(ss)
 	ConfigPats(ss)
 	ConfigNet(ss, ss.Net)
-	// LogSpec needs to be configured after Net
-	ss.ConfigLogSpec()
 	ss.ConfigLogs()
 	ss.ConfigSpikeRasts()
 }

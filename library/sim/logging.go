@@ -12,10 +12,36 @@ import (
 	"github.com/emer/etable/split"
 )
 
-////////////////////////////////////////////////////////////////////////////////////////////
-// 		Logging
+// InitStats initializes all the statistics.
+// called at start of new run
+func (ss *Sim) InitStats() {
+	// clear rest just to make Sim look initialized
+	ss.Stats.SetFloat("TrlErr", 0.0)
+	ss.Stats.SetString("TrlClosest", "")
+	ss.Stats.SetFloat("TrlCorrel", 0.0)
+	ss.Stats.SetFloat("TrlUnitErr", 0.0)
+	ss.Stats.SetFloat("TrlCosDiff", 0.0)
+	ss.Stats.SetInt("FirstZero", -1) // critical to reset to -1
+	ss.Stats.SetInt("NZero", 0)
+}
+
+// StatCounters saves current counters to Stats, so they are available for logging etc
+// Also saves a string rep of them to the GUI, if the GUI is active
+func (ss *Sim) StatCounters(train bool) {
+	ev := ss.TrainEnv
+	if !train {
+		ev = ss.TestEnv
+	}
+	ss.Stats.SetInt("Run", ss.Run.Cur)
+	ss.Stats.SetInt("Epoch", ss.TrainEnv.Epoch().Cur)
+	ss.Stats.SetInt("Trial", ev.Trial().Cur)
+	ss.Stats.SetString("TrialName", ev.CurTrialName())
+	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
+	ss.GUI.NetViewText = ss.Stats.Print([]string{"Run", "Epoch", "Trial", "TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
+}
 
 func (ss *Sim) ConfigLogs() {
+	ss.ConfigLogItems()
 	ss.Logs.CreateTables()
 	ss.Logs.SetContext(&ss.Stats, ss.Net)
 	// don't plot certain combinations we don't use
@@ -55,93 +81,57 @@ func (ss *Sim) LogFileName(lognm string) string {
 	return ss.Net.Nm + "_" + ss.RunName() + "_" + lognm + ".tsv"
 }
 
-//////////////////////////////////////////////
-//  TrnEpcLog
-
-// TODO Unify these functions
-
+// Log is the main logging function, handles special things for different scopes
 func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 	dt := ss.Logs.Table(mode, time)
-
 	row := dt.Rows
+	switch {
+	case mode == elog.Test && time == elog.Epoch:
+		ss.LogTestErrors()
+	case time == elog.Cycle:
+		row = ss.Stats.Int("Cycle")
+	case time == elog.Trial:
+		row = ss.Stats.Int("Trial")
+	}
+
+	ss.Logs.LogRow(mode, time, row) // also logs to file, etc
 	if time == elog.Cycle {
-		row = ss.Time.Cycle
-	}
-	if time == elog.Trial {
-		// TODO Why is this not stored on ss.Time?
-		if mode == elog.Test {
-			row = (ss.TestEnv).Trial().Cur
-		} else {
-			row = (ss.TrainEnv).Trial().Cur
-		}
-	}
-
-	// TODO These should be callback functions
-	if mode == elog.Train && time == elog.Epoch {
-		ss.UpdateTrnEpc()
-	}
-
-	ss.Logs.LogRow(mode, time, row)
-
-	// TODO These should be callback functions
-	if mode == elog.Test && time == elog.Epoch {
-		ss.UpdateTstEpcErrors()
-	}
-	if mode == elog.Train && time == elog.Run {
-		ss.UpdateRun(dt)
-	}
-}
-
-// Callback functions that update miscellaneous logs
-// TODO Move these to logging_content.go
-
-func (ss *Sim) UpdateTrnEpc() {
-	epc := (ss.TrainEnv).Epoch().Prv // this is triggered by increment so use previous value
-
-	sumErr := ss.Stats.Float("SumErr")
-	epcSumErr := float64(sumErr)
-	ss.Stats.SetFloat("SumErr", 0)
-
-	if ss.Stats.Int("FirstZero") < 0 && epcSumErr == 0 {
-		ss.Stats.SetInt("FirstZero", epc)
-	}
-	if epcSumErr == 0 {
-		nzero := ss.Stats.Int("NZero")
-		ss.Stats.SetInt("NZero", nzero+1)
+		ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
 	} else {
-		ss.Stats.SetInt("NZero", 0)
+		ss.GUI.UpdatePlot(mode, time)
+	}
+
+	switch {
+	case mode == elog.Train && time == elog.Run:
+		ss.LogRunStats()
 	}
 }
 
-func (ss *Sim) UpdateTstEpcErrors() {
-	// Record those test trials which had errors
-	trl := ss.Logs.Table(elog.Test, elog.Trial)
-	trlix := etable.NewIdxView(trl)
-	trlix.Filter(func(et *etable.Table, row int) bool {
-		return et.CellFloat("UnitErr", row) > 0 // include error trials
+// LogTestErrors records all errors made across TestTrials, at Test Epoch scope
+func (ss *Sim) LogTestErrors() {
+	sk := elog.Scope(elog.Test, elog.Trial)
+	lt := ss.Logs.TableDetailsScope(sk)
+	ix, _ := lt.NamedIdxView("TestErrors")
+	ix.Filter(func(et *etable.Table, row int) bool {
+		return et.CellFloat("Err", row) > 0 // include error trials
 	})
+	ss.Logs.MiscTables["TestErrors"] = ix.NewTable()
 
-	ss.Logs.MiscTables["TestErrorLog"] = trlix.NewTable()
-
-	allsp := split.All(trlix)
+	allsp := split.All(ix)
 	split.Agg(allsp, "UnitErr", agg.AggSum)
-	split.Agg(allsp, "InAct", agg.AggMean)
-	split.Agg(allsp, "OutActM", agg.AggMean)
-	split.Agg(allsp, "OutActP", agg.AggMean)
-
+	// note: can add other stats to compute
 	ss.Logs.MiscTables["TestErrorStats"] = allsp.AggsToTable(etable.AddAggName)
 }
 
-//////////////////////////////////////////////
-//  RunLog
+// LogRunStats records stats across all runs, at Train Run scope
+func (ss *Sim) LogRunStats() {
+	sk := elog.Scope(elog.Train, elog.Run)
+	lt := ss.Logs.TableDetailsScope(sk)
+	ix, _ := lt.NamedIdxView("RunStats")
 
-// UpdateRun adds data from current run to the RunLog table.
-func (ss *Sim) UpdateRun(dt *etable.Table) {
-	runix := etable.NewIdxView(dt)
-	spl := split.GroupBy(runix, []string{"Params"})
+	spl := split.GroupBy(ix, []string{"Params"})
 	split.Desc(spl, "FirstZero")
 	split.Desc(spl, "PctCor")
-
 	ss.Logs.MiscTables["RunStats"] = spl.AggsToTable(etable.AddAggName)
 }
 
@@ -182,17 +172,4 @@ func (ss *Sim) RecSpikes(cyc int) {
 		sr := ss.Stats.F32Tensor("Raster_" + lnm)
 		ss.SetSpikeRastCol(sr, tv, cyc)
 	}
-}
-
-// InitStats initializes all the statistics, especially important for the
-// cumulative epoch stats -- called at start of new run
-func (ss *Sim) InitStats() {
-	// clear rest just to make Sim look initialized
-	ss.Stats.SetFloat("TrlErr", 0.0)
-	ss.Stats.SetString("TrlClosest", "")
-	ss.Stats.SetFloat("TrlCorrel", 0.0)
-	ss.Stats.SetFloat("TrlUnitErr", 0.0)
-	ss.Stats.SetFloat("TrlCosDiff", 0.0)
-	ss.Stats.SetInt("FirstZero", -1)
-	ss.Stats.SetInt("NZero", 0)
 }

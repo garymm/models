@@ -42,7 +42,6 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
 		}
 		if ss.GUI.Active {
 			ss.RecSpikes(ss.Time.Cycle)
@@ -72,7 +71,6 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
 		}
 		if ss.GUI.Active {
 			ss.RecSpikes(ss.Time.Cycle)
@@ -134,7 +132,6 @@ func (ss *Sim) TrainTrial() {
 	epc, _, chg := TrainEnv.Counter(env.Epoch)
 	if chg {
 		ss.Log(elog.Train, elog.Epoch)
-		ss.GUI.UpdatePlot(elog.Train, elog.Epoch)
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 			ss.GUI.UpdateNetView()
@@ -158,13 +155,11 @@ func (ss *Sim) TrainTrial() {
 	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
 	ss.Log(elog.Train, elog.Trial)
-	ss.GUI.UpdatePlot(elog.Train, elog.Trial)
 }
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
-	ss.GUI.UpdatePlot(elog.Train, elog.Run)
 	if ss.CmdArgs.SaveWts {
 		fnm := ss.WeightsFileName()
 		fmt.Printf("Saving Weights to: %s\n", fnm)
@@ -278,7 +273,6 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 			ss.GUI.UpdateNetView()
 		}
 		ss.Log(elog.Test, elog.Epoch)
-		ss.GUI.UpdatePlot(elog.Test, elog.Epoch)
 		if returnOnChg {
 			return
 		}
@@ -287,7 +281,6 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	ss.ApplyInputs(ss.TestEnv)
 	ss.ThetaCyc(false) // !train
 	ss.Log(elog.Test, elog.Trial)
-	ss.GUI.UpdatePlot(elog.Test, elog.Trial)
 	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
 		ss.CmdArgs.NetData.Record(ss.GUI.NetViewText)
 	}
