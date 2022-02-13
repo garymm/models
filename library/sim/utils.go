@@ -10,14 +10,15 @@ import (
 	"github.com/emer/etable/metric"
 )
 
-// Counters returns a string of the current counter state
+// StateString returns a string of the current counter and stats state
 // use tabs to achieve a reasonable formatting overall
 // and add a few tabs at the end to allow for expansion.
-func (ss *Sim) Counters(train bool) string {
+func (ss *Sim) StateString(train bool) string {
+	stats := ss.Stats.Print([]string{"TrlErr", "TrlCosDiff"})
 	if train {
-		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t\t\t", ss.Run.Cur, ss.TrainEnv.Epoch().Cur, ss.TrainEnv.Trial().Cur, ss.Time.Cycle)
+		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t%s\t\t\t", ss.Run.Cur, ss.TrainEnv.Epoch().Cur, ss.TrainEnv.Trial().Cur, ss.Time.Cycle, stats)
 	} else {
-		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t\t\t", ss.Run.Cur, ss.TestEnv.Epoch().Cur, ss.TestEnv.Trial().Cur, ss.Time.Cycle)
+		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\t%s\t\t\t", ss.Run.Cur, ss.TestEnv.Epoch().Cur, ss.TestEnv.Trial().Cur, ss.Time.Cycle, stats)
 	}
 }
 

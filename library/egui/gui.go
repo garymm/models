@@ -110,7 +110,7 @@ func (gui *GUI) AddPlots(title string, Log elog.Logs) {
 		plt.SetTable(table.Table)
 		//This is so inefficient even if it's run once, this is ugly
 		for _, item := range Log.Items {
-			_, ok := item.Compute[key]
+			_, ok := item.Write[key]
 			if ok {
 				plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
 

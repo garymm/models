@@ -13,7 +13,7 @@ import (
 )
 
 // Stats provides maps for storing statistics as named scalar and tensor values.
-// These stats are available in the elog.Context for use during logging
+// These stats are available in the elog.Context for use during logging.
 type Stats struct {
 	Floats     map[string]float64
 	Strings    map[string]string
@@ -32,6 +32,33 @@ func (st *Stats) Init() {
 	st.F32Tensors = make(map[string]*etensor.Float32)
 	st.F64Tensors = make(map[string]*etensor.Float64)
 	st.SimMats = make(map[string]*simat.SimMat)
+}
+
+// Print returns a formatted Name: Value string of stat values,
+// suitable for displaying at the bottom of the NetView or otherwise printing.
+// Looks for names of stats in order of fields in Stats object (Floats, Strings, Ints)
+func (st *Stats) Print(stats []string) string {
+	var str string
+	for _, nm := range stats {
+		if str != "" {
+			str += "\t"
+		}
+		str += fmt.Sprintf("%s: \t", nm)
+		if val, has := st.Floats[nm]; has {
+			str += fmt.Sprintf("%.4g", val)
+			continue
+		}
+		if val, has := st.Strings[nm]; has {
+			str += fmt.Sprintf("%s", val)
+			continue
+		}
+		if val, has := st.Ints[nm]; has {
+			str += fmt.Sprintf("%d", val)
+			continue
+		}
+		str += "<not found!>"
+	}
+	return str
 }
 
 func (st *Stats) SetFloat(name string, value float64) {

@@ -5,6 +5,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
@@ -14,7 +16,6 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
-	"log"
 )
 
 var TestEnv = EnvRa25{}
@@ -33,18 +34,18 @@ var numInputs = 30
 func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
-	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
-	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
+	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloat("TrlUnitErr", out.PctUnitErr())
 
-	if ss.Stats.FloatMetric("TrlUnitErr") > 0 {
-		ss.Stats.SetFloatMetric("TrlErr", 1)
+	if ss.Stats.Float("TrlUnitErr") > 0 {
+		ss.Stats.SetFloat("TrlErr", 1)
 	} else {
-		ss.Stats.SetFloatMetric("TrlErr", 0)
+		ss.Stats.SetFloat("TrlErr", 0)
 	}
 
 	if accum {
-		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
-		ss.Stats.SetFloatMetric("SumErr", sumErr)
+		sumErr := ss.Stats.Float("SumErr") + ss.Stats.Float("TrlErr")
+		ss.Stats.SetFloat("SumErr", sumErr)
 	}
 }
 
@@ -82,6 +83,9 @@ func Config(ss *sim.Sim) {
 
 // ConfigParams configure the parameters
 func ConfigParams(ss *sim.Sim) {
+	ss.Params.AddNetwork(ss.Net)
+	ss.Params.AddSim(ss)
+	ss.Params.AddNetSize()
 
 	// ParamSetsMin sets the minimal non-default params
 	// Base is always applied, and others can be optionally selected to apply on top of that
@@ -139,7 +143,7 @@ func ConfigParams(ss *sim.Sim) {
 			"Sim": &params.Sheet{ // sim params apply to sim object
 				{Sel: "Sim", Desc: "best params always finish in this time",
 					Params: params.Params{
-						"Sim.MaxEpcs": "100",
+						"Sim.CmdArgs.MaxEpcs": "100",
 					}},
 			},
 		}},

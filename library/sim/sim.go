@@ -27,10 +27,10 @@ type Sim struct {
 	Logs   elog.Logs   `desc:"Contains all the logs and information about the logs.'"`
 	Params emer.Params `view:"inline" desc:"all parameter management"`
 
-	GUI   egui.GUI
-	Stats estats.Stats
+	GUI   egui.GUI     `view:"-" desc:"manages all the gui elements"`
+	Stats estats.Stats `desc:"contains computed statistic values"`
 
-	TrialStatsFunc func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
+	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
 
 	Tag string  `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
 	Run env.Ctr `desc:"Information about the current run."`
@@ -41,19 +41,18 @@ type Sim struct {
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
 
-	Time         axon.Time       `desc:"axon timing parameters and state"`
+	Time         axon.Time       `view:"-" desc:"axon timing parameters and state"`
 	ViewOn       bool            `desc:"whether to update the network view while running"`
 	TrainUpdt    axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 	TestUpdt     axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 	TestInterval int             `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
 
 	// TODO These maybe don't need to be stored on Sim at all
-	LayStatNms   []string `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
-	SpikeRecLays []string `desc:"names of layers to record spikes of during testing"`
+	SpikeRecLays []string `view:"-" desc:"names of layers to record spikes of during testing"`
 
 	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
 
-	CmdArgs CmdArgs `desc:"Arguments passed in through the command line"`
+	CmdArgs CmdArgs `view:"-" desc:"Arguments passed in through the command line"`
 }
 
 // New creates new blank elements and initializes defaults
@@ -61,6 +60,7 @@ func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
 	ss.Stats.Init()
+	ss.Run.Scale = env.Run
 	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
 		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0
@@ -69,7 +69,6 @@ func (ss *Sim) New() {
 	ss.TrainUpdt = axon.AlphaCycle
 	ss.TestUpdt = axon.Cycle
 	ss.TestInterval = 500                                               // TODO this should be a value we update or save, seems to log every epoch
-	ss.LayStatNms = []string{"Hidden1", "Hidden2", "Output"}            // TODO randy is gonna refactor out
 	ss.SpikeRecLays = []string{"Input", "Hidden1", "Hidden2", "Output"} //TODO randy is gonna refactor out
 	ss.Time.Defaults()
 }

@@ -7,11 +7,11 @@ import (
 )
 
 func TestScopeKeyStringing(t *testing.T) {
-	sk := GenKey(Train, Epoch)
+	sk := Scope(Train, Epoch)
 	if sk != "Train&Epoch" {
 		t.Errorf("Got unexpected scopekey " + string(sk))
 	}
-	sk2 := GenKeys([]EvalModes{Train, Test}, []Times{Epoch, Cycle})
+	sk2 := Scopes([]EvalModes{Train, Test}, []Times{Epoch, Cycle})
 	if sk2 != "Train|Test&Epoch|Cycle" {
 		t.Errorf("Got unexpected scopekey " + string(sk2))
 	}
@@ -25,12 +25,12 @@ func TestItem(t *testing.T) {
 	item := Item{
 		Name: "Testo",
 		Type: etensor.STRING,
-		Compute: ComputeMap{"Train|Test&Epoch|Cycle": func(ctx *Context) {
+		Write: WriteMap{"Train|Test&Epoch|Cycle": func(ctx *Context) {
 			// DO NOTHING
 		}},
 	}
 	item.SetEachScopeKey()
-	_, ok := item.ComputeFunc("Train", "Epoch")
+	_, ok := item.WriteFunc("Train", "Epoch")
 	if !ok {
 		t.Errorf("Error getting compute function")
 	}

@@ -180,7 +180,11 @@ func ConfigEnv(ss *sim2.Sim) {
 	TrainEnv.Validate()
 	ss.Run.Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
 
-	TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	// TODO if you run project using normal go tools, it runs in the text_one2many directory
+	path := ""
+	// path := "mechs/text_one2many/"
+
+	TrainEnv.Config(path+"data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	TrainEnv.Trial().Max = len(TrainEnv.NGrams)
 	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 
@@ -188,7 +192,7 @@ func ConfigEnv(ss *sim2.Sim) {
 	TestEnv.Dsc = "testing params and state"
 	TestEnv.Validate()
 	TestEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
-	TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	TestEnv.Config(path+"data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	TestEnv.Trial().Max = len(TestEnv.NGrams)
 	TestEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 	// note: to create a train / test split of pats, do this:
