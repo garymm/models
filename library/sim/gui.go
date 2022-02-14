@@ -2,7 +2,6 @@ package sim
 
 import (
 	"fmt"
-
 	"github.com/Astera-org/models/library/egui"
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"

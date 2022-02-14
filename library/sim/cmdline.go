@@ -61,24 +61,27 @@ func (ss *Sim) ParseArgs() {
 
 	// ToDO from michael to andrew - need to account for paramsFile and extrasheet not always being the same thing - should be separate parameter imo
 	if ss.CmdArgs.paramsFile != "" {
-
-		jsonFile, err := os.Open(ss.CmdArgs.paramsFile)
-		if err != nil {
-			fmt.Println("Params file error: " + err.Error())
-			return
-		}
-		defer jsonFile.Close()
-		byteValue, _ := ioutil.ReadAll(jsonFile)
-		loadedParams := params.Sets{}
-		json.Unmarshal(byteValue, &loadedParams)
-		if len(loadedParams) == 0 {
-			fmt.Println("Unable to load parameters from file: " + ss.CmdArgs.paramsFile)
-			return
-		}
-		ss.Params.ExtraSets = loadedParams[0].Name // just make them the same
-		ss.Params.Params = append(ss.Params.Params, loadedParams[0])
-
+		ss.ApplyHyperFromCMD(ss.CmdArgs.paramsFile)
 	}
+}
+
+func (ss *Sim) ApplyHyperFromCMD(path string) {
+	ss.CmdArgs.paramsFile = path
+	jsonFile, err := os.Open(ss.CmdArgs.paramsFile)
+	if err != nil {
+		fmt.Println("Params file error: " + err.Error())
+		return
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	loadedParams := params.Sets{}
+	json.Unmarshal(byteValue, &loadedParams)
+	if len(loadedParams) == 0 {
+		fmt.Println("Unable to load parameters from file: " + ss.CmdArgs.paramsFile)
+		return
+	}
+	ss.Params.ExtraSets = loadedParams[0].Name // just make them the same
+	ss.Params.Params = append(ss.Params.Params, loadedParams[0])
 }
 
 // RunFromArgs uses command line arguments to run the model.

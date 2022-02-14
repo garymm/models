@@ -8,6 +8,18 @@ import (
 	"testing"
 )
 
+func TestParamAssignment(t *testing.T) {
+	//go test -run TestParamAssignment mechs/one2many/*.go
+	ss := One2Sim{}
+	ss.Pats = &etable.Table{}
+	ss.ApplyHyperFromCMD("hyperparams.json")
+	//ss.Params.SetMsg = ss.CmdArgs.LogSetParams
+	//ss.Params.SetAll()
+	// NOTE uncomment following to see the compiled hyper params
+	// fmt.Println(ss.Params.NetHypers.JSONString())
+	//ss.NewRun()
+}
+
 func TestConfigNet(t *testing.T) {
 	simo := sim.Sim{}
 	neto := axon.Network{}
