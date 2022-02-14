@@ -31,7 +31,8 @@ type Sim struct {
 	CmdArgs CmdArgs       `view:"-" desc:"Arguments passed in through the command line"`
 
 	Run          env.Ctr `desc:"run number"`
-	TestInterval int     `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
+	TestInterval int     `desc:"how often (in epochs) to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
+	PCAInterval  int     `desc:"how frequently (in epochs) to compute PCA on hidden representations to measure variance?"`
 	NZeroStop    int     `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
@@ -61,7 +62,8 @@ func (ss *Sim) New() {
 	ss.ViewOn = true
 	ss.TrainUpdt = axon.AlphaCycle
 	ss.TestUpdt = axon.Cycle
-	ss.TestInterval = 500                                               // TODO this should be a value we update or save, seems to log every epoch
+	ss.TestInterval = 500 // TODO this should be a value we update or save, seems to log every epoch
+	ss.PCAInterval = 10
 	ss.SpikeRecLays = []string{"Input", "Hidden1", "Hidden2", "Output"} //TODO randy is gonna refactor out
 	ss.Time.Defaults()
 }

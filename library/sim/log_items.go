@@ -165,7 +165,7 @@ func (ss *Sim) ConfigLogItems() {
 			}}})
 
 	// Standard stats for Ge and AvgAct tuning -- for all hidden, output layers
-	layers := []string{"Hidden1", "Hidden2", "Output"}
+	layers := ss.Net.LayersByType(emer.Hidden, emer.Target)
 	for _, lnm := range layers {
 		clnm := lnm
 		ss.Logs.AddItem(&elog.Item{
@@ -231,7 +231,7 @@ func (ss *Sim) ConfigLogItems() {
 	}
 
 	// input layer average activity -- important for tuning
-	layers = []string{"Input"}
+	layers = ss.Net.LayersByType(emer.Input)
 	for _, lnm := range layers {
 		clnm := lnm
 		ss.Logs.AddItem(&elog.Item{
@@ -248,7 +248,7 @@ func (ss *Sim) ConfigLogItems() {
 	}
 
 	// input / output layer activity patterns during testing
-	layers = []string{"Input", "Output"}
+	layers = ss.Net.LayersByType(emer.Input, emer.Target)
 	for _, lnm := range layers {
 		clnm := lnm
 		cly := ss.Net.LayerByName(clnm)
@@ -274,5 +274,54 @@ func (ss *Sim) ConfigLogItems() {
 						ctx.SetLayerTensor(clnm, "ActM")
 					}}})
 		}
+	}
+
+	// hidden activities for PCA analysis, and PCA results
+	layers = ss.Net.LayersByType(emer.Hidden)
+	for _, lnm := range layers {
+		clnm := lnm
+		cly := ss.Net.LayerByName(clnm)
+		ss.Logs.AddItem(&elog.Item{
+			Name:      clnm + "_ActM",
+			Type:      etensor.FLOAT64,
+			CellShape: cly.Shape().Shp,
+			FixMax:    elog.DTrue,
+			Range:     minmax.F64{Max: 1},
+			Write: elog.WriteMap{
+				elog.Scope(elog.Analyze, elog.Trial): func(ctx *elog.Context) {
+					ctx.SetLayerTensor(clnm, "ActM")
+				}}})
+		ss.Logs.AddItem(&elog.Item{
+			Name: clnm + "_PCA_NStrong",
+			Type: etensor.FLOAT64,
+			Plot: elog.DFalse,
+			Write: elog.WriteMap{
+				elog.Scope(elog.Train, elog.Epoch): func(ctx *elog.Context) {
+					ctx.SetStatFloat(ctx.Item.Name)
+				}}})
+		ss.Logs.AddItem(&elog.Item{
+			Name: clnm + "_PCA_Top5",
+			Type: etensor.FLOAT64,
+			Plot: elog.DFalse,
+			Write: elog.WriteMap{
+				elog.Scope(elog.Train, elog.Epoch): func(ctx *elog.Context) {
+					ctx.SetStatFloat(ctx.Item.Name)
+				}}})
+		ss.Logs.AddItem(&elog.Item{
+			Name: clnm + "_PCA_Next5",
+			Type: etensor.FLOAT64,
+			Plot: elog.DFalse,
+			Write: elog.WriteMap{
+				elog.Scope(elog.Train, elog.Epoch): func(ctx *elog.Context) {
+					ctx.SetStatFloat(ctx.Item.Name)
+				}}})
+		ss.Logs.AddItem(&elog.Item{
+			Name: clnm + "_PCA_Rest",
+			Type: etensor.FLOAT64,
+			Plot: elog.DFalse,
+			Write: elog.WriteMap{
+				elog.Scope(elog.Train, elog.Epoch): func(ctx *elog.Context) {
+					ctx.SetStatFloat(ctx.Item.Name)
+				}}})
 	}
 }

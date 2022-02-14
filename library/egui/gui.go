@@ -1,8 +1,6 @@
 package egui
 
 import (
-	"fmt"
-
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
@@ -158,7 +156,7 @@ func (gui *GUI) PlotScope(scope elog.ScopeKey) *eplot.Plot2D {
 	}
 	plot, ok := gui.Plots[scope]
 	if !ok {
-		fmt.Printf("egui Plot not found for scope: %s\n", scope)
+		// fmt.Printf("egui Plot not found for scope: %s\n", scope)
 		return nil
 	}
 	return plot

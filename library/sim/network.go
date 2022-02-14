@@ -95,7 +95,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.GUI.UpdateNetView()
 	}
 	if !train {
-		ss.GUI.UpdatePlot(elog.Test, elog.Cycle)
+		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
 	}
 }
 
@@ -131,12 +131,15 @@ func (ss *Sim) TrainTrial() {
 	// if epoch counter has changed
 	epc, _, chg := TrainEnv.Counter(env.Epoch)
 	if chg {
+		if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
+			ss.PCAStats()
+		}
 		ss.Log(elog.Train, elog.Epoch)
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 			ss.GUI.UpdateNetView()
 		}
-		if ss.TestInterval > 0 && epc%ss.TestInterval == 0 { // note: epc is *next* so won't trigger first time
+		if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
 			ss.TestAll()
 		}
 		if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
@@ -155,6 +158,9 @@ func (ss *Sim) TrainTrial() {
 	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
 	ss.Log(elog.Train, elog.Trial)
+	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) {
+		ss.Log(elog.Analyze, elog.Trial)
+	}
 }
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here

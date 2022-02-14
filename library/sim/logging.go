@@ -5,6 +5,7 @@ import (
 
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/emer"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -133,6 +134,13 @@ func (ss *Sim) LogRunStats() {
 	split.Desc(spl, "FirstZero")
 	split.Desc(spl, "PctCor")
 	ss.Logs.MiscTables["RunStats"] = spl.AggsToTable(etable.AddAggName)
+}
+
+// PCAStats computes PCA statistics on recorded hidden activation patterns
+// from Analyze, Trial log data
+func (ss *Sim) PCAStats() {
+	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayTypeMap[emer.Hidden])
+	ss.Logs.ResetLog(elog.Analyze, elog.Trial)
 }
 
 //////////////////////////////////////////////
