@@ -12,7 +12,7 @@ import (
 	"log"
 	"strings"
 
-	sim2 "github.com/Astera-org/models/library/sim"
+	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/evec"
@@ -28,7 +28,7 @@ var programName = "TextOne2Many"
 
 func main() {
 	// TheSim is the overall state for this simulation
-	var TheSim sim2.Sim
+	var TheSim sim.Sim
 	TheSim.New()
 
 	Config(&TheSim)
@@ -37,7 +37,7 @@ func main() {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim2.GuiRun(&TheSim, programName, "Text One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim.GuiRun(&TheSim, programName, "Text One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
 }
@@ -50,46 +50,38 @@ var TestEnv = EnvText2Many{}
 // core algorithm side remains as simple as possible, and doesn't need to worry about
 // different time-scales over which stats could be accumulated etc.
 // You can also aggregate directly from log data, as is done for testing stats
-func TrialStats(ss *sim2.Sim, accum bool) {
+func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
-	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
-	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
-	_, cor, closestWord := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
+	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloat("TrlUnitErr", out.PctUnitErr())
+	_, cor, closestWord := ss.Stats.ClosestPat(ss.Net, "Output", "ActM", ss.Pats, "Pattern", "Word")
 
-	ss.Stats.SetStringMetric("TrlClosest", closestWord)
-	ss.Stats.SetFloatMetric("TrlCorrel", float64(cor))
+	ss.Stats.SetString("TrlClosest", closestWord)
+	ss.Stats.SetFloat("TrlCorrel", float64(cor))
 
 	contextWords := strings.Join(TrainEnv.CurWords, " ")
 
 	//Check if the closest word that is found is one of the potential following words
 	_, ok := TrainEnv.NGrams[contextWords][closestWord]
 	if ok {
-		ss.Stats.SetFloatMetric("TrlErr", 1)
+		ss.Stats.SetFloat("TrlErr", 1)
 	} else {
-		ss.Stats.SetFloatMetric("TrlErr", 0)
-	}
-
-	if accum {
-		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
-		ss.Stats.SetFloatMetric("SumErr", sumErr)
+		ss.Stats.SetFloat("TrlErr", 0)
 	}
 }
 
 // Config configures all the elements using the standard functions
-func Config(ss *sim2.Sim) {
+func Config(ss *sim.Sim) {
 	ConfigParams(ss)
 	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigPats(ss)
 	ConfigNet(ss, ss.Net)
-	// LogSpec needs to be configured after Net
-	ss.ConfigLogSpec()
 	ss.ConfigLogs()
-	ss.ConfigSpikeRasts()
 }
 
-func ConfigParams(ss *sim2.Sim) {
+func ConfigParams(ss *sim.Sim) {
 	ss.Params.AddNetwork(ss.Net)
 	ss.Params.AddSim(ss)
 	ss.Params.AddNetSize()
@@ -129,8 +121,8 @@ func ConfigParams(ss *sim2.Sim) {
 					},
 					Hypers: params.Hypers{
 						// TODO Set these numbers to be less random
-						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "Min": "1", "Max": "3", "Sigma": ".45", "Priority": "5"},
-						"Layer.Act.Clamp.Ge":   {"Val": "1.0"},
+						"Layer.Inhib.Layer.Gi": {"Sigma": ".45", "Priority": "5"},
+						"Layer.Act.Clamp.Ge":   {"Sigma": "0.2"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
@@ -164,7 +156,7 @@ func ConfigParams(ss *sim2.Sim) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Configs
 
-func ConfigEnv(ss *sim2.Sim) {
+func ConfigEnv(ss *sim.Sim) {
 
 	ss.TrainEnv = &TrainEnv
 	ss.TestEnv = &TestEnv
@@ -180,7 +172,11 @@ func ConfigEnv(ss *sim2.Sim) {
 	TrainEnv.Validate()
 	ss.Run.Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
 
-	TrainEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	// TODO if you run project using normal go tools, it runs in the text_one2many directory
+	path := ""
+	// path := "mechs/text_one2many/"
+
+	TrainEnv.Config(path+"data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	TrainEnv.Trial().Max = len(TrainEnv.NGrams)
 	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 
@@ -188,7 +184,7 @@ func ConfigEnv(ss *sim2.Sim) {
 	TestEnv.Dsc = "testing params and state"
 	TestEnv.Validate()
 	TestEnv.Run().Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
-	TestEnv.Config("mechs/text_one2many/data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
+	TestEnv.Config(path+"data/cbt_train_filt.json", evec.Vec2i{5, 5}, false, 1, 3, 10)
 	TestEnv.Trial().Max = len(TestEnv.NGrams)
 	TestEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 	// note: to create a train / test split of pats, do this:
@@ -201,7 +197,7 @@ func ConfigEnv(ss *sim2.Sim) {
 	TestEnv.Init(0)
 }
 
-func ConfigPats(ss *sim2.Sim) {
+func ConfigPats(ss *sim.Sim) {
 	dt := ss.Pats
 	dt.SetMetaData("name", "SuccessorPatterns")
 	dt.SetMetaData("desc", "SuccessorPatterns")
@@ -225,7 +221,7 @@ func ConfigPats(ss *sim2.Sim) {
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
-func ConfigNet(ss *sim2.Sim, net *axon.Network) {
+func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
 	ss.Params.SetObject("NetSize")
 

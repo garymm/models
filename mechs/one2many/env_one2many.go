@@ -71,7 +71,7 @@ func (env *EnvOne2Many) Init(run int) {
 	env.FixedTable.Init(run)
 }
 
-func (env *EnvOne2Many) GetCurrentTrialName() string {
+func (env *EnvOne2Many) CurTrialName() string {
 	return env.TrialName().Cur
 }
 func (env *EnvOne2Many) Step() {

@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/etable"
-	"testing"
 )
 
 func TestConfigNet(t *testing.T) {
 	simo := sim.Sim{}
 	neto := axon.Network{}
+	// TODO params are not set at this point -- triggers warning in confignet
 	ConfigNet(&simo, &neto)
 	if len(neto.Layers) != 4 {
 		t.Errorf("Expected network to be configured differently")

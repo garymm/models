@@ -3,8 +3,8 @@ package sim
 import (
 	"fmt"
 
-	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/env"
 	"github.com/goki/gi/gi"
 )
@@ -39,14 +39,12 @@ func (ss *Sim) ThetaCyc(train bool) {
 	ss.Time.NewState()
 	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
+		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
-				ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
-			}
 		}
-		if !ss.CmdArgs.NoGui {
-			ss.RecSpikes(ss.Time.Cycle)
+		if ss.GUI.Active {
+			ss.RasterRec(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
 		switch ss.Time.Cycle { // save states at beta-frequency -- not used computationally
@@ -60,24 +58,22 @@ func (ss *Sim) ThetaCyc(train bool) {
 			ss.Net.MinusPhase(&ss.Time)
 		}
 		if ss.ViewOn {
-			ss.UpdateViewTime(train, viewUpdt)
+			ss.UpdateViewTime(viewUpdt)
 		}
 	}
 	ss.Time.NewPhase()
+	ss.StatCounters(train)
 	if viewUpdt == axon.Phase {
-		ss.UpdateView(train)
+		ss.GUI.UpdateNetView()
 	}
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
+		ss.StatCounters(train)
 		if !train {
 			ss.Log(elog.Test, elog.Cycle)
-			if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
-				ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
-			}
-
 		}
-		if !ss.CmdArgs.NoGui {
-			ss.RecSpikes(ss.Time.Cycle)
+		if ss.GUI.Active {
+			ss.RasterRec(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
 
@@ -85,21 +81,21 @@ func (ss *Sim) ThetaCyc(train bool) {
 			ss.Net.PlusPhase(&ss.Time)
 		}
 		if ss.ViewOn {
-			ss.UpdateViewTime(train, viewUpdt)
+			ss.UpdateViewTime(viewUpdt)
 		}
 	}
 	ss.TrialStatsFunc(ss, train)
+	ss.StatCounters(train)
 
 	if train {
 		ss.Net.DWt()
 	}
 
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
-		ss.UpdateView(train)
+		ss.GUI.UpdateNetView()
 	}
-	// TODO check why this is being called here instead of in plus or minus phase
-	if ss.GUI.CycleUpdateRate > 0 && (ss.Time.Cycle%ss.GUI.CycleUpdateRate) == 0 {
-		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Cycle))
+	if !train {
+		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
 	}
 }
 
@@ -135,16 +131,18 @@ func (ss *Sim) TrainTrial() {
 	// if epoch counter has changed
 	epc, _, chg := TrainEnv.Counter(env.Epoch)
 	if chg {
+		if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
+			ss.PCAStats()
+		}
 		ss.Log(elog.Train, elog.Epoch)
-		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Epoch))
 		ss.LrateSched(epc)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-			ss.UpdateView(true)
+			ss.GUI.UpdateNetView()
 		}
-		if ss.TestInterval > 0 && epc%ss.TestInterval == 0 { // note: epc is *next* so won't trigger first time
+		if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
 			ss.TestAll()
 		}
-		if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.IntMetric("NZero") >= ss.NZeroStop) {
+		if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
 			// done with training..
 			ss.RunEnd()
 			if ss.Run.Incr() { // we are done!
@@ -160,13 +158,14 @@ func (ss *Sim) TrainTrial() {
 	ss.ApplyInputs(TrainEnv)
 	ss.ThetaCyc(true)
 	ss.Log(elog.Train, elog.Trial)
-	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Trial))
+	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) {
+		ss.Log(elog.Analyze, elog.Trial)
+	}
 }
 
 // RunEnd is called at the end of a run -- save weights, record final log, etc here
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
-	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Train, elog.Run))
 	if ss.CmdArgs.SaveWts {
 		fnm := ss.WeightsFileName()
 		fmt.Printf("Saving Weights to: %s\n", fnm)
@@ -187,8 +186,10 @@ func (ss *Sim) NewRun() {
 	ss.Time.Reset()
 	ss.Net.InitWts()
 	ss.InitStats()
-	ss.Logs.Table(elog.Train, elog.Epoch).SetNumRows(0)
-	ss.Logs.Table(elog.Test, elog.Epoch).SetNumRows(0)
+	ss.StatCounters(true)
+
+	ss.Logs.ResetLog(elog.Train, elog.Epoch)
+	ss.Logs.ResetLog(elog.Test, elog.Epoch)
 	ss.CmdArgs.NeedsNewRun = false
 }
 
@@ -238,14 +239,7 @@ func (ss *Sim) Stop() {
 
 // Stopped is called when a run method stops running -- updates the IsRunning flag and toolbar
 func (ss *Sim) Stopped() {
-	ss.GUI.IsRunning = false
-	if ss.GUI.Win != nil {
-		vp := ss.GUI.Win.WinViewport2D()
-		if ss.GUI.ToolBar != nil {
-			ss.GUI.ToolBar.UpdateActions()
-		}
-		vp.SetNeedsFullRender()
-	}
+	ss.GUI.Stopped()
 }
 
 // SaveWeights saves the network weights -- when called with giv.CallMethod
@@ -275,10 +269,9 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	_, _, chg := TestEnv.Counter(env.Epoch)
 	if chg {
 		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
-			ss.UpdateView(false)
+			ss.GUI.UpdateNetView()
 		}
 		ss.Log(elog.Test, elog.Epoch)
-		ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Epoch))
 		if returnOnChg {
 			return
 		}
@@ -287,9 +280,8 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	ss.ApplyInputs(ss.TestEnv)
 	ss.ThetaCyc(false) // !train
 	ss.Log(elog.Test, elog.Trial)
-	ss.GUI.UpdatePlot(elog.GenScopeKey(elog.Test, elog.Trial))
 	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
-		ss.CmdArgs.NetData.Record(ss.Counters(false))
+		ss.CmdArgs.NetData.Record(ss.GUI.NetViewText)
 	}
 }
 

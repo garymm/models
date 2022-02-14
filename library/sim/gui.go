@@ -3,9 +3,9 @@ package sim
 import (
 	"fmt"
 
-	"github.com/Astera-org/models/library/egui"
-	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/egui"
+	"github.com/emer/emergent/elog"
 	"github.com/goki/gi/gi"
 	"github.com/goki/ki/ki"
 	"github.com/goki/mat32"
@@ -20,24 +20,25 @@ func GuiRun(TheSim *Sim, appname, title, about string) {
 // ConfigGui configures the GoGi gui interface for this simulation,
 func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	ss.GUI.MakeWindow(ss, appname, title, about)
-	ss.GUI.CycleUpdateRate = 10
+	ss.GUI.CycleUpdateInterval = 10
 	ss.GUI.NetView.SetNet(ss.Net) // TODO ask Randy what this is doing
 
 	ss.GUI.NetView.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
 	ss.GUI.NetView.Scene().Camera.LookAt(mat32.Vec3{0, 0, 0}, mat32.Vec3{0, 1, 0})
-	ss.GUI.AddPlots(title, ss.Logs)
+	ss.GUI.AddPlots(title, &ss.Logs)
 
 	stb := ss.GUI.TabView.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
 	stb.Lay = gi.LayoutVert
 	stb.SetStretchMax()
-	for _, lnm := range ss.SpikeRecLays {
-		sr := ss.SpikeRastTsr(lnm)
-		tg := ss.SpikeRastGrid(lnm)
+	layers := ss.Net.LayersByType() // all
+	for _, lnm := range layers {
+		sr := ss.Stats.F32Tensor("Raster_" + lnm)
+		tg := ss.GUI.RasterGrid(lnm)
 		tg.SetName(lnm + "Spikes")
 		gi.AddNewLabel(stb, lnm, lnm+":")
 		stb.AddChild(tg)
 		gi.AddNewSpace(stb, lnm+"_spc")
-		ss.ConfigSpikeGrid(tg, sr)
+		ss.GUI.ConfigRasterGrid(tg, sr)
 	}
 	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Init", Icon: "update",
 		Tooltip: "Initialize everything including network weights, and start over.  Also applies current params.",
@@ -169,9 +170,8 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Tooltip: "Reset the accumulated log of all Runs, which are tagged with the ParamSet used",
 		Active:  egui.ActiveAlways,
 		Func: func() {
-			ss.Logs.Table(elog.Train, elog.Run).SetNumRows(0)
-			runPlot := ss.GUI.PlotMap[elog.GenScopeKey(elog.Train, elog.Run)]
-			runPlot.Update()
+			ss.Logs.ResetLog(elog.Train, elog.Run)
+			ss.GUI.UpdatePlot(elog.Train, elog.Run)
 		},
 	})
 	////////////////////////////////////////////////
@@ -196,32 +196,22 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	return ss.GUI.Win
 }
 
-// UpdateView updates the gui visualization of the network
-func (ss *Sim) UpdateView(train bool) {
-	if ss.GUI.NetView != nil && ss.GUI.NetView.IsVisible() {
-		ss.GUI.NetView.Record(ss.Counters(train))
-
-		// note: essential to use Go version of update when called from another goroutine
-		ss.GUI.NetView.GoUpdate() // note: using counters is significantly slower..
-	}
-}
-
 // UpdateViewTime based on differetn time scales change the values accoridngly
-func (ss *Sim) UpdateViewTime(train bool, viewUpdt axon.TimeScales) {
+func (ss *Sim) UpdateViewTime(viewUpdt axon.TimeScales) {
 	switch viewUpdt {
 	case axon.Cycle:
-		ss.UpdateView(train)
+		ss.GUI.UpdateNetView()
 	case axon.FastSpike:
 		if ss.Time.Cycle%10 == 0 {
-			ss.UpdateView(train)
+			ss.GUI.UpdateNetView()
 		}
 	case axon.GammaCycle:
 		if ss.Time.Cycle%25 == 0 {
-			ss.UpdateView(train)
+			ss.GUI.UpdateNetView()
 		}
 	case axon.AlphaCycle:
 		if ss.Time.Cycle%100 == 0 {
-			ss.UpdateView(train)
+			ss.GUI.UpdateNetView()
 		}
 	}
 }

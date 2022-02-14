@@ -1,15 +1,16 @@
 package sim
 
 import (
-	"github.com/Astera-org/models/library/egui"
-	"github.com/Astera-org/models/library/elog"
-	"github.com/Astera-org/models/library/estats"
-	"github.com/emer/axon/axon"
-	"github.com/emer/emergent/emer"
-	"github.com/emer/emergent/env"
-	"github.com/emer/etable/etable"
 	"math/rand"
 	"time"
+
+	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/egui"
+	"github.com/emer/emergent/elog"
+	"github.com/emer/emergent/emer"
+	"github.com/emer/emergent/env"
+	"github.com/emer/emergent/estats"
+	"github.com/emer/etable/etable"
 )
 
 // Sim encapsulates the entire simulation model, and we define all the
@@ -21,45 +22,36 @@ type Sim struct {
 	// TODO Net maybe shouldn't be in Sim because it won't always be an axon.Network
 	Net *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
 	// TODO This should be moved to the environment or the Sim extension
-	Pats *etable.Table `view:"no-inline" desc:"the training patterns to use"`
+	Params  emer.Params   `view:"inline" desc:"all parameter management"`
+	Tag     string        `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
+	Pats    *etable.Table `view:"no-inline" desc:"the training patterns to use"`
+	Stats   estats.Stats  `desc:"contains computed statistic values"`
+	Logs    elog.Logs     `desc:"Contains all the logs and information about the logs.'"`
+	GUI     egui.GUI      `view:"-" desc:"manages all the gui elements"`
+	CmdArgs CmdArgs       `view:"-" desc:"Arguments passed in through the command line"`
 
-	Logs   elog.Logs   `desc:"Contains all the logs and information about the logs.'"`
-	Params emer.Params `view:"inline" desc:"all parameter management"`
-
-	GUI   egui.GUI
-	Stats estats.Stats
-
-	TrialStatsFunc func(ss *Sim, accum bool) `view:"inline" desc:"a function that calculates trial stats"`
-
-	Tag string  `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	Run env.Ctr `desc:"Information about the current run."`
-
-	// TODO This refactor will have to happen later
-	NZeroStop int `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
+	Run          env.Ctr `desc:"run number"`
+	TestInterval int     `desc:"how often (in epochs) to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
+	PCAInterval  int     `desc:"how frequently (in epochs) to compute PCA on hidden representations to measure variance?"`
+	NZeroStop    int     `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
 
-	Time         axon.Time       `desc:"axon timing parameters and state"`
-	ViewOn       bool            `desc:"whether to update the network view while running"`
-	TrainUpdt    axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
-	TestUpdt     axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
-	TestInterval int             `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
+	Time      axon.Time       `view:"-" desc:"axon timing parameters and state"`
+	ViewOn    bool            `desc:"whether to update the network view while running"`
+	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
+	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 
-	// TODO These maybe don't need to be stored on Sim at all
-	LayStatNms   []string `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
-	SpikeRecLays []string `desc:"names of layers to record spikes of during testing"`
-
-	LastEpcTime time.Time `view:"-" desc:"timer for last epoch"`
-
-	CmdArgs CmdArgs `desc:"Arguments passed in through the command line"`
+	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
 }
 
 // New creates new blank elements and initializes defaults
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
 	ss.Pats = &etable.Table{}
-	ss.Stats = estats.InitStats()
+	ss.Stats.Init()
+	ss.Run.Scale = env.Run
 	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < 100; i++ {
 		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0
@@ -67,9 +59,8 @@ func (ss *Sim) New() {
 	ss.ViewOn = true
 	ss.TrainUpdt = axon.AlphaCycle
 	ss.TestUpdt = axon.Cycle
-	ss.TestInterval = 500                                               // TODO this should be a value we update or save, seems to log every epoch
-	ss.LayStatNms = []string{"Hidden1", "Hidden2", "Output"}            // TODO randy is gonna refactor out
-	ss.SpikeRecLays = []string{"Input", "Hidden1", "Hidden2", "Output"} //TODO randy is gonna refactor out
+	ss.TestInterval = 500 // TODO this should be a value we update or save, seems to log every epoch
+	ss.PCAInterval = 10
 	ss.Time.Defaults()
 }
 
@@ -86,7 +77,8 @@ func (ss *Sim) Init() {
 	// NOTE uncomment following to see the compiled hyper params
 	// fmt.Println(ss.Params.NetHypers.JSONString())
 	ss.NewRun()
-	ss.UpdateView(true)
+	ss.GUI.UpdateNetView()
+	ss.Stats.ResetTimer("PerTrlMSec")
 }
 
 // InitRndSeed initializes the random seed based on current training run number

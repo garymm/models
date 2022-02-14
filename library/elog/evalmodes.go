@@ -1,3 +1,7 @@
+// Copyright (c) 2022, The Emergent Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package elog
 
 import "github.com/goki/ki/kit"
@@ -16,8 +20,8 @@ func (ev *EvalModes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSO
 const (
 	NoEvalMode EvalModes = iota
 
-	// AllEvalModes indicates that the log should occur over all modes present in other items.
-	AllEvalModes
+	// AllModes indicates that the log should occur over all modes present in other items.
+	AllModes
 
 	// Train is this a training mode for the env
 	Train
@@ -27,6 +31,9 @@ const (
 
 	// Validate is this a validation mode for the env
 	Validate
+
+	// Analyze when analyzing the representations and behavior of the network
+	Analyze
 
 	EvalModesN
 )

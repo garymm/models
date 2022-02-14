@@ -67,7 +67,7 @@ func (env *EnvText2Many) Validate() error {
 func (env *EnvText2Many) Init(run int) {
 	env.CorpusEnv.Init(run)
 }
-func (env *EnvText2Many) GetCurrentTrialName() string {
+func (env *EnvText2Many) CurTrialName() string {
 	return strings.Join(env.CorpusEnv.CurWords, " ")
 }
 func (env *EnvText2Many) Step() {
