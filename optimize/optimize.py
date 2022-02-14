@@ -85,7 +85,7 @@ def create_suggested_params(params, trial):
     print(parameters_to_modify)
     for info in parameters_to_modify:
         value_to_assign = get_opt_value(trial, info["uniquename"], info["values"]["Hypers"][info["paramname"]])
-        info["values"]["Params"][info["paramname"]] = value_to_assign
+        info["values"]["Params"][info["paramname"]] = str(value_to_assign)
     # This creates a version of Params that has stripped out everything that didn't have Hypers
     updated_parameters = (create_hyperonly(cparams))
     print("UPDATED PARAMS")

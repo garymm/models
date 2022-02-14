@@ -140,8 +140,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
-					}},
+					"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
+				}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0
