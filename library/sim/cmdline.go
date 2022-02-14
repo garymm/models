@@ -59,7 +59,9 @@ func (ss *Sim) ParseArgs() {
 		return
 	}
 
+	// ToDO from michael to andrew - need to account for paramsFile and extrasheet not always being the same thing - should be separate parameter imo
 	if ss.CmdArgs.paramsFile != "" {
+
 		jsonFile, err := os.Open(ss.CmdArgs.paramsFile)
 		if err != nil {
 			fmt.Println("Params file error: " + err.Error())
@@ -73,7 +75,9 @@ func (ss *Sim) ParseArgs() {
 			fmt.Println("Unable to load parameters from file: " + ss.CmdArgs.paramsFile)
 			return
 		}
+		ss.Params.ExtraSets = loadedParams[0].Name // just make them the same
 		ss.Params.Params = append(ss.Params.Params, loadedParams[0])
+
 	}
 }
 
