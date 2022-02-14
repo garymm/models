@@ -37,6 +37,17 @@ func (gui *GUI) UpdateWindow() {
 
 }
 
+// Stopped is called when a run method stops running -- updates the IsRunning flag and toolbar
+func (gui *GUI) Stopped() {
+	gui.IsRunning = false
+	if gui.Win != nil {
+		if gui.ToolBar != nil {
+			gui.ToolBar.UpdateActions()
+		}
+		gui.UpdateWindow()
+	}
+}
+
 // MakeWindow specifies default window settings that are largely used in all windwos
 func (gui *GUI) MakeWindow(sim interface{}, appname, title, about string) {
 	width := 1600

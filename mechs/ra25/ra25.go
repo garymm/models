@@ -241,7 +241,7 @@ func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
-	//ss.SetParams("Network", ss.CmdArgs.LogSetParams) // only set Network params
+	ss.Params.SetObject("Network")
 	err := net.Build()
 	if err != nil {
 		log.Println(err)
