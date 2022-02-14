@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/Astera-org/models/library/elog"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
 	"github.com/goki/gi/gi"

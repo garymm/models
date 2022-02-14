@@ -4,12 +4,12 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Astera-org/models/library/egui"
-	"github.com/Astera-org/models/library/elog"
-	"github.com/Astera-org/models/library/estats"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/egui"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
+	"github.com/emer/emergent/estats"
 	"github.com/emer/etable/etable"
 )
 

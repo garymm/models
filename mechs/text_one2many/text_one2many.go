@@ -12,7 +12,7 @@ import (
 	"log"
 	"strings"
 
-	sim2 "github.com/Astera-org/models/library/sim"
+	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/evec"
@@ -28,7 +28,7 @@ var programName = "TextOne2Many"
 
 func main() {
 	// TheSim is the overall state for this simulation
-	var TheSim sim2.Sim
+	var TheSim sim.Sim
 	TheSim.New()
 
 	Config(&TheSim)
@@ -37,7 +37,7 @@ func main() {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim2.GuiRun(&TheSim, programName, "Text One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim.GuiRun(&TheSim, programName, "Text One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
 }
@@ -50,7 +50,7 @@ var TestEnv = EnvText2Many{}
 // core algorithm side remains as simple as possible, and doesn't need to worry about
 // different time-scales over which stats could be accumulated etc.
 // You can also aggregate directly from log data, as is done for testing stats
-func TrialStats(ss *sim2.Sim, accum bool) {
+func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
 	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
@@ -72,17 +72,16 @@ func TrialStats(ss *sim2.Sim, accum bool) {
 }
 
 // Config configures all the elements using the standard functions
-func Config(ss *sim2.Sim) {
+func Config(ss *sim.Sim) {
 	ConfigParams(ss)
 	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigPats(ss)
 	ConfigNet(ss, ss.Net)
 	ss.ConfigLogs()
-	ss.ConfigSpikeRasts()
 }
 
-func ConfigParams(ss *sim2.Sim) {
+func ConfigParams(ss *sim.Sim) {
 	ss.Params.AddNetwork(ss.Net)
 	ss.Params.AddSim(ss)
 	ss.Params.AddNetSize()
@@ -157,7 +156,7 @@ func ConfigParams(ss *sim2.Sim) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Configs
 
-func ConfigEnv(ss *sim2.Sim) {
+func ConfigEnv(ss *sim.Sim) {
 
 	ss.TrainEnv = &TrainEnv
 	ss.TestEnv = &TestEnv
@@ -198,7 +197,7 @@ func ConfigEnv(ss *sim2.Sim) {
 	TestEnv.Init(0)
 }
 
-func ConfigPats(ss *sim2.Sim) {
+func ConfigPats(ss *sim.Sim) {
 	dt := ss.Pats
 	dt.SetMetaData("name", "SuccessorPatterns")
 	dt.SetMetaData("desc", "SuccessorPatterns")
@@ -222,7 +221,7 @@ func ConfigPats(ss *sim2.Sim) {
 	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
 }
 
-func ConfigNet(ss *sim2.Sim, net *axon.Network) {
+func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
 	ss.Params.SetObject("NetSize")
 

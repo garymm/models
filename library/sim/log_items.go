@@ -1,8 +1,8 @@
 package sim
 
 import (
-	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etensor"

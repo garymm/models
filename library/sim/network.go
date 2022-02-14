@@ -3,8 +3,8 @@ package sim
 import (
 	"fmt"
 
-	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/env"
 	"github.com/goki/gi/gi"
 )

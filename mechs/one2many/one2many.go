@@ -92,7 +92,6 @@ func Config(ss *One2Sim) {
 	ConfigEnv(&ss.Sim)
 	ConfigNet(&ss.Sim, ss.Net)
 	ss.ConfigLogs()
-	ss.ConfigSpikeRasts()
 }
 
 // ConfigParams configure the parameters
