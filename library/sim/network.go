@@ -239,14 +239,7 @@ func (ss *Sim) Stop() {
 
 // Stopped is called when a run method stops running -- updates the IsRunning flag and toolbar
 func (ss *Sim) Stopped() {
-	ss.GUI.IsRunning = false
-	if ss.GUI.Win != nil {
-		vp := ss.GUI.Win.WinViewport2D()
-		if ss.GUI.ToolBar != nil {
-			ss.GUI.ToolBar.UpdateActions()
-		}
-		vp.SetNeedsFullRender()
-	}
+	ss.GUI.Stopped()
 }
 
 // SaveWeights saves the network weights -- when called with giv.CallMethod
