@@ -18,10 +18,10 @@ import (
 // to specify ranges
 type ScopeKey string
 
-// Like "Train&Test|Epoch&Trial"
+// Like "Train|Test&Epoch|Trial"
 var (
-	ScopeKeySeparator = "&"
-	ScopeKeyList      = "|"
+	ScopeKeySeparator = "&" // between mode and time
+	ScopeKeyList      = "|" // between multiple modes, times
 )
 
 // FromScopesStr creates an associated scope merging
@@ -86,6 +86,27 @@ func (sk *ScopeKey) ModesAndTimes() (modes, times []string) {
 	return
 }
 
+// ModeAndTime returns the singular mode and time as enums from a
+// concrete scope key having one of each (No* cases if not standard)
+func (sk *ScopeKey) ModeAndTime() (mode EvalModes, time Times) {
+	modes, times := sk.ModesAndTimes()
+	if len(modes) != 1 {
+		mode = NoEvalMode
+	} else {
+		if mode.FromString(modes[0]) != nil {
+			mode = NoEvalMode
+		}
+	}
+	if len(times) != 1 {
+		time = NoTime
+	} else {
+		if time.FromString(times[0]) != nil {
+			time = NoTime
+		}
+	}
+	return
+}
+
 // FromScopesMap creates an associated scope key merging
 // the modes and times that are specified by map of strings.
 func (sk *ScopeKey) FromScopesMap(modes, times map[string]bool) {
@@ -122,84 +143,61 @@ func (sk *ScopeKey) ModesAndTimesMap() (modes, times map[string]bool) {
 //////////////////////////////////////////////////
 // Standalone funcs
 
-// GenScopeKey generates a scope key string from one mode and time
-func GenScopeKey(mode EvalModes, time Times) ScopeKey {
+// Scope generates a scope key string from one mode and time
+func Scope(mode EvalModes, time Times) ScopeKey {
 	var ss ScopeKey
 	ss.FromScope(mode, time)
 	return ss
 }
 
-// GenScopeKeyStr generates a scope key string from string
+// ScopeStr generates a scope key string from string
 // values for mode, time
-func GenScopeKeyStr(mode, time string) ScopeKey {
+func ScopeStr(mode, time string) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopeStr(mode, time)
 	return ss
 }
 
-// GenScopesKey generates a scope key string from multiple modes, times
-func GenScopesKey(modes []EvalModes, times []Times) ScopeKey {
+// Scopes generates a scope key string from multiple modes, times
+func Scopes(modes []EvalModes, times []Times) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopes(modes, times)
 	return ss
 }
 
-// GenScopesKeyStr generates a scope key string from multiple modes, times
-func GenScopesKeyStr(modes, times []string) ScopeKey {
+// ScopesStr generates a scope key string from multiple modes, times
+func ScopesStr(modes, times []string) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopesStr(modes, times)
 	return ss
 }
 
-func GenScopesKeyMap(modes, times map[string]bool) ScopeKey {
+// ScopesMap generates a scope key from maps of modes and times (warning: ordering is random!)
+func ScopesMap(modes, times map[string]bool) ScopeKey {
 	var ss ScopeKey
 	ss.FromScopesMap(modes, times)
 	return ss
 }
 
-// ScopeName generates a basic name as a concatenation of mode + time
+// ScopeName generates a string name as just the concatenation of mode + time
+// e.g., used for naming log tables
 func ScopeName(mode EvalModes, time Times) string {
 	return mode.String() + time.String()
 }
 
 // SortScopes sorts a list of concrete mode, time
-// scopes according to the EvalModes and Times enum
-// ordering, with all others at the end.
+// scopes according to the EvalModes and Times enum ordering
 func SortScopes(scopes []ScopeKey) []ScopeKey {
 	sort.Slice(scopes, func(i, j int) bool {
-		mi, ti := scopes[i].ModesAndTimes()
-		mj, tj := scopes[j].ModesAndTimes()
-		switch {
-		case len(mi) != 1 && len(mj) == 1:
-			return false
-		case len(mi) == 1 && len(mj) != 1:
-			return true
-		case len(ti) != 1 && len(tj) == 1:
-			return false
-		case len(ti) == 1 && len(tj) != 1:
+		mi, ti := scopes[i].ModeAndTime()
+		mj, tj := scopes[j].ModeAndTime()
+		if mi < mj {
 			return true
 		}
-		var emi, emj EvalModes
-		var eti, etj Times
-		if emi.FromString(mi[0]) != nil {
-			emi = 1000
-		}
-		if emj.FromString(mj[0]) != nil {
-			emj = 1000
-		}
-		if eti.FromString(ti[0]) != nil {
-			eti = 1000
-		}
-		if etj.FromString(tj[0]) != nil {
-			etj = 1000
-		}
-		if emi < emj {
-			return true
-		}
-		if emi > emj {
+		if mi > mj {
 			return false
 		}
-		return eti < etj
+		return ti < tj
 	})
 	return scopes
 }

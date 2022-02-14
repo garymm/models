@@ -5,7 +5,7 @@ import (
 	"github.com/emer/etable/etensor"
 )
 
-//Environment defines expected getters and setters for our environment variables
+// Environment defines expected getters and setters for our environment variables
 type Environment interface {
 	SetName(name string)
 	Name() string
@@ -21,7 +21,7 @@ type Environment interface {
 
 	TrialName() *env.CurPrvString
 
-	GetCurrentTrialName() string
+	CurTrialName() string
 	GroupName() *env.CurPrvString
 
 	NameCol() string

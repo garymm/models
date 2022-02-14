@@ -4,34 +4,48 @@ import (
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
+	"github.com/emer/etable/etensor"
+	"github.com/emer/etable/etview"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki/ki"
 	"github.com/goki/mat32"
 )
 
+// GUI manages all standard elements of a simulation Graphical User Interface
 type GUI struct {
-	IsRunning bool `view:"-" desc:"true if sim is running"`
-	StopNow   bool `view:"-" desc:"flag to stop running"`
+	NetViewText         string `desc:"text to display at bottom of the NetView -- has relevant network state"`
+	CycleUpdateInterval int    `desc:"how many cycles between updates of cycle-level plots"`
+	Active              bool   `view:"-" desc:"true if the GUI is configured and running"`
+	IsRunning           bool   `view:"-" desc:"true if sim is running"`
+	StopNow             bool   `view:"-" desc:"flag to stop running"`
 
-	Win      *gi.Window       `view:"-" desc:"main GUI gui.Window"`
-	NetView  *netview.NetView `view:"-" desc:"the network viewer"`
-	ToolBar  *gi.ToolBar      `view:"-" desc:"the master toolbar"`
-	ViewPort *gi.Viewport2D
+	Plots       map[elog.ScopeKey]*eplot.Plot2D `desc:"plots by scope"`
+	RasterGrids map[string]*etview.TensorGrid   `desc:"spike raster grid views, by layer name"`
 
-	StructView *giv.StructView
-	TabView    *gi.TabView
-
-	PlotMap map[elog.ScopeKey]*eplot.Plot2D
-	PlotAry []*eplot.Plot2D
-
-	CycleUpdateRate int
+	NetView    *netview.NetView `view:"-" desc:"the network viewer"`
+	ToolBar    *gi.ToolBar      `view:"-" desc:"the master toolbar"`
+	StructView *giv.StructView  `view:"-" desc:"displays Sim fields on left"`
+	TabView    *gi.TabView      `view:"-" desc:"tabs for different view elements: plots, rasters"`
+	Win        *gi.Window       `view:"-" desc:"main GUI gui.Window"`
+	ViewPort   *gi.Viewport2D   `view:"-" desc:"main viewport for Window"`
 }
 
 // UpdateWindow renders the viewport associated with the main window
 func (gui *GUI) UpdateWindow() {
 	gui.ViewPort.SetNeedsFullRender()
 
+}
+
+// Stopped is called when a run method stops running -- updates the IsRunning flag and toolbar
+func (gui *GUI) Stopped() {
+	gui.IsRunning = false
+	if gui.Win != nil {
+		if gui.ToolBar != nil {
+			gui.ToolBar.UpdateActions()
+		}
+		gui.UpdateWindow()
+	}
 }
 
 // MakeWindow specifies default window settings that are largely used in all windwos
@@ -92,45 +106,119 @@ func (gui *GUI) AddToolbarItem(item ToolbarItem) {
 }
 
 // AddPlots adds plots based on the unique tables we have, currently assumes they should always be plotted
-func (gui *GUI) AddPlots(title string, Log elog.Logs) {
-	gui.PlotMap = make(map[elog.ScopeKey]*eplot.Plot2D)
+func (gui *GUI) AddPlots(title string, lg *elog.Logs) {
+	gui.Plots = make(map[elog.ScopeKey]*eplot.Plot2D)
 	//for key, table := range Log.Tables {
-	for _, key := range Log.TableOrder {
+	for _, key := range lg.TableOrder {
 		modes, times := key.ModesAndTimes()
-		timeName := times[0]
-		modeName := modes[0]
+		time := times[0]
+		mode := modes[0]
+		lt := lg.Tables[key] // LogTable struct
+		if doplot, has := lt.Meta["Plot"]; has {
+			if doplot == "false" {
+				continue
+			}
+		}
 
-		table := Log.Tables[key]
-		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, modeName+" "+timeName+" Plot").(*eplot.Plot2D)
-		gui.PlotMap[key] = plt
-		gui.PlotAry = append(gui.PlotAry, plt)
-		plt.SetTable(table.Table)
-		//This is so inefficient even if it's run once, this is ugly
-		for _, item := range Log.Items {
-			_, ok := item.Compute[key]
-			if ok {
-				plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
+		plt := gui.TabView.AddNewTab(eplot.KiT_Plot2D, mode+" "+time+" Plot").(*eplot.Plot2D)
+		gui.Plots[key] = plt
+		plt.SetTable(lt.Table)
 
-				plt.Params.Title = title + " " + timeName + " Plot"
-				plt.Params.XAxisCol = timeName
-				// TODO this needs to be settable in config
-				if times[0] == "Run" { //The one exception
-					plt.Params.LegendCol = "Params"
-				}
+		for _, item := range lg.Items {
+			_, ok := item.Write[key]
+			if !ok {
+				continue
+			}
+			plt.SetColParams(item.Name, item.Plot.ToBool(), item.FixMin.ToBool(), item.Range.Min, item.FixMax.ToBool(), item.Range.Max)
+
+			plt.Params.Title = title + " " + time + " Plot"
+			plt.Params.XAxisCol = time
+			if xaxis, has := lt.Meta["XAxisCol"]; has {
+				plt.Params.XAxisCol = xaxis
+			}
+			if legend, has := lt.Meta["LegendCol"]; has {
+				plt.Params.LegendCol = legend
 			}
 		}
 	}
-
 }
 
-// UpdatePlot wrapper for updating each plot
-func (gui *GUI) UpdatePlot(scope elog.ScopeKey) {
+// RasterGrid gets spike raster grid of given name, creating if not yet made
+func (gui *GUI) RasterGrid(name string) *etview.TensorGrid {
+	if gui.RasterGrids == nil {
+		gui.RasterGrids = make(map[string]*etview.TensorGrid)
+	}
+	tsr, ok := gui.RasterGrids[name]
+	if !ok {
+		tsr = &etview.TensorGrid{}
+		gui.RasterGrids[name] = tsr
+	}
+	return tsr
+}
 
-	plot, ok := gui.PlotMap[scope]
-	if ok {
+// ConfigRasterGrid configures the raster grid
+func (gui *GUI) ConfigRasterGrid(tg *etview.TensorGrid, sr *etensor.Float32) {
+	tg.SetStretchMax()
+	sr.SetMetaData("grid-fill", "1")
+	tg.SetTensor(sr)
+}
 
-		plot.UpdatePlot()
+// Plot returns plot for mode, time scope
+func (gui *GUI) Plot(mode elog.EvalModes, time elog.Times) *eplot.Plot2D {
+	return gui.PlotScope(elog.Scope(mode, time))
+}
+
+// PlotScope returns plot for given scope
+func (gui *GUI) PlotScope(scope elog.ScopeKey) *eplot.Plot2D {
+	if !gui.Active {
+		return nil
+	}
+	plot, ok := gui.Plots[scope]
+	if !ok {
+		// fmt.Printf("egui Plot not found for scope: %s\n", scope)
+		return nil
+	}
+	return plot
+}
+
+// UpdatePlot updates plot for given mode, time scope
+func (gui *GUI) UpdatePlot(mode elog.EvalModes, time elog.Times) *eplot.Plot2D {
+	plot := gui.Plot(mode, time)
+	if plot != nil {
 		plot.GoUpdate()
+	}
+	return plot
+}
+
+// UpdatePlotScope updates plot at given scope
+func (gui *GUI) UpdatePlotScope(scope elog.ScopeKey) *eplot.Plot2D {
+	plot := gui.PlotScope(scope)
+	if plot != nil {
+		plot.GoUpdate()
+	}
+	return plot
+}
+
+// UpdateCyclePlot updates cycle plot for given mode.
+// only updates every CycleUpdateInterval
+func (gui *GUI) UpdateCyclePlot(mode elog.EvalModes, cycle int) *eplot.Plot2D {
+	plot := gui.Plot(mode, elog.Cycle)
+	if plot == nil {
+		return plot
+	}
+	if (gui.CycleUpdateInterval > 0) && (cycle%gui.CycleUpdateInterval == 0) {
+		plot.GoUpdate()
+	}
+	return plot
+}
+
+// UpdateNetView updates the gui visualization of the network
+// set the NetViewText field prior to updating
+func (gui *GUI) UpdateNetView() {
+	if gui.NetView != nil && gui.NetView.IsVisible() {
+		gui.NetView.Record(gui.NetViewText)
+		// note: essential to use Go version of update when called from another goroutine
+		gui.NetView.GoUpdate() // note: using counters is significantly slower..
 	}
 }
 
@@ -191,5 +279,6 @@ func (gui *GUI) FinalizeGUI(closePrompt bool) {
 		go gi.Quit() // once main gui.Window is closed, quit
 	})
 
+	gui.Active = true
 	gui.Win.MainMenuUpdated()
 }

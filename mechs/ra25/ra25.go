@@ -5,6 +5,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
@@ -14,7 +16,6 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
-	"log"
 )
 
 var TestEnv = EnvRa25{}
@@ -33,18 +34,13 @@ var numInputs = 30
 func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
-	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
-	ss.Stats.SetFloatMetric("TrlUnitErr", out.PctUnitErr())
+	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloat("TrlUnitErr", out.PctUnitErr())
 
-	if ss.Stats.FloatMetric("TrlUnitErr") > 0 {
-		ss.Stats.SetFloatMetric("TrlErr", 1)
+	if ss.Stats.Float("TrlUnitErr") > 0 {
+		ss.Stats.SetFloat("TrlErr", 1)
 	} else {
-		ss.Stats.SetFloatMetric("TrlErr", 0)
-	}
-
-	if accum {
-		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
-		ss.Stats.SetFloatMetric("SumErr", sumErr)
+		ss.Stats.SetFloat("TrlErr", 0)
 	}
 }
 
@@ -74,14 +70,14 @@ func Config(ss *sim.Sim) {
 	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigNet(ss, ss.Net)
-	// LogSpec needs to be configured after Net
-	ss.ConfigLogSpec()
 	ss.ConfigLogs()
-	ss.ConfigSpikeRasts()
 }
 
 // ConfigParams configure the parameters
 func ConfigParams(ss *sim.Sim) {
+	ss.Params.AddNetwork(ss.Net)
+	ss.Params.AddSim(ss)
+	ss.Params.AddNetSize()
 
 	// ParamSetsMin sets the minimal non-default params
 	// Base is always applied, and others can be optionally selected to apply on top of that
@@ -114,7 +110,7 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
+						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
@@ -123,8 +119,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-						"Layer.Act.Clamp.Ge":   {"Val": "1.0", "StdDev": ".2"},
+						"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
+						"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
@@ -145,13 +141,13 @@ func ConfigParams(ss *sim.Sim) {
 						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
 					},
 					Hypers: params.Hypers{
-						"Prjn.PrjnScale.Rel": {"Val": "0.3", "StdDev": ".05"},
+						"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
 					}},
 			},
 			"Sim": &params.Sheet{ // sim params apply to sim object
 				{Sel: "Sim", Desc: "best params always finish in this time",
 					Params: params.Params{
-						"Sim.MaxEpcs": "100",
+						"Sim.CmdArgs.MaxEpcs": "100",
 					}},
 			},
 		}},
@@ -260,7 +256,7 @@ func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
-	//ss.SetParams("Network", ss.CmdArgs.LogSetParams) // only set Network params
+	ss.Params.SetObject("Network")
 	err := net.Build()
 	if err != nil {
 		log.Println(err)

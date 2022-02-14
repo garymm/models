@@ -14,16 +14,17 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[NoEvalMode-0]
-	_ = x[AllEvalModes-1]
+	_ = x[AllModes-1]
 	_ = x[Train-2]
 	_ = x[Test-3]
 	_ = x[Validate-4]
-	_ = x[EvalModesN-5]
+	_ = x[Analyze-5]
+	_ = x[EvalModesN-6]
 }
 
-const _EvalModes_name = "NoEvalModeAllEvalModesTrainTestValidateEvalModesN"
+const _EvalModes_name = "NoEvalModeAllModesTrainTestValidateAnalyzeEvalModesN"
 
-var _EvalModes_index = [...]uint8{0, 10, 22, 27, 31, 39, 49}
+var _EvalModes_index = [...]uint8{0, 10, 18, 23, 27, 35, 42, 52}
 
 func (i EvalModes) String() string {
 	if i < 0 || i >= EvalModes(len(_EvalModes_index)-1) {

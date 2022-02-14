@@ -70,7 +70,7 @@ func (env *EnvRa25) Init(run int) {
 	env.FixedTable.Init(run)
 }
 
-func (env *EnvRa25) GetCurrentTrialName() string {
+func (env *EnvRa25) CurTrialName() string {
 	return env.TrialName().Cur
 }
 func (env *EnvRa25) Step() {

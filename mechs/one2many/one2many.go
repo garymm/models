@@ -37,12 +37,12 @@ var TrainEnv = EnvOne2Many{}
 func TrialStats(ss *sim.Sim, accum bool) {
 	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
-	ss.Stats.SetFloatMetric("TrlCosDiff", float64(out.CosDiff.Cos))
+	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
 
-	_, cor, cnm := ss.ClosestStat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
+	_, cor, cnm := ss.Stats.ClosestPat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
 
-	ss.Stats.SetStringMetric("TrlClosest", cnm)
-	ss.Stats.SetFloatMetric("TrialCorrel", float64(cor))
+	ss.Stats.SetString("TrlClosest", cnm)
+	ss.Stats.SetFloat("TrlCorrel", float64(cor))
 	tnm := ""
 	if accum { // really train
 		tnm = ss.TrainEnv.TrialName().Cur
@@ -50,15 +50,11 @@ func TrialStats(ss *sim.Sim, accum bool) {
 		tnm = ss.TestEnv.TrialName().Cur
 	}
 	if cnm == tnm {
-		ss.Stats.SetFloatMetric("TrlErr", 0)
+		ss.Stats.SetFloat("TrlErr", 0)
 	} else {
-		ss.Stats.SetFloatMetric("TrlErr", 1)
+		ss.Stats.SetFloat("TrlErr", 1)
 	}
 
-	if accum {
-		sumErr := ss.Stats.FloatMetric("SumErr") + ss.Stats.FloatMetric("TrlErr")
-		ss.Stats.SetFloatMetric("SumErr", sumErr)
-	}
 }
 
 type One2Sim struct {
@@ -96,11 +92,7 @@ func Config(ss *One2Sim) {
 	ss.ParseArgs()
 	ConfigEnv(&ss.Sim)
 	ConfigNet(&ss.Sim, ss.Net)
-	// LogSpec needs to be configured after Net
-
-	ss.ConfigLogSpec()
 	ss.ConfigLogs()
-	ss.ConfigSpikeRasts()
 }
 
 // ConfigParams configure the parameters
@@ -140,8 +132,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
 					}, Hypers: params.Hypers{
-					"Layer.Inhib.ActAvg.Init": {"Val": "0.04", "StdDev": "0.01", "Min": "0.01"},
-				}},
+						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0
@@ -150,8 +142,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi": {"Val": "0.9", "StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-						"Layer.Act.Clamp.Ge":   {"Val": "1.0", "StdDev": ".2"},
+						"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
+						"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
@@ -172,7 +164,7 @@ func ConfigParams(ss *sim.Sim) {
 						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
 					},
 					Hypers: params.Hypers{
-						"Prjn.PrjnScale.Rel": {"Val": "0.3", "StdDev": ".05"},
+						"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
 					}},
 			},
 			"Sim": &params.Sheet{ // sim params apply to sim object
