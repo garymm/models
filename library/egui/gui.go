@@ -4,6 +4,7 @@ import (
 	"github.com/Astera-org/models/library/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/etable/eplot"
+	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/etview"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
@@ -142,6 +143,13 @@ func (gui *GUI) RasterGrid(name string) *etview.TensorGrid {
 		gui.RasterGrids[name] = tsr
 	}
 	return tsr
+}
+
+// ConfigRasterGrid configures the raster grid
+func (gui *GUI) ConfigRasterGrid(tg *etview.TensorGrid, sr *etensor.Float32) {
+	tg.SetStretchMax()
+	sr.SetMetaData("grid-fill", "1")
+	tg.SetTensor(sr)
 }
 
 // Plot returns plot for mode, time scope

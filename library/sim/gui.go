@@ -30,14 +30,15 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	stb := ss.GUI.TabView.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
 	stb.Lay = gi.LayoutVert
 	stb.SetStretchMax()
-	for _, lnm := range ss.SpikeRecLays {
+	layers := ss.Net.LayersByType() // all
+	for _, lnm := range layers {
 		sr := ss.Stats.F32Tensor("Raster_" + lnm)
 		tg := ss.GUI.RasterGrid(lnm)
 		tg.SetName(lnm + "Spikes")
 		gi.AddNewLabel(stb, lnm, lnm+":")
 		stb.AddChild(tg)
 		gi.AddNewSpace(stb, lnm+"_spc")
-		ss.ConfigSpikeGrid(tg, sr)
+		ss.GUI.ConfigRasterGrid(tg, sr)
 	}
 	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Init", Icon: "update",
 		Tooltip: "Initialize everything including network weights, and start over.  Also applies current params.",

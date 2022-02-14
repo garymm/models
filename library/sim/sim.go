@@ -44,9 +44,6 @@ type Sim struct {
 	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
-
-	// TODO These maybe don't need to be stored on Sim at all
-	SpikeRecLays []string `view:"-" desc:"names of layers to record spikes of during testing"`
 }
 
 // New creates new blank elements and initializes defaults
@@ -64,7 +61,6 @@ func (ss *Sim) New() {
 	ss.TestUpdt = axon.Cycle
 	ss.TestInterval = 500 // TODO this should be a value we update or save, seems to log every epoch
 	ss.PCAInterval = 10
-	ss.SpikeRecLays = []string{"Input", "Hidden1", "Hidden2", "Output"} //TODO randy is gonna refactor out
 	ss.Time.Defaults()
 }
 

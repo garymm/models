@@ -4,12 +4,9 @@ import (
 	"fmt"
 
 	"github.com/Astera-org/models/library/elog"
-	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
-	"github.com/emer/etable/etensor"
-	"github.com/emer/etable/etview"
 	"github.com/emer/etable/split"
 )
 
@@ -48,8 +45,9 @@ func (ss *Sim) ConfigLogs() {
 	// don't plot certain combinations we don't use
 	ss.Logs.NoPlot(elog.Train, elog.Cycle)
 	ss.Logs.NoPlot(elog.Test, elog.Run)
-	ss.Logs.NoPlot(elog.Analyze, elog.Trial)
+	// note: Analyze not plotted by default
 	ss.Logs.SetMeta(elog.Train, elog.Run, "LegendCol", "Params")
+	ss.Stats.ConfigRasters(ss.Net, ss.Net.LayersByType())
 }
 
 // RunName returns a name for this run that combines Tag and Params -- add this to
@@ -139,45 +137,11 @@ func (ss *Sim) LogRunStats() {
 // PCAStats computes PCA statistics on recorded hidden activation patterns
 // from Analyze, Trial log data
 func (ss *Sim) PCAStats() {
-	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayTypeMap[emer.Hidden])
+	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayersByType(emer.Hidden))
 	ss.Logs.ResetLog(elog.Analyze, elog.Trial)
 }
 
-//////////////////////////////////////////////
-//  SpikeRasters
-
-// SetSpikeRastCol sets column of given spike raster from data
-func (ss *Sim) SetSpikeRastCol(sr, vl *etensor.Float32, col int) {
-	for ni, v := range vl.Values {
-		sr.Set([]int{ni, col}, v)
-	}
-}
-
-// ConfigSpikeGrid configures the spike grid
-func (ss *Sim) ConfigSpikeGrid(tg *etview.TensorGrid, sr *etensor.Float32) {
-	tg.SetStretchMax()
-	sr.SetMetaData("grid-fill", "1")
-	tg.SetTensor(sr)
-}
-
-// ConfigSpikeRasts configures spike rasters
-func (ss *Sim) ConfigSpikeRasts() {
-	ncy := 200 // max cycles
-	// spike rast
-	for _, lnm := range ss.SpikeRecLays {
-		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		sr := ss.Stats.F32Tensor("Raster_" + lnm)
-		sr.SetShape([]int{ly.Shp.Len(), ncy}, nil, []string{"Nrn", "Cyc"})
-	}
-}
-
-// RecSpikes records spikes
-func (ss *Sim) RecSpikes(cyc int) {
-	for _, lnm := range ss.SpikeRecLays {
-		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		tv := ss.Stats.F32Tensor(lnm)
-		ly.UnitValsTensor(tv, "Spike")
-		sr := ss.Stats.F32Tensor("Raster_" + lnm)
-		ss.SetSpikeRastCol(sr, tv, cyc)
-	}
+// RasterRec updates spike raster record for given cycle
+func (ss *Sim) RasterRec(cyc int) {
+	ss.Stats.RasterRec(ss.Net, cyc, "Spike", ss.Net.LayersByType())
 }

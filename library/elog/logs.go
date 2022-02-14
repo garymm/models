@@ -174,6 +174,9 @@ func (lg *Logs) CreateTables() error {
 				dt := lg.NewTable(modes[0], times[0])
 				tables[scope] = NewLogTable(dt)
 				tableOrder = append(tableOrder, scope)
+				if modes[0] == "Analyze" {
+					tables[scope].Meta["Plot"] = "false" // don't plot Anaylze by default
+				}
 			}
 		}
 	}

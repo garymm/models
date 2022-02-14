@@ -71,7 +71,6 @@ func Config(ss *sim.Sim) {
 	ConfigEnv(ss)
 	ConfigNet(ss, ss.Net)
 	ss.ConfigLogs()
-	ss.ConfigSpikeRasts()
 }
 
 // ConfigParams configure the parameters

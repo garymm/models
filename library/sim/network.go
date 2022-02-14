@@ -44,7 +44,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 			ss.Log(elog.Test, elog.Cycle)
 		}
 		if ss.GUI.Active {
-			ss.RecSpikes(ss.Time.Cycle)
+			ss.RasterRec(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
 		switch ss.Time.Cycle { // save states at beta-frequency -- not used computationally
@@ -73,7 +73,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 			ss.Log(elog.Test, elog.Cycle)
 		}
 		if ss.GUI.Active {
-			ss.RecSpikes(ss.Time.Cycle)
+			ss.RasterRec(ss.Time.Cycle)
 		}
 		ss.Time.CycleInc()
 
