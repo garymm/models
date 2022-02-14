@@ -2,8 +2,9 @@ package sim
 
 import (
 	"fmt"
-
 	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/egui"
+	"github.com/emer/emergent/elog"
 	"github.com/goki/gi/gi"
 	"github.com/goki/ki/ki"
 	"github.com/goki/mat32"
