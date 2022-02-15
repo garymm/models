@@ -86,7 +86,7 @@ func ConfigParams(ss *sim.Sim) {
 			"NetSize": &params.Sheet{
 				{Sel: ".Hidden", Desc: "all hidden layers",
 					Params: params.Params{
-						"Layer.X": "7", //todo layer size correspondance between areas that are connected upstream parameter - get there when we get there
+						"Layer.X": "7", //todo layer size correspondence between areas that are connected upstream parameter - get there when we get there
 						"Layer.Y": "7",
 					},
 					Hypers: params.Hypers{
@@ -98,20 +98,20 @@ func ConfigParams(ss *sim.Sim) {
 			"Network": &params.Sheet{
 				{Sel: "Layer", Desc: "all defaults",
 					Params: params.Params{
-						"Layer.Inhib.Layer.Gi":    "1.2",  // 1.2 > 1.1     10
-						"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1  10
-						"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0   2
-						"Layer.Act.Decay.Glong":   "0.6",  // 0.6   2
-						"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0   5
-						"Layer.Act.Dend.GbarR":    "3",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels 5
-						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect 1
-						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better 1
-						"Layer.Act.Dt.GeTau":      "5",    // 1
-						"Layer.Act.NMDA.Gbar":     "0.15", //  7
-						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15  7
+						"Layer.Inhib.Layer.Gi":    "1.2",  // 1.2 > 1.1     importance: 10
+						"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1  importance: 10
+						"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0   importance: 2
+						"Layer.Act.Decay.Glong":   "0.6",  // 0.6   importance: 2
+						"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0   importance: 5
+						"Layer.Act.Dend.GbarR":    "3",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels importance: 5
+						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect importance: 1
+						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better importance: 1
+						"Layer.Act.Dt.GeTau":      "5",    // importance: 1
+						"Layer.Act.NMDA.Gbar":     "0.15", //  importance: 7
+						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
-					"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-				}},
+						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
@@ -132,13 +132,13 @@ func ConfigParams(ss *sim.Sim) {
 					}},
 				{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
 					Params: params.Params{
-						"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //10
-						"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //5
-						"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //7
+						"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
+						"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
+						"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
 					}},
 				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
 					Params: params.Params{
-						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5 //9
+						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5 //importance: 9
 					},
 					Hypers: params.Hypers{
 						"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
