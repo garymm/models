@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -75,7 +76,7 @@ func (ss *Sim) Init() {
 	ss.Params.SetMsg = ss.CmdArgs.LogSetParams
 	ss.Params.SetAll()
 	// NOTE uncomment following to see the compiled hyper params
-	// fmt.Println(ss.Params.NetHypers.JSONString())
+	fmt.Println(ss.Params.NetHypers.JSONString())
 	ss.NewRun()
 	ss.GUI.UpdateNetView()
 	ss.Stats.ResetTimer("PerTrlMSec")

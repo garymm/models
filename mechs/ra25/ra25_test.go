@@ -9,6 +9,9 @@ import (
 
 func TestConfigNet(t *testing.T) {
 	simo := sim.Sim{}
+	simo.New()
+	simo.CmdArgs.NoGui = true
+	Config(&simo)
 	neto := axon.Network{}
 	ConfigNet(&simo, &neto)
 	if len(neto.Layers) != 4 {

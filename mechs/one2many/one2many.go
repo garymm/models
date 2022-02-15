@@ -11,8 +11,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/emer"
@@ -22,6 +20,7 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
+	"log"
 )
 
 var ProgramName = "One2Many"
@@ -132,8 +131,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-					}},
+					"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+				}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0

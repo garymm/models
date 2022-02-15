@@ -90,7 +90,7 @@ func (ss *Sim) ConfigLogItems() {
 		FixMax: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(elog.Train, elog.Epoch): func(ctx *elog.Context) {
+			elog.Scope(elog.Train, elog.Epoch): func(ctx *elog.Context) { //ctxMode implies whatever current mode, do trial log for that, instead of making it specific
 				pcterr := ctx.SetAggItem(ctx.Mode, elog.Trial, "Err", agg.AggMean)
 				epc := ctx.Stats.Int("Epoch")
 				if ss.Stats.Int("FirstZero") < 0 && pcterr == 0 {
@@ -292,7 +292,7 @@ func (ss *Sim) ConfigLogItems() {
 					ctx.SetLayerTensor(clnm, "ActM")
 				}}})
 		ss.Logs.AddItem(&elog.Item{
-			Name: clnm + "_PCA_NStrong",
+			Name: clnm + "_PCA_NStrong", //These are explicitely defined in stats, maybe make enums MOAR enums?
 			Type: etensor.FLOAT64,
 			Plot: elog.DFalse,
 			Write: elog.WriteMap{
