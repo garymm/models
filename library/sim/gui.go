@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/egui"
 	"github.com/emer/emergent/elog"
@@ -29,7 +30,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	stb := ss.GUI.TabView.AddNewTab(gi.KiT_Layout, "Spike Rasters").(*gi.Layout)
 	stb.Lay = gi.LayoutVert
 	stb.SetStretchMax()
-	layers := ss.Net.LayersByType() // all
+	layers := ss.Net.LayersByClass() // all
 	for _, lnm := range layers {
 		sr := ss.Stats.F32Tensor("Raster_" + lnm)
 		tg := ss.GUI.RasterGrid(lnm)

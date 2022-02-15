@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/emer/emergent/elog"
-	"github.com/emer/emergent/emer"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/split"
@@ -47,7 +46,7 @@ func (ss *Sim) ConfigLogs() {
 	ss.Logs.NoPlot(elog.Test, elog.Run)
 	// note: Analyze not plotted by default
 	ss.Logs.SetMeta(elog.Train, elog.Run, "LegendCol", "Params")
-	ss.Stats.ConfigRasters(ss.Net, ss.Net.LayersByType())
+	ss.Stats.ConfigRasters(ss.Net, ss.Net.LayersByClass())
 }
 
 // RunName returns a name for this run that combines Tag and Params -- add this to
@@ -137,11 +136,11 @@ func (ss *Sim) LogRunStats() {
 // PCAStats computes PCA statistics on recorded hidden activation patterns
 // from Analyze, Trial log data
 func (ss *Sim) PCAStats() {
-	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayersByType(emer.Hidden))
+	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayersByClass("Hidden"))
 	ss.Logs.ResetLog(elog.Analyze, elog.Trial)
 }
 
 // RasterRec updates spike raster record for given cycle
 func (ss *Sim) RasterRec(cyc int) {
-	ss.Stats.RasterRec(ss.Net, cyc, "Spike", ss.Net.LayersByType())
+	ss.Stats.RasterRec(ss.Net, cyc, "Spike", ss.Net.LayersByClass())
 }
