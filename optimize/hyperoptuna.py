@@ -16,8 +16,8 @@ def get_opt_value(trial: Trial, parametername, guidelines):
         maxo = float(guidelines["Max"])
     # This is a bit of a hack because optuna wants a min and a max, but we might only specify a StdDev.
     elif guidelines.get("StdDev") is not None:
-        mino = val - 2 * guidelines["StdDev"]
-        maxo = val + 2 * guidelines["StdDev"]
+        mino = val - 2 * float(guidelines["StdDev"])
+        maxo = val + 2 * float(guidelines["StdDev"])
     else:
         # TODO Make this better
         mino = val * .5
@@ -61,9 +61,6 @@ def main():
         optimization.run_model(
             "-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs={0} -epochs={1}".format(
                 str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
-
-        print("BEST PARAMS SO FAR")
-        print(study.best_params)
 
         # Get valuation from logs
         return optimization.get_score_from_logs()

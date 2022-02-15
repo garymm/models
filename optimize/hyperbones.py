@@ -109,8 +109,6 @@ def main():
     bone_params = BONESParams(
         better_direction_sign=-1, is_wandb_logging_enabled=False, initial_search_radius=0.5, resample_frequency=-1
     )
-    print(bone_params)
-    print(params_space_by_name)
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
     best, best_score = run_bones(bones, optimization.NUM_TRIALS, params, optimize_fn=optimize_bones)
