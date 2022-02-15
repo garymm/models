@@ -68,18 +68,18 @@ def prepare_hyperparams_bones(the_params):
         # Assume that we always supply a standard deviation.
         stddev = value / 4.0  # Default
         if "StdDev" in relevantvalues:
-            stddev = relevantvalues["StdDev"]
+            stddev = float(relevantvalues["StdDev"])
         if "Sigma" in relevantvalues:
-            stddev = relevantvalues["Sigma"]
+            stddev = float(relevantvalues["Sigma"])
         # TODO Have a parameter for Linear/LogLinear/Etc.
         # TODO Allow integer and categorical spaces.
         distribution_type = LinearSpace(scale=stddev)
         if "Min" in relevantvalues and "Max" in relevantvalues:
-            distribution_type = LinearSpace(scale=stddev, min=relevantvalues["Min"], max=relevantvalues["Max"])
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), max=float(relevantvalues["Max"]))
         elif "Min" in relevantvalues:
-            distribution_type = LinearSpace(scale=stddev, min=relevantvalues["Min"])
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]))
         elif "Max" in relevantvalues:
-            distribution_type = LinearSpace(scale=stddev, min=relevantvalues["Max"])
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Max"]))
         initial_params.update({uniquename: value})
         params_space_by_name.update([(uniquename, distribution_type)])
 
@@ -109,6 +109,8 @@ def main():
     bone_params = BONESParams(
         better_direction_sign=-1, is_wandb_logging_enabled=False, initial_search_radius=0.5, resample_frequency=-1
     )
+    print(bone_params)
+    print(params_space_by_name)
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
     best, best_score = run_bones(bones, optimization.NUM_TRIALS, params, optimize_fn=optimize_bones)
