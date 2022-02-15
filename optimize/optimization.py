@@ -9,9 +9,9 @@ import json
 MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top of each mech file
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "#PctErr"
-NUM_EPOCHS = 3
-NUM_RUNS = 1
-NUM_TRIALS = 4
+NUM_EPOCHS = 100
+NUM_RUNS = 10
+NUM_TRIALS = 100
 
 
 def get_hypers():
