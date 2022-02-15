@@ -98,7 +98,9 @@ func ConfigParams(ss *sim.Sim) {
 			"Network": &params.Sheet{
 				{Sel: "Layer", Desc: "all defaults",
 					Params: params.Params{
-						"Layer.Inhib.Layer.Gi":    "1.2",  // 1.2 > 1.1     importance: 10
+						// All params with importance >=5 have hypers
+						"Layer.Inhib.Layer.Gi": "1.2", // 1.2 > 1.1     importance: 10
+						// TODO This param should vary with Gi it looks like
 						"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1  importance: 10
 						"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0   importance: 2
 						"Layer.Act.Decay.Glong":   "0.6",  // 0.6   importance: 2
@@ -110,7 +112,12 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Gbar":     "0.15", //  importance: 7
 						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
+						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
 						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+						"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
+						"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
+						"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
+						"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
@@ -135,6 +142,11 @@ func ConfigParams(ss *sim.Sim) {
 						"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
 						"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
 						"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
+					},
+					Hypers: params.Hypers{
+						"Prjn.Learn.Lrate.Base": {"StdDev": "0.05"},
+						"Prjn.SWt.Adapt.Lrate":  {"StdDev": "0.025"},
+						"Prjn.SWt.Init.SPct":    {"StdDev": "0.1"},
 					}},
 				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
 					Params: params.Params{
