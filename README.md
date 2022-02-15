@@ -7,3 +7,6 @@
 [![Codecov](https://codecov.io/gh/Astera-org/models/branch/master/graph/badge.svg?token=Hw5cInAxY3)](https://codecov.io/gh/Astera-org/models)
 
 A collection of models on the [axon](https://github.com/Astera-org/axon) framework.
+
+On Linux, you will need these dependencies:
+sudo apt install xlib-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libgl1-mesa-dev libgl1-mesa-dev xorg-dev
