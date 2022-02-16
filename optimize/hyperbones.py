@@ -14,6 +14,9 @@ from bones import ObservationInParam
 from bones import LinearSpace
 
 
+OBSERVATIONS_FILE = "bones_obs.txt"
+
+
 def get_bones_suggestion(current_suggestions: dict, parametername, guidelines):
     return current_suggestions[parametername]
 
@@ -22,7 +25,7 @@ def get_bones_suggestion(current_suggestions: dict, parametername, guidelines):
 def create_bones_suggested_params(params, suggestions, trial_name: str):
     cparams = copy.deepcopy(params)
     parameters_to_modify = optimization.enumerate_parameters_to_modify(cparams)
-    print("PARAMETERS TO MODIFY in Bones")
+    print("PARAMETERS TO MODIFY IN BONES")
     print(parameters_to_modify)
     for info in parameters_to_modify:
         value_to_assign = get_bones_suggestion(suggestions, info["uniquename"],
@@ -89,11 +92,17 @@ def run_bones(bones_obj, trialnumber, params):
     for i in range(trialnumber):
         trial_name = "Searching_" + str(i)
         suggestions = bones_obj.suggest().suggestion
+        print("TRYING THESE SUGGESTIONS")
+        print(suggestions)
         observed_value = optimize_bones(params, suggestions, trial_name)
+        print(observed_value)
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
         if observed_value < best_score:
             best_score = observed_value
             best_suggest = suggestions
+        with open(OBSERVATIONS_FILE, "a") as file_object:
+            file_object.write("\n{}\t{}\t{}\t{}".
+                              format(str(suggestions), str(observed_value), str(best_suggest), str(best_suggest)))
     return best_suggest, best_score
 
 
