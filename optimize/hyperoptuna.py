@@ -34,7 +34,7 @@ def create_suggested_params(params, trial):
         value_to_assign = get_opt_value(trial, info["uniquename"], info["values"]["Hypers"][info["paramname"]])
         info["values"]["Params"][info["paramname"]] = str(value_to_assign)
     # This creates a version of Params that has stripped out everything that didn't have Hypers
-    updated_parameters = (optimization.create_hyperonly(cparams))
+    updated_parameters = (optimization.create_hyperonly(cparams, "Searching"))
     print("UPDATED PARAMS")
     print(updated_parameters)
     return updated_parameters
@@ -63,7 +63,7 @@ def main():
                 str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
 
         # Get valuation from logs
-        return optimization.get_score_from_logs()
+        return optimization.get_score_from_logs("Searching")
 
     # Starts optimization
     study.optimize(optimize_optuna, n_trials=optimization.NUM_TRIALS)

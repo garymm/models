@@ -19,7 +19,7 @@ def get_bones_suggestion(current_suggestions: dict, parametername, guidelines):
 
 
 # TODO Pull this into optimization.py
-def create_bones_suggested_params(params, suggestions):
+def create_bones_suggested_params(params, suggestions, trial_name: str):
     cparams = copy.deepcopy(params)
     parameters_to_modify = optimization.enumerate_parameters_to_modify(cparams)
     print("PARAMETERS TO MODIFY in Bones")
@@ -29,30 +29,9 @@ def create_bones_suggested_params(params, suggestions):
                                                info["values"]["Hypers"][info["paramname"]])
         info["values"]["Params"][info["paramname"]] = value_to_assign
     # This creates a version of Params that has stripped out everything that didn't have Hypers
-    updated_parameters = (optimization.create_hyperonly(cparams))
+    updated_parameters = (optimization.create_hyperonly(cparams, trial_name))
     # print(updated_parameters)
     return updated_parameters
-
-
-def optimize_bones(params, suggestions: dict):
-    print("BEGIN OPTIMIZE")
-    # This creates a version of Params that has stripped out everything that didn't have Hypers
-    updated_parameters = create_bones_suggested_params(params, suggestions)
-
-    # Save the hyperparameters so that they can be read by the model
-    with open("hyperparams.json", "w") as outfile:
-        json.dump(updated_parameters, outfile)
-
-    # Run go program with -params arg
-    optimization.run_model(
-        "-paramsFile=hyperparams.json -nogui=true -epclog=true -params=Searching -runs={0} -epochs={1}".format(
-            str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
-
-    # Get valuation from logs
-    # TODO Make sure this name is unique for parallelization.
-    score = pd.read_csv('logs/{}_Searching_testepc.tsv'.format(optimization.MECHNAME), sep="\t")[
-        optimization.VARIABLE_TO_OPTIMIZE].values[-1]
-    return float(score)
 
 
 # Bones needs the space to be defined at start.
@@ -86,12 +65,31 @@ def prepare_hyperparams_bones(the_params):
     return {"initial_params": initial_params, "paramspace_conditions": params_space_by_name}
 
 
-def run_bones(bones_obj, trialnumber, params, optimize_fn):
+def optimize_bones(params, suggestions: dict, trial_name: str):
+    print("BEGIN OPTIMIZE")
+    # This creates a version of Params that has stripped out everything that didn't have Hypers
+    updated_parameters = create_bones_suggested_params(params, suggestions, trial_name)
+
+    # Save the hyperparameters so that they can be read by the model
+    with open("hyperparams.json", "w") as outfile:
+        json.dump(updated_parameters, outfile)
+
+    # Run go program with -params arg
+    optimization.run_model(
+        "-paramsFile=hyperparams.json -nogui=true -epclog=true -params={0} -runs={1} -epochs={2}".format(
+            trial_name, str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
+
+    # Get valuation from logs
+    return optimization.get_score_from_logs(trial_name)
+
+
+def run_bones(bones_obj, trialnumber, params):
     best_suggest = {}
     best_score = sys.float_info.max
     for i in range(trialnumber):
+        trial_name = "Searching_" + str(i)
         suggestions = bones_obj.suggest().suggestion
-        observed_value = optimize_fn(params, suggestions)
+        observed_value = optimize_bones(params, suggestions, trial_name)
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
         if observed_value < best_score:
             best_score = observed_value
@@ -111,7 +109,7 @@ def main():
     )
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
-    best, best_score = run_bones(bones, optimization.NUM_TRIALS, params, optimize_fn=optimize_bones)
+    best, best_score = run_bones(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
 
 

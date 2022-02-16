@@ -9,9 +9,10 @@ import json
 MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top of each mech file
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "#PctErr"
-NUM_EPOCHS = 100
-NUM_RUNS = 10
-NUM_TRIALS = 100
+NUM_EPOCHS = 5
+NUM_RUNS = 1
+NUM_TRIALS = 5
+NUM_PARALLEL = 4
 
 
 def get_hypers():
@@ -28,9 +29,9 @@ def get_hypers():
     return params
 
 
-def get_score_from_logs():
+def get_score_from_logs(logs_name: str):
     # TODO Make sure this name is unique for parallelization.
-    score = pd.read_csv('logs/{}_Searching_run.tsv'.format(MECHNAME), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
+    score = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
     return float(score)
 
 
@@ -52,11 +53,12 @@ def enumerate_parameters_to_modify(params: list):
     return params_relations
 
 
-def create_hyperonly(params):
-    duplicate = {}
-    duplicate["Name"] = "Searching"
-    duplicate["Desc"] = "Parameters suggested by optimizer"
-    duplicate["Sheets"] = {}
+def create_hyperonly(params, logs_name: str):
+    duplicate = {
+        "Name": logs_name,
+        "Desc": "Parameters suggested by optimizer",
+        "Sheets": {}
+    }
     assert len(params) == 1
     for name in params[0]["Sheets"]:
         duplicate["Sheets"][name] = []
