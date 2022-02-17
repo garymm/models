@@ -936,7 +936,7 @@ func (ss *Sim) MemStats(train bool) {
 		} else {
 			ss.Mem = 0
 		}
-	} else { // test
+	} else {          // test
 		if cmpN > 0 { // should be
 			trgOnWasOffCmp /= cmpN
 			if trgOnWasOffCmp < ss.MemThr && trgOffWasOn < ss.MemThr {
@@ -960,8 +960,10 @@ func (ss *Sim) TrialStats(accum bool) {
 	outLay := ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
 	ss.TrlCosDiff = float64(outLay.CosDiff.Cos)
 	ss.TrlUnitErr = outLay.PctUnitErr()
+	ss.HipSim.Stats.SetFloat("TrlUnitErr", ss.TrlUnitErr)
 	if accum {
 		ss.SumUnitErr += ss.TrlUnitErr
+
 		ss.SumCosDiff += ss.TrlCosDiff
 		if ss.TrlUnitErr != 0 {
 			ss.CntErr++
