@@ -24,6 +24,7 @@ def get_opt_value(trial: Trial, parametername, guidelines):
         maxo = val * 1.5
     return trial.suggest_float(parametername, mino, maxo)
 
+
 # TODO Pull this into optimization.py
 def create_suggested_params(params, trial):
     cparams = copy.deepcopy(params)

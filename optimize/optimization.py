@@ -9,9 +9,9 @@ import json
 MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top of each mech file
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "#FirstZero"
-NUM_EPOCHS = 100
-NUM_RUNS = 2
-NUM_TRIALS = 1
+NUM_EPOCHS = 75
+NUM_RUNS = 1
+NUM_TRIALS = 10
 NUM_PARALLEL = 4
 
 
@@ -24,8 +24,8 @@ def get_hypers():
     f = open(hyper_file)
     params = json.load(f)
     f.close()
-    print("GOT PARAMS")
-    print(params)
+    # print("GOT PARAMS")
+    # print(params)
     return params
 
 

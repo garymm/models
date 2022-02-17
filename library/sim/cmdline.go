@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/netview"
 	"github.com/emer/emergent/params"
 	"github.com/goki/gi/gi"
@@ -45,7 +44,7 @@ func (ss *Sim) ParseArgs() {
 	flag.BoolVar(&ss.CmdArgs.SaveWts, "wts", false, "if true, save final weights after each run")
 	flag.StringVar(&ss.CmdArgs.note, "note", "", "user note -- describe the run params etc")
 	flag.BoolVar(&ss.CmdArgs.saveEpcLog, "epclog", true, "if true, save train epoch log to file")
-	flag.BoolVar(&ss.CmdArgs.saveRunLog, "runlog", true, "if true, save run epoch log to file")
+	flag.BoolVar(&ss.CmdArgs.saveRunLog, "runlog", true, "if true, save run run log to file")
 	flag.BoolVar(&ss.CmdArgs.saveNetData, "netdata", false, "if true, save network activation etc data from testing trials, for later viewing in netview")
 	flag.BoolVar(&ss.CmdArgs.NoGui, "nogui", len(os.Args) > 1, "if not passing any other args and want to run nogui, use nogui")
 	flag.StringVar(&ss.CmdArgs.hyperFile, "hyperFile", "", "Name of the file to output hyperparameter data. If not empty string, program should write and then exit")
@@ -62,6 +61,27 @@ func (ss *Sim) ParseArgs() {
 	// ToDO from michael to andrew - need to account for paramsFile and extrasheet not always being the same thing - should be separate parameter imo
 	if ss.CmdArgs.paramsFile != "" {
 		ss.ApplyHyperFromCMD(ss.CmdArgs.paramsFile)
+	}
+
+	if ss.CmdArgs.note != "" {
+		fmt.Printf("note: %s\n", ss.CmdArgs.note)
+	}
+	if ss.Params.ExtraSets != "" {
+		fmt.Printf("Using ParamSet: %s\n", ss.Params.ExtraSets)
+	}
+	if ss.CmdArgs.MaxRuns == 0 { // allow user override
+		ss.CmdArgs.MaxRuns = 5
+	}
+	if ss.CmdArgs.MaxEpcs == 0 { // allow user override
+		ss.CmdArgs.MaxEpcs = 100
+	}
+
+	if ss.CmdArgs.saveNetData {
+		ss.CmdArgs.NetData = &netview.NetData{}
+		ss.CmdArgs.NetData.Init(ss.Net, 200) // 200 = amount to save
+	}
+	if ss.CmdArgs.SaveWts {
+		fmt.Printf("Saving final weights per run\n")
 	}
 }
 
@@ -91,38 +111,6 @@ func (ss *Sim) RunFromArgs() {
 	}
 	ss.Init()
 
-	if ss.CmdArgs.note != "" {
-		fmt.Printf("note: %s\n", ss.CmdArgs.note)
-	}
-	if ss.Params.ExtraSets != "" {
-		fmt.Printf("Using ParamSet: %s\n", ss.Params.ExtraSets)
-	}
-	if ss.CmdArgs.MaxRuns == 0 { // allow user override
-		ss.CmdArgs.MaxRuns = 5
-	}
-	if ss.CmdArgs.MaxEpcs == 0 { // allow user override
-		ss.CmdArgs.MaxEpcs = 100
-	}
-
-	if ss.CmdArgs.saveEpcLog {
-		fnm := ss.LogFileName("epc")
-		ss.Logs.SetLogFile(elog.Train, elog.Epoch, fnm)
-
-		//Save test as well as train epoch logs
-		testfnm := ss.LogFileName("testepc")
-		ss.Logs.SetLogFile(elog.Test, elog.Epoch, testfnm)
-	}
-	if ss.CmdArgs.saveRunLog {
-		fnm := ss.LogFileName("run")
-		ss.Logs.SetLogFile(elog.Train, elog.Run, fnm)
-	}
-	if ss.CmdArgs.saveNetData {
-		ss.CmdArgs.NetData = &netview.NetData{}
-		ss.CmdArgs.NetData.Init(ss.Net, 200) // 200 = amount to save
-	}
-	if ss.CmdArgs.SaveWts {
-		fmt.Printf("Saving final weights per run\n")
-	}
 	fmt.Printf("Running %d Runs starting at %d\n", ss.CmdArgs.MaxRuns, ss.CmdArgs.StartRun)
 	ss.Run.Set(ss.CmdArgs.StartRun)
 	ss.Run.Max = ss.CmdArgs.StartRun + ss.CmdArgs.MaxRuns

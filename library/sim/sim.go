@@ -29,7 +29,7 @@ type Sim struct {
 	Stats   estats.Stats  `desc:"contains computed statistic values"`
 	Logs    elog.Logs     `desc:"Contains all the logs and information about the logs.'"`
 	GUI     egui.GUI      `view:"-" desc:"manages all the gui elements"`
-	CmdArgs CmdArgs       `view:"-" desc:"Arguments passed in through the command line"`
+	CmdArgs CmdArgs       `desc:"Arguments passed in through the command line"`
 
 	Run          env.Ctr `desc:"run number"`
 	TestInterval int     `desc:"how often (in epochs) to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`

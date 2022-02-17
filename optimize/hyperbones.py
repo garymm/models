@@ -25,12 +25,12 @@ def get_bones_suggestion(current_suggestions: dict, parametername, guidelines):
 def create_bones_suggested_params(params, suggestions, trial_name: str):
     cparams = copy.deepcopy(params)
     parameters_to_modify = optimization.enumerate_parameters_to_modify(cparams)
-    print("PARAMETERS TO MODIFY IN BONES")
-    print(parameters_to_modify)
+    # print("PARAMETERS TO MODIFY IN BONES")
+    # print(parameters_to_modify)
     for info in parameters_to_modify:
         value_to_assign = get_bones_suggestion(suggestions, info["uniquename"],
                                                info["values"]["Hypers"][info["paramname"]])
-        info["values"]["Params"][info["paramname"]] = value_to_assign
+        info["values"]["Params"][info["paramname"]] = str(value_to_assign)
     # This creates a version of Params that has stripped out everything that didn't have Hypers
     updated_parameters = (optimization.create_hyperonly(cparams, trial_name))
     # print(updated_parameters)
@@ -55,13 +55,14 @@ def prepare_hyperparams_bones(the_params):
             stddev = float(relevantvalues["Sigma"])
         # TODO Have a parameter for Linear/LogLinear/Etc.
         # TODO Allow integer and categorical spaces.
-        distribution_type = LinearSpace(scale=stddev)
+        is_int = "Type" in relevantvalues and relevantvalues["Type"] == "Int"
+        distribution_type = LinearSpace(scale=stddev, is_integer=is_int)
         if "Min" in relevantvalues and "Max" in relevantvalues:
-            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), max=float(relevantvalues["Max"]))
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), max=float(relevantvalues["Max"]), is_integer=is_int)
         elif "Min" in relevantvalues:
-            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]))
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), is_integer=is_int)
         elif "Max" in relevantvalues:
-            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Max"]))
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Max"]), is_integer=is_int)
         initial_params.update({uniquename: value})
         params_space_by_name.update([(uniquename, distribution_type)])
 
@@ -92,10 +93,10 @@ def run_bones(bones_obj, trialnumber, params):
     for i in range(trialnumber):
         trial_name = "Searching_" + str(i)
         suggestions = bones_obj.suggest().suggestion
-        print("TRYING THESE SUGGESTIONS")
-        print(suggestions)
+        # print("TRYING THESE SUGGESTIONS")
+        # print(suggestions)
         observed_value = optimize_bones(params, suggestions, trial_name)
-        print(observed_value)
+        # print(observed_value)
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
         if observed_value < best_score:
             best_score = observed_value

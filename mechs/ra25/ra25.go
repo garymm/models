@@ -58,7 +58,6 @@ func main() {
 			sim.GuiRun(&TheSim, programName, programName, `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
-
 }
 
 // Config configures all the elements using the standard functions
@@ -90,8 +89,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Y": "10",
 					},
 					Hypers: params.Hypers{
-						"Layer.X": {"StdDev": "0.3", "Min": "2"},
-						"Layer.Y": {"StdDev": "0.3", "Min": "2"},
+						"Layer.X": {"StdDev": "0.3", "Min": "2", "Type": "Int"},
+						"Layer.Y": {"StdDev": "0.3", "Min": "2", "Type": "Int"},
 					},
 				},
 			},
