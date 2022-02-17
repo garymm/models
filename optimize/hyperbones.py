@@ -102,7 +102,7 @@ def run_bones(bones_obj, trialnumber, params):
             best_suggest = suggestions
         with open(OBSERVATIONS_FILE, "a") as file_object:
             file_object.write("\n{}\t{}\t{}\t{}".
-                              format(str(suggestions), str(observed_value), str(best_suggest), str(best_suggest)))
+                              format(str(suggestions), str(observed_value), str(best_suggest), str(best_score)))
     return best_suggest, best_score
 
 

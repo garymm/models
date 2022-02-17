@@ -8,10 +8,10 @@ import json
 # todo oneday wrap this in a clear object with comments
 MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top of each mech file
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
-VARIABLE_TO_OPTIMIZE = "#PctErr"
-NUM_EPOCHS = 5
-NUM_RUNS = 1
-NUM_TRIALS = 5
+VARIABLE_TO_OPTIMIZE = "#FirstZero"
+NUM_EPOCHS = 100
+NUM_RUNS = 2
+NUM_TRIALS = 1
 NUM_PARALLEL = 4
 
 
