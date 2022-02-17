@@ -44,6 +44,7 @@ import (
 
 var TrainEnv = EnvHipBench{}
 
+//ToDO Stays here, main()
 func main() {
 	var TrueSim HipSim
 	TrueSim.New()
@@ -66,6 +67,7 @@ func main() {
 	}
 }
 
+//TODO merge with main() - see one2many line 79
 func guirun() {
 	TheSim.Init()
 	win := TheSim.ConfigGui()
@@ -109,6 +111,8 @@ type PatParams struct {
 	CtxtFlipPct float32 `desc:"proportion (0-1) of active bits to flip for each context pattern, relative to a prototype, for non-drifting"`
 	DriftPct    float32 `desc:"percentage of active bits that drift, per step, for drifting context"`
 }
+
+//TODO move to knock off HipSim.go
 
 // Sim encapsulates the entire simulation model, and we define all the
 // functionality as methods on this struct.  This structure keeps all relevant
@@ -218,6 +222,7 @@ var KiT_Sim = kit.Types.AddType(&Sim{}, SimProps)
 // TheSim is the overall state for this simulation
 var TheSim Sim
 
+// Todo move to new Sim.go hipsim
 // New creates new blank elements and initializes defaults
 func (ss *Sim) New() {
 	ss.Net = &axon.Network{}
@@ -258,12 +263,15 @@ func (ss *Sim) New() {
 	ss.Defaults()
 }
 
+// TODO create a hipParams.go
+
 func (pp *PatParams) Defaults() {
 	pp.ListSize = 10 // 20 def
 	pp.MinDiffPct = 0.5
 	pp.CtxtFlipPct = .25
 }
 
+// TODO add to hipParams.go
 func (hp *HipParams) Defaults() {
 	// size
 	hp.ECSize.Set(2, 3)
@@ -282,6 +290,8 @@ func (hp *HipParams) Defaults() {
 	hp.MossyDelTest = 0 // for rel = 4: 3 > 2 > 0 > 4 -- 4 is very bad -- need a small amount..
 }
 
+//TODO add this to HipSim.go inside
+
 func (ss *Sim) Defaults() {
 	ss.Hip.Defaults()
 	ss.Pat.Defaults()
@@ -289,12 +299,16 @@ func (ss *Sim) Defaults() {
 	ss.Update()
 }
 
+//TODO is update = setting params = Params.SetAll, add to init()
+
 func (ss *Sim) Update() {
 	ss.Hip.Update()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // 		Configs
+
+//TODO stays in hip_bench
 
 // Config configures all the elements using the standard functions
 func (ss *Sim) Config() {
@@ -308,6 +322,8 @@ func (ss *Sim) Config() {
 	ss.ConfigTstCycLog(ss.TstCycLog)
 	ss.ConfigRunLog(ss.RunLog)
 }
+
+//TODO stay in hip_bench
 
 func (ss *Sim) ConfigEnv() {
 	if ss.MaxRuns == 0 { // allow user override
@@ -337,6 +353,8 @@ func (ss *Sim) ConfigEnv() {
 	ss.TrainEnv.Init(ss.StartRun)
 	ss.TestEnv.Init(ss.StartRun)
 }
+
+// TODO stays in hip_bench.go, optionally moved to meta Env object? Probs not
 
 // SetEnv select which set of patterns to train on: AB or AC
 func (ss *Sim) SetEnv(trainAC bool) {
@@ -463,6 +481,8 @@ func (ss *Sim) ReConfigNet() {
 ////////////////////////////////////////////////////////////////////////////////
 // 	    Init, utils
 
+//TODO move to hipsim
+
 // Init restarts the run, and initializes everything, including network weights
 // and resets the epoch log table
 func (ss *Sim) Init() {
@@ -502,6 +522,8 @@ func (ss *Sim) Counters(train bool) string {
 	}
 }
 
+//TODO where should this go?
+
 func (ss *Sim) UpdateView(train bool) {
 	if ss.NetView != nil && ss.NetView.IsVisible() {
 		ss.NetView.Record(ss.Counters(train))
@@ -509,6 +531,8 @@ func (ss *Sim) UpdateView(train bool) {
 		ss.NetView.GoUpdate() // note: using counters is significantly slower..
 	}
 }
+
+//TODO move to hip_network.go
 
 func (ss *Sim) UpdateViewTime(train bool, viewUpdt axon.TimeScales) {
 	switch viewUpdt {
@@ -936,7 +960,7 @@ func (ss *Sim) MemStats(train bool) {
 		} else {
 			ss.Mem = 0
 		}
-	} else {          // test
+	} else { // test
 		if cmpN > 0 { // should be
 			trgOnWasOffCmp /= cmpN
 			if trgOnWasOffCmp < ss.MemThr && trgOffWasOn < ss.MemThr {
