@@ -86,12 +86,12 @@ func ConfigParams(ss *sim.Sim) {
 			"NetSize": &params.Sheet{
 				{Sel: ".Hidden", Desc: "all hidden layers",
 					Params: params.Params{
-						"Layer.X": "7", //todo layer size correspondence between areas that are connected upstream parameter - get there when we get there
-						"Layer.Y": "7",
+						"Layer.X": "10", //todo layer size correspondence between areas that are connected upstream parameter - get there when we get there
+						"Layer.Y": "10",
 					},
 					Hypers: params.Hypers{
-						"Layer.X": {"Val": "5", "StdDev": "0.3", "Min": "2"},
-						"Layer.Y": {"Val": "5", "StdDev": "0.3", "Min": "2"},
+						"Layer.X": {"StdDev": "0.3", "Min": "2"},
+						"Layer.Y": {"StdDev": "0.3", "Min": "2"},
 					},
 				},
 			},
@@ -123,7 +123,7 @@ func ConfigParams(ss *sim.Sim) {
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
 						"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
-						"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
+						"Layer.Inhib.ActAvg.Init": "0.15", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
 						"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
@@ -132,7 +132,7 @@ func ConfigParams(ss *sim.Sim) {
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 >= 0.8 > 1.0 > 0.7 even with adapt -- not beneficial to start low
-						"Layer.Inhib.ActAvg.Init": "0.04", // this has to be exact for adapt
+						"Layer.Inhib.ActAvg.Init": "0.24", // this has to be exact for adapt
 						"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum.
 						"Layer.Act.Clamp.Ge":      "0.6",  // .6 > .5 v94
 						// "Layer.Act.NMDA.Gbar":     "0.3",  // higher not better

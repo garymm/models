@@ -78,7 +78,7 @@ def optimize_bones(params, suggestions: dict, trial_name: str):
         json.dump(updated_parameters, outfile)
 
     # Run go program with -params arg
-    optimization.run_model( 
+    optimization.run_model(
         "-paramsFile=hyperparams.json -nogui=true -epclog=true -params={0} -runs={1} -epochs={2}".format(
             trial_name, str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
 
