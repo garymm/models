@@ -32,6 +32,8 @@ def get_hypers():
 def get_score_from_logs(logs_name: str):
     # TODO Make sure this name is unique for parallelization.
     score = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
+    if VARIABLE_TO_OPTIMIZE == "#FirstZero" and score == -1:
+        score = 100000  # This is a kludge for #FirstZero
     return float(score)
 
 
