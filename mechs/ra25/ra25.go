@@ -104,21 +104,25 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1  importance: 10
 						"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0   importance: 2
 						"Layer.Act.Decay.Glong":   "0.6",  // 0.6   importance: 2
-						"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0   importance: 5
-						"Layer.Act.Dend.GbarR":    "3",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels importance: 5
+						"Layer.Act.Dend.GbarExp":  "0.5",  // 0.2 > 0.1 > 0   importance: 5
+						"Layer.Act.Dend.GbarR":    "6",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels importance: 5
 						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect importance: 1
+						"Layer.Act.Dend.VGCCCa":   "20",
+						"Layer.Act.Dend.CaMax":    "90",
 						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better importance: 1
 						"Layer.Act.Dt.GeTau":      "5",    // importance: 1
 						"Layer.Act.NMDA.Gbar":     "0.15", //  importance: 7
-						"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15  importance: 7
+						"Layer.Act.NMDA.MgC":      "1.4",
+						"Layer.Act.NMDA.Voff":     "5",
+						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
-						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-						"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
-						"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
-						"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
-						"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
-					}},
+					"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
+					"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+					"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
+					"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
+					"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
+					"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
+				}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
