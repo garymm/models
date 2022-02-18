@@ -77,13 +77,14 @@ def optimize_bones(params, suggestions: dict, trial_name: str):
     updated_parameters = create_bones_suggested_params(params, suggestions, trial_name)
 
     # Save the hyperparameters so that they can be read by the model
-    with open("hyperparams.json", "w") as outfile:
+    hyperfile = "hyperparams{}.json".format(trial_name)
+    with open(hyperfile, "w") as outfile:
         json.dump(updated_parameters, outfile)
 
     # Run go program with -params arg
     optimization.run_model(
-        "-paramsFile=hyperparams.json -nogui=true -epclog=true -params={0} -runs={1} -epochs={2}".format(
-            trial_name, str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
+        "-paramsFile={} -nogui=true -epclog=true -params={} -runs={} -epochs={}".format(
+            hyperfile, trial_name, str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
 
     # Get valuation from logs
     return optimization.get_score_from_logs(trial_name)
@@ -126,7 +127,6 @@ def single_bones_trial(bones_obj, params, lock, i):
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
     all_observations.append((observed_value, suggestions))
     print("WHAT WE'VE TRED SO FAR:")
-    print(all_observations)
     for so in all_observations:
         print("Score: " + str(so[0]) + " From Sugg: " + str(so[1]))
     print("BEST RESULT: " + str(min(all_observations)))
@@ -134,12 +134,12 @@ def single_bones_trial(bones_obj, params, lock, i):
 
 def run_bones_parallel(bones_obj, trialnumber, params):
     locky = threading.Lock()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=optimization.NUM_PARALLEL) as executor:
         for i in range(trialnumber):
             print("Starting to execute: " + str(i))
             executor.submit(single_bones_trial, bones_obj, params, locky, i)
 
-    best = min(all_observations)
+    best = sorted(all_observations, key=lambda a: a[0])[0]
     return best[1], best[0]
 
 
