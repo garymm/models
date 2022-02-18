@@ -12,7 +12,7 @@ VARIABLE_TO_OPTIMIZE = "#FirstZero"
 NUM_EPOCHS = 75
 NUM_RUNS = 1
 NUM_TRIALS = 10
-NUM_PARALLEL = 4
+NUM_PARALLEL = 5
 
 
 def get_hypers():

@@ -1,10 +1,12 @@
+import collections
 import sys
 from collections import OrderedDict
 import json
 import copy
 import os
 import optimization
-import pandas as pd
+import concurrent.futures
+import threading
 
 # NOTE bones must be pulled and installed locally from
 # https://gitlab.com/generally-intelligent/bones/
@@ -107,6 +109,40 @@ def run_bones(bones_obj, trialnumber, params):
     return best_suggest, best_score
 
 
+all_observations = collections.deque()
+
+
+def single_bones_trial(bones_obj, params, lock, i):
+    trial_name = "Searching_" + str(i)
+    print("Starting trial: " + trial_name)
+    with lock:
+        suggestions = bones_obj.suggest().suggestion
+    print("TRYING THESE SUGGESTIONS")
+    print(suggestions)
+    observed_value = optimize_bones(params, suggestions, trial_name)
+    print("GOT OBSERVED VALUE")
+    print(observed_value)
+    with lock:
+        bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
+    all_observations.append((observed_value, suggestions))
+    print("WHAT WE'VE TRED SO FAR:")
+    print(all_observations)
+    for so in all_observations:
+        print("Score: " + str(so[0]) + " From Sugg: " + str(so[1]))
+    print("BEST RESULT: " + str(min(all_observations)))
+
+
+def run_bones_parallel(bones_obj, trialnumber, params):
+    locky = threading.Lock()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        for i in range(trialnumber):
+            print("Starting to execute: " + str(i))
+            executor.submit(single_bones_trial, bones_obj, params, locky, i)
+
+    best = min(all_observations)
+    return best[1], best[0]
+
+
 def main():
     os.chdir('../')  # Move into the models/ directory
     params = optimization.get_hypers()
@@ -119,7 +155,7 @@ def main():
     )
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
-    best, best_score = run_bones(bones, optimization.NUM_TRIALS, params)
+    best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
 
 
