@@ -9,6 +9,55 @@ import (
 	"github.com/emer/etable/minmax"
 )
 
+func (ss *Sim) ConfigHipItems() {
+	ss.ConfigLogItems()
+	ss.Logs.AddItem(&elog.Item{
+		Name:   "Mem",
+		Type:   etensor.FLOAT64,
+		Plot:   elog.DTrue,
+		FixMax: elog.DTrue,
+		FixMin: elog.DTrue,
+		Range:  minmax.F64{Max: 1},
+		Write: elog.WriteMap{
+			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+				ctx.SetStatFloat("Mem")
+			},
+			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			},
+		}})
+	ss.Logs.AddItem(&elog.Item{
+		Name:   "TrgOnWasOff",
+		Type:   etensor.FLOAT64,
+		Plot:   elog.DTrue,
+		FixMax: elog.DTrue,
+		FixMin: elog.DTrue,
+		Range:  minmax.F64{Max: 1},
+		Write: elog.WriteMap{
+			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+				ctx.SetStatFloat("TrgOnWasOff")
+			},
+			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			},
+		}})
+	ss.Logs.AddItem(&elog.Item{
+		Name:   "TrgOnWasOn",
+		Type:   etensor.FLOAT64,
+		Plot:   elog.DTrue,
+		FixMax: elog.DTrue,
+		FixMin: elog.DTrue,
+		Range:  minmax.F64{Max: 1},
+		Write: elog.WriteMap{
+			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+				ctx.SetStatFloat("TrgOnWasOn")
+			},
+			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			},
+		}})
+}
+
 func (ss *Sim) ConfigLogItems() {
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Run",

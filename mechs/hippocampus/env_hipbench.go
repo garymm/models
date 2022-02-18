@@ -13,18 +13,34 @@ type TableMaps map[HipTableTypes]*etable.Table
 const (
 	TrainAB      HipTableTypes = "TrainAB"
 	TrainBC      HipTableTypes = "TrainBC"
-	TestAb       HipTableTypes = "TestAB"
+	TestAB       HipTableTypes = "TestAB"
 	TestAC       HipTableTypes = "TestAC"
+	TrainAC      HipTableTypes = "TestAC"
 	PretrainLure HipTableTypes = "PreTrainLure"
 	TestLure     HipTableTypes = "TestLure"
 	TrainAll     HipTableTypes = "TrainAll" //needs special logic
 )
 
+// PatParams have the pattern parameters
+type PatParams struct {
+	ListSize    int     `desc:"number of A-B, A-C patterns each"`
+	MinDiffPct  float32 `desc:"minimum difference between item random patterns, as a proportion (0-1) of total active"`
+	DriftCtxt   bool    `desc:"use drifting context representations -- otherwise does bit flips from prototype"`
+	CtxtFlipPct float32 `desc:"proportion (0-1) of active bits to flip for each context pattern, relative to a prototype, for non-drifting"`
+	DriftPct    float32 `desc:"percentage of active bits that drift, per step, for drifting context"`
+}
+
 type EnvHipBench struct {
 	sim.Environment
 	env.FixedTable
 	EvalTables TableMaps //a map of tables used for handling stuff
+	Pat        PatParams
+}
 
+func (pp *PatParams) Defaults() {
+	pp.ListSize = 10 // 20 def
+	pp.MinDiffPct = 0.5
+	pp.CtxtFlipPct = .25
 }
 
 func (envhip *EnvHipBench) InitTables(tableNames ...HipTableTypes) {
@@ -91,6 +107,7 @@ func (envhip *EnvHipBench) Validate() error {
 }
 func (envhip *EnvHipBench) Init(run int) {
 	envhip.FixedTable.Init(run)
+	envhip.Pat.Defaults()
 }
 
 func (envhip *EnvHipBench) CurTrialName() string {

@@ -18,10 +18,10 @@ var OrigParamSets = params.Sets{
 				}},
 			{Sel: ".EcCa1Prjn", Desc: "encoder projections -- no norm, moment",
 				Params: params.Params{
-					"Prjn.Learn.Lrate":        "0.04",
-					"Prjn.Learn.Momentum.On":  "false",
-					"Prjn.Learn.Norm.On":      "false",
-					"Prjn.Learn.WtBal.On":     "true", // counteracting hogging
+					"Prjn.Learn.Lrate":       "0.04",
+					"Prjn.Learn.Momentum.On": "false",
+					"Prjn.Learn.Norm.On":     "false",
+					"Prjn.Learn.WtBal.On":    "true", // counteracting hogging
 					//"Prjn.Learn.XCal.SetLLrn": "true", // bcm now avail, comment out = default LLrn
 					//"Prjn.Learn.XCal.LLrn":    "0",    // 0 = turn off BCM, must with SetLLrn = true
 				}},
@@ -67,9 +67,9 @@ var OrigParamSets = params.Sets{
 				}},
 			{Sel: "#CA3ToCA1", Desc: "Schaffer collaterals -- slower, less hebb",
 				Params: params.Params{
-					"Prjn.CHL.Hebb":    	  "0.005",
-					"Prjn.CHL.SAvgCor": 	  "0.4",
-					"Prjn.Learn.Lrate": 	  "0.1",
+					"Prjn.CHL.Hebb":    "0.005",
+					"Prjn.CHL.SAvgCor": "0.4",
+					"Prjn.Learn.Lrate": "0.1",
 				}},
 			{Sel: ".EC", Desc: "all EC layers: only pools, no layer-level",
 				Params: params.Params{
@@ -104,105 +104,105 @@ var OrigParamSets = params.Sets{
 	}},
 	{Name: "List010", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "10",
+					"Pat.ListSize": "10",
 				}},
 		},
 	}},
 	{Name: "List020", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "20",
+					"Pat.ListSize": "20",
 				}},
 		},
 	}},
 	{Name: "List030", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "30",
+					"Pat.ListSize": "30",
 				}},
 		},
 	}},
 	{Name: "List040", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "40",
+					"Pat.ListSize": "40",
 				}},
 		},
 	}},
 	{Name: "List050", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "50",
+					"Pat.ListSize": "50",
 				}},
 		},
 	}},
 	{Name: "List060", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "60",
+					"Pat.ListSize": "60",
 				}},
 		},
 	}},
 	{Name: "List070", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "70",
+					"Pat.ListSize": "70",
 				}},
 		},
 	}},
 	{Name: "List080", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "80",
+					"Pat.ListSize": "80",
 				}},
 		},
 	}},
 	{Name: "List090", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "90",
+					"Pat.ListSize": "90",
 				}},
 		},
 	}},
 	{Name: "List100", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "100",
+					"Pat.ListSize": "100",
 				}},
 		},
 	}},
 	{Name: "List120", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "120",
+					"Pat.ListSize": "120",
 				}},
 		},
 	}},
 	{Name: "List160", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "160",
+					"Pat.ListSize": "160",
 				}},
 		},
 	}},
 	{Name: "List200", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "200",
+					"Pat.ListSize": "200",
 				}},
 		},
 	}},

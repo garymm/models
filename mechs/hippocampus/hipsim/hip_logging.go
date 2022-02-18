@@ -38,7 +38,7 @@ func (ss *Sim) StatCounters(train bool) {
 }
 
 func (ss *Sim) ConfigLogs() {
-	ss.ConfigLogItems()
+	ss.ConfigHipItems() //TODO Updated LogItems, need to continue this journey
 	ss.Logs.CreateTables()
 	ss.Logs.SetContext(&ss.Stats, ss.Net)
 	// don't plot certain combinations we don't use

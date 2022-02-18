@@ -134,105 +134,105 @@ var ParamSets = params.Sets{
 	}},
 	{Name: "List010", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "10",
+					"Pat.ListSize": "10",
 				}},
 		},
 	}},
 	{Name: "List020", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "20",
+					"Pat.ListSize": "20",
 				}},
 		},
 	}},
 	{Name: "List030", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "30",
+					"Pat.ListSize": "30",
 				}},
 		},
 	}},
 	{Name: "List040", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "40",
+					"Pat.ListSize": "40",
 				}},
 		},
 	}},
 	{Name: "List050", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "50",
+					"Pat.ListSize": "50",
 				}},
 		},
 	}},
 	{Name: "List060", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "60",
+					"Pat.ListSize": "60",
 				}},
 		},
 	}},
 	{Name: "List070", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "70",
+					"Pat.ListSize": "70",
 				}},
 		},
 	}},
 	{Name: "List080", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "80",
+					"Pat.ListSize": "80",
 				}},
 		},
 	}},
 	{Name: "List090", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "90",
+					"Pat.ListSize": "90",
 				}},
 		},
 	}},
 	{Name: "List100", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "100",
+					"Pat.ListSize": "100",
 				}},
 		},
 	}},
 	{Name: "List125", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "125",
+					"Pat.ListSize": "125",
 				}},
 		},
 	}},
 	{Name: "List150", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "150",
+					"Pat.ListSize": "150",
 				}},
 		},
 	}},
 	{Name: "List200", Desc: "list size", Sheets: params.Sheets{
 		"Pat": &params.Sheet{
-			{Sel: "PatParams", Desc: "pattern params",
+			{Sel: "Pat", Desc: "pattern params",
 				Params: params.Params{
-					"PatParams.ListSize": "200",
+					"Pat.ListSize": "200",
 				}},
 		},
 	}},
