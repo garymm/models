@@ -20,8 +20,96 @@ import (
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
+	"github.com/goki/mat32"
 	"log"
+	"strconv"
 )
+
+type Input2OutputCount map[string]map[string]int
+
+var InputOutputCounts = Input2OutputCount{}
+var InputPredictedCounts = Input2OutputCount{}
+
+func calculateInputOutputCounts(table *etable.Table) {
+	var nameIds = table.ColByName("Name").(*etensor.String)
+	for row, name := range nameIds.Values {
+		indexMap := InputOutputCounts[name]
+		rowString := strconv.Itoa(row)
+		if indexMap == nil {
+			indexMap = make(map[string]int)
+			indexMap[rowString] = 0
+			InputOutputCounts[name] = indexMap
+		}
+		indexMap[rowString] = indexMap[rowString] + 1
+	}
+}
+
+//Could also do this in the end of the theta cycle and take slices every N cycle
+func addToInputPredictedCounts(name, row string) {
+	indexMap, exists := InputPredictedCounts[name]
+	if exists == false {
+		InputPredictedCounts[name] = make(map[string]int)
+		InputPredictedCounts[name][row] = 0
+	}
+	InputPredictedCounts[name][row] = indexMap[row] + 1
+}
+
+func calculateNorm(counts map[string]int) map[string]float64 {
+	total := 0.0
+	normedValues := make(map[string]float64)
+	for name, val := range counts {
+		total += float64(val)
+		normedValues[name] = float64(counts[name])
+	}
+	for name, val := range normedValues {
+		normedValues[name] = val / total
+	}
+	return normedValues
+}
+
+func calculateNorms(allCounts Input2OutputCount) map[string]map[string]float64 {
+	allNormed := make(map[string]map[string]float64)
+	for name, theMap := range allCounts {
+		allNormed[name] = calculateNorm(theMap)
+	}
+	return allNormed
+}
+
+func KlDivergeAcross(normedTrue, normedPredicted map[string]map[string]float64) float64 {
+	total := 0.0
+	for name, _ := range normedTrue {
+		total += KLDiverge(normedTrue[name], normedPredicted[name])
+	}
+	return (total / float64(len(normedTrue)))
+}
+func KLDiverge(trueDistribution, predDistribution map[string]float64) float64 {
+	diverge := 0.0
+	for name, p := range predDistribution {
+		q := predDistribution[name]
+		logpq := mat32.Log2(float32(p / q))
+		diverge += (p * float64(logpq))
+	}
+	return diverge
+}
+
+func alignInputOutput(name string) {
+	groundTruthMap, _ := InputOutputCounts[name]
+	predictedMap, _ := InputPredictedCounts[name]
+	//Add zeros for values that exist in predictedMap but not in ground truth map
+	for rowName := range predictedMap {
+		_, exists := groundTruthMap[rowName]
+		if exists == false {
+			groundTruthMap[rowName] = 0
+		}
+	}
+	for rowName := range groundTruthMap {
+		_, exists := predictedMap[rowName]
+		if exists == false {
+			predictedMap[rowName] = 0
+		}
+	}
+
+}
 
 var ProgramName = "One2Many"
 
@@ -38,8 +126,10 @@ func TrialStats(ss *sim.Sim, accum bool) {
 
 	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
 
-	_, cor, cnm := ss.Stats.ClosestPat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
+	row, cor, cnm := ss.Stats.ClosestPat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
 
+	//For each name, record map of closest rows that are predicted
+	//For each name, record rows associated with
 	ss.Stats.SetString("TrlClosest", cnm)
 	ss.Stats.SetFloat("TrlCorrel", float64(cor))
 	tnm := ""
@@ -54,6 +144,16 @@ func TrialStats(ss *sim.Sim, accum bool) {
 		ss.Stats.SetFloat("TrlErr", 1)
 	}
 
+	addToInputPredictedCounts(cnm, strconv.Itoa(row)) //Alternatively, I could only measure the values that are part of it
+	if TrainEnv.Epoch().Cur == 2 {
+		if TrainEnv.Epoch().Chg == true {
+			normedOutputDistr := calculateNorms(InputOutputCounts)
+			normedPredDistr := calculateNorms(InputPredictedCounts)
+
+			KlDivergeAcross(normedOutputDistr, normedPredDistr)
+
+		}
+	}
 }
 
 type One2Sim struct {
@@ -64,6 +164,10 @@ type One2Sim struct {
 }
 
 func main() {
+
+	InputPredictedCounts = make(Input2OutputCount) //Calculate input output counts for doing KL
+	InputOutputCounts = make(Input2OutputCount)    //calculate input predicted counts for doing KL
+
 	// TheSim is the overall state for this simulation
 	var TheSim One2Sim
 	TheSim.New()
@@ -86,6 +190,7 @@ func main() {
 func Config(ss *One2Sim) {
 	ConfigPats(ss)
 	OpenPats(&ss.Sim)
+	calculateInputOutputCounts(ss.Pats)
 	ConfigParams(&ss.Sim)
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
