@@ -1198,22 +1198,7 @@ func (ss *Sim) LogTrnEpc(dt *etable.Table) {
 }
 
 func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
-	dt.SetMetaData("name", "TrnEpcLog")
-	dt.SetMetaData("desc", "Record of performance over epochs of training")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
-	sch := etable.Schema{
-		{"Run", etensor.INT64, nil, nil},
-		{"Epoch", etensor.INT64, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"PctErr", etensor.FLOAT64, nil, nil},
-		{"PctCor", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
-		{"Mem", etensor.FLOAT64, nil, nil},
-		{"TrgOnWasOff", etensor.FLOAT64, nil, nil},
-		{"TrgOffWasOn", etensor.FLOAT64, nil, nil},
-	}
 	for _, lnm := range ss.LayStatNms {
 		sch = append(sch, etable.Column{lnm + "_MaxGeM", etensor.FLOAT64, nil, nil})
 		sch = append(sch, etable.Column{lnm + "_ActAvg", etensor.FLOAT64, nil, nil})
@@ -1222,20 +1207,6 @@ func (ss *Sim) ConfigTrnEpcLog(dt *etable.Table) {
 }
 
 func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
-	plt.Params.Title = "Hippocampus Epoch Plot"
-	plt.Params.XAxisCol = "Epoch"
-	plt.SetTable(dt)
-	// order of params: on, fixMin, min, fixMax, max
-	plt.SetColParams("Run", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("Epoch", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("UnitErr", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("PctErr", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
-	plt.SetColParams("PctCor", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
-	plt.SetColParams("CosDiff", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
-
-	plt.SetColParams("Mem", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)         // default plot
-	plt.SetColParams("TrgOnWasOff", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1) // default plot
-	plt.SetColParams("TrgOffWasOn", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1) // default plot
 
 	for _, lnm := range ss.LayStatNms {
 		plt.SetColParams(lnm+"_MaxGeM", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 2.0)
@@ -1250,26 +1221,6 @@ func (ss *Sim) ConfigTrnEpcPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 // LogTstTrl adds data from current trial to the TstTrlLog table.
 // log always contains number of testing items
 func (ss *Sim) LogTstTrl(dt *etable.Table) {
-	epc := ss.TrainEnv.Epoch.Prv // this is triggered by increment so use previous value
-	trl := ss.TestEnv.Trial.Cur
-
-	row := dt.Rows
-	if ss.TestNm == "AB" && trl == 0 { // reset at start
-		row = 0
-	}
-	dt.SetNumRows(row + 1)
-
-	dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	dt.SetCellFloat("Epoch", row, float64(epc))
-	dt.SetCellString("TestNm", row, ss.TestNm)
-	dt.SetCellFloat("Trial", row, float64(row))
-	dt.SetCellString("TrialName", row, ss.TestEnv.TrialName.Cur)
-	dt.SetCellFloat("UnitErr", row, ss.TrlUnitErr)
-	dt.SetCellFloat("CosDiff", row, ss.TrlCosDiff)
-
-	dt.SetCellFloat("Mem", row, ss.Mem)
-	dt.SetCellFloat("TrgOnWasOff", row, ss.TrgOnWasOffCmp)
-	dt.SetCellFloat("TrgOffWasOn", row, ss.TrgOffWasOn)
 
 	for _, lnm := range ss.LayStatNms {
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
@@ -1290,27 +1241,7 @@ func (ss *Sim) LogTstTrl(dt *etable.Table) {
 }
 
 func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
-	// inLay := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon()
-	// outLay := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
 
-	dt.SetMetaData("name", "TstTrlLog")
-	dt.SetMetaData("desc", "Record of testing per input pattern")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
-
-	nt := ss.TestEnv.Table.Len() // number in view
-	sch := etable.Schema{
-		{"Run", etensor.INT64, nil, nil},
-		{"Epoch", etensor.INT64, nil, nil},
-		{"TestNm", etensor.STRING, nil, nil},
-		{"Trial", etensor.INT64, nil, nil},
-		{"TrialName", etensor.STRING, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
-		{"Mem", etensor.FLOAT64, nil, nil},
-		{"TrgOnWasOff", etensor.FLOAT64, nil, nil},
-		{"TrgOffWasOn", etensor.FLOAT64, nil, nil},
-	}
 	for _, lnm := range ss.LayStatNms {
 		sch = append(sch, etable.Column{lnm + " ActM.Avg", etensor.FLOAT64, nil, nil})
 	}
@@ -1325,22 +1256,10 @@ func (ss *Sim) ConfigTstTrlLog(dt *etable.Table) {
 func (ss *Sim) ConfigTstTrlPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
 	plt.Params.Title = "Hippocampus Test Trial Plot"
 	plt.Params.XAxisCol = "TrialName"
-	plt.Params.Type = eplot.Bar
-	plt.SetTable(dt) // this sets defaults so set params after
-	plt.Params.XAxisRot = 45
+	plt.Params.Type = eplot.Bar //Todo specifying this in our code
+	plt.SetTable(dt)            // this sets defaults so set params after
+	plt.Params.XAxisRot = 45    //todo specify this in our code
 	// order of params: on, fixMin, min, fixMax, max
-	plt.SetColParams("Run", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("Epoch", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("TestNm", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("Trial", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("TrialName", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("UnitErr", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("CosDiff", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
-
-	plt.SetColParams("Mem", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)
-	plt.SetColParams("TrgOnWasOff", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)
-	plt.SetColParams("TrgOffWasOn", eplot.On, eplot.FixMin, 0, eplot.FixMax, 1)
-
 	for _, lnm := range ss.LayStatNms {
 		plt.SetColParams(lnm+" ActM.Avg", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 0.5)
 	}
@@ -1430,20 +1349,8 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 
 	// note: this shows how to use agg methods to compute summary data from another
 	// data table, instead of incrementing on the Sim
-	dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	dt.SetCellString("Params", row, params)
 	dt.SetCellString("NetSize", row, netsz)
 	dt.SetCellString("ListSize", row, listsz)
-	dt.SetCellFloat("Epoch", row, float64(epc))
-	dt.SetCellFloat("PerTrlMSec", row, ss.EpcPerTrlMSec)
-	dt.SetCellFloat("UnitErr", row, agg.Sum(tix, "UnitErr")[0])
-	dt.SetCellFloat("PctErr", row, agg.PropIf(tix, "UnitErr", func(idx int, val float64) bool {
-		return val > 0
-	})[0])
-	dt.SetCellFloat("PctCor", row, agg.PropIf(tix, "UnitErr", func(idx int, val float64) bool {
-		return val == 0
-	})[0])
-	dt.SetCellFloat("CosDiff", row, agg.Mean(tix, "CosDiff")[0])
 
 	trix := etable.NewIdxView(trl)
 	spl := split.GroupBy(trix, []string{"TestNm"})
@@ -1451,7 +1358,6 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 		split.Agg(spl, ts, agg.AggMean)
 	}
 	ss.TstStats = spl.AggsToTable(etable.ColNameOnly)
-
 	for ri := 0; ri < ss.TstStats.Rows; ri++ {
 		tst := ss.TstStats.CellString("TestNm", ri)
 		for _, ts := range ss.TstStatNms {
@@ -1490,17 +1396,6 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 		ss.NZero = 0
 	}
 
-	// note: essential to use Go version of update when called from another goroutine
-	if ss.TstEpcPlot != nil {
-		ss.TstEpcPlot.GoUpdate()
-	}
-	if ss.TstEpcFile != nil {
-		if !ss.TstEpcHdrs {
-			dt.WriteCSVHeaders(ss.TstEpcFile, etable.Tab)
-			ss.TstEpcHdrs = true
-		}
-		dt.WriteCSVRow(ss.TstEpcFile, row, etable.Tab)
-	}
 }
 
 func (ss *Sim) ConfigTstEpcLog(dt *etable.Table) {
@@ -1514,12 +1409,6 @@ func (ss *Sim) ConfigTstEpcLog(dt *etable.Table) {
 		{"Params", etensor.STRING, nil, nil},
 		{"NetSize", etensor.STRING, nil, nil},
 		{"ListSize", etensor.STRING, nil, nil},
-		{"Epoch", etensor.INT64, nil, nil},
-		{"PerTrlMSec", etensor.FLOAT64, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"PctErr", etensor.FLOAT64, nil, nil},
-		{"PctCor", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
 	}
 	for _, tn := range ss.TstNms {
 		for _, ts := range ss.TstStatNms {
@@ -1697,48 +1586,10 @@ func (ss *Sim) LogRun(dt *etable.Table) {
 }
 
 func (ss *Sim) ConfigRunLog(dt *etable.Table) {
-	dt.SetMetaData("name", "RunLog")
-	dt.SetMetaData("desc", "Record of performance at end of training")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(LogPrec))
 
-	sch := etable.Schema{
-		{"Run", etensor.INT64, nil, nil},
-		{"Params", etensor.STRING, nil, nil},
-		{"NetSize", etensor.STRING, nil, nil},
-		{"ListSize", etensor.STRING, nil, nil},
-		{"NEpochs", etensor.FLOAT64, nil, nil},
-		{"FirstZero", etensor.FLOAT64, nil, nil},
-		{"UnitErr", etensor.FLOAT64, nil, nil},
-		{"PctErr", etensor.FLOAT64, nil, nil},
-		{"PctCor", etensor.FLOAT64, nil, nil},
-		{"CosDiff", etensor.FLOAT64, nil, nil},
-	}
-	for _, tn := range ss.TstNms {
-		for _, ts := range ss.TstStatNms {
-			sch = append(sch, etable.Column{tn + " " + ts, etensor.FLOAT64, nil, nil})
-		}
-	}
-	for _, lnm := range ss.LayStatNms {
-		for _, ts := range ss.SimMatStats {
-			sch = append(sch, etable.Column{lnm + " " + ts, etensor.FLOAT64, nil, nil})
-		}
-	}
-	dt.SetFromSchema(sch, 0)
 }
 
 func (ss *Sim) ConfigRunPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot2D {
-	plt.Params.Title = "Hippocampus Run Plot"
-	plt.Params.XAxisCol = "Run"
-	plt.SetTable(dt)
-	// order of params: on, fixMin, min, fixMax, max
-	plt.SetColParams("Run", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("NEpochs", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("FirstZero", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("UnitErr", eplot.Off, eplot.FixMin, 0, eplot.FloatMax, 0)
-	plt.SetColParams("PctErr", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
-	plt.SetColParams("PctCor", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
-	plt.SetColParams("CosDiff", eplot.Off, eplot.FixMin, 0, eplot.FixMax, 1)
 
 	for _, tn := range ss.TstNms {
 		for _, ts := range ss.TstStatNms {

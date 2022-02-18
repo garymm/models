@@ -133,13 +133,13 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Voff":     "5",
 						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
-						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-						"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
-						"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
-						"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
-						"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
-					}},
+					"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
+					"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+					"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
+					"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
+					"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
+					"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
+				}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
@@ -402,7 +402,9 @@ func ConfigNet(ss *HipSim, net *axon.Network) {
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
-	ss.SetParams("Network", ss.LogSetParams) // only set Network params
+
+	ss.Params.SetObject("Network")
+	//ss.SetParams("Network", ss.LogSetParams) // only set Network params
 	err := net.Build()
 	if err != nil {
 		log.Println(err)
