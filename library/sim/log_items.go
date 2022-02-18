@@ -57,12 +57,21 @@ func (ss *Sim) ConfigLogItems() {
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name:  "FirstZero",
-		Type:  etensor.FLOAT64,
+		Type:  etensor.INT64,
 		Plot:  elog.DFalse,
 		Range: minmax.F64{Min: -1},
 		Write: elog.WriteMap{
 			elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
 				ctx.SetStatInt("FirstZero")
+			}}})
+	ss.Logs.AddItem(&elog.Item{
+		Name:  "LastZero",
+		Type:  etensor.INT64,
+		Plot:  elog.DFalse,
+		Range: minmax.F64{Min: -1},
+		Write: elog.WriteMap{
+			elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
+				ctx.SetStatInt("LastZero")
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "UnitErr",
@@ -101,6 +110,9 @@ func (ss *Sim) ConfigLogItems() {
 					ss.Stats.SetInt("NZero", nzero+1)
 				} else {
 					ss.Stats.SetInt("NZero", 0)
+				}
+				if ss.Stats.Int("NZero") >= ss.NZeroStop {
+					ss.Stats.SetInt("LastZero", epc)
 				}
 			}, elog.Scope(elog.Test, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAggItem(ctx.Mode, elog.Trial, "Err", agg.AggMean)

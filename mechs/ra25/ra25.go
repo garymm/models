@@ -89,8 +89,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Y": "10",
 					},
 					Hypers: params.Hypers{
-						"Layer.X": {"StdDev": "0.3", "Min": "2", "Type": "Int"},
-						"Layer.Y": {"StdDev": "0.3", "Min": "2", "Type": "Int"},
+						//"Layer.X": {"StdDev": "0.3", "Min": "2", "Type": "Int"},
+						//"Layer.Y": {"StdDev": "0.3", "Min": "2", "Type": "Int"},
 					},
 				},
 			},
@@ -115,12 +115,12 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Voff":     "5",
 						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
-						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-						"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
-						"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
-						"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
-						"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
+						//"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
+						//"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+						//"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
+						//"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
+						//"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
+						//"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
@@ -129,8 +129,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Inhib.ActAvg.Init": "0.15", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-						"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
+						//"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
+						//"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
@@ -143,20 +143,20 @@ func ConfigParams(ss *sim.Sim) {
 				{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
 					Params: params.Params{
 						"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
-						"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
+						"Prjn.SWt.Adapt.Lrate":  "0.0", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
 						"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
 					},
 					Hypers: params.Hypers{
-						"Prjn.Learn.Lrate.Base": {"StdDev": "0.05"},
-						"Prjn.SWt.Adapt.Lrate":  {"StdDev": "0.025"},
-						"Prjn.SWt.Init.SPct":    {"StdDev": "0.1"},
+						"Prjn.Learn.Lrate.Base": {"StdDev": "0.2"},
+						//"Prjn.SWt.Adapt.Lrate":  {"StdDev": "0.025"},
+						//"Prjn.SWt.Init.SPct":    {"StdDev": "0.1"},
 					}},
 				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
 					Params: params.Params{
 						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5 //importance: 9
 					},
 					Hypers: params.Hypers{
-						"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
+						//"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
 					}},
 			},
 			"Sim": &params.Sheet{ // sim params apply to sim object
