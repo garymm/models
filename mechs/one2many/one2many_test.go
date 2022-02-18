@@ -15,7 +15,7 @@ func TestParamAssignment(t *testing.T) {
 	ss.Pats = &etable.Table{}
 	fmt.Println(ss.CmdArgs)
 	ss.ApplyHyperFromCMD("../../hyperparams.json")
-	t.Errorf("this hsould fail")
+	//t.Errorf("this should fail")
 	//ss.Params.SetMsg = ss.CmdArgs.LogSetParams
 	//ss.Params.SetAll()
 	// NOTE uncomment following to see the compiled hyper params
