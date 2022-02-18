@@ -125,10 +125,10 @@ def single_bones_trial(bones_obj, params, lock, i):
     print(observed_value)
     with lock:
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
-    all_observations.append((observed_value, suggestions))
+    all_observations.append((observed_value, suggestions, trial_name))
     print("WHAT WE'VE TRED SO FAR:")
     for so in all_observations:
-        print("Score: " + str(so[0]) + " From Sugg: " + str(so[1]))
+        print(so[2] + " Score: " + str(so[0]) + " From Sugg: " + str(so[1]))
     print("BEST RESULT: " + str(min(all_observations)))
 
 

@@ -19,6 +19,7 @@ func (ss *Sim) InitStats() {
 	ss.Stats.SetFloat("TrlUnitErr", 0.0)
 	ss.Stats.SetFloat("TrlCosDiff", 0.0)
 	ss.Stats.SetInt("FirstZero", -1) // critical to reset to -1
+	ss.Stats.SetInt("LastZero", -1)  // critical to reset to -1
 	ss.Stats.SetInt("NZero", 0)
 }
 
@@ -48,7 +49,6 @@ func (ss *Sim) ConfigLogsFromArgs() {
 	}
 	if ss.CmdArgs.saveRunLog {
 		fnm := ss.LogFileName("run")
-		print("RUN LOG FILE NAME: " + fnm) // DO NOT SUBMIT
 		ss.Logs.SetLogFile(elog.Train, elog.Run, fnm)
 	}
 }

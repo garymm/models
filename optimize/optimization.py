@@ -8,11 +8,12 @@ import json
 # todo oneday wrap this in a clear object with comments
 MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top of each mech file
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
-VARIABLE_TO_OPTIMIZE = "#FirstZero"
+# TODO Add a metric to track LastZero, or the time when it is able to get 5 zeroes in a row
+VARIABLE_TO_OPTIMIZE = "|LastZero"
 NUM_EPOCHS = 75
 NUM_RUNS = 1
-NUM_TRIALS = 10
-NUM_PARALLEL = 5
+NUM_TRIALS = 20
+NUM_PARALLEL = 10
 
 
 def get_hypers():
@@ -32,8 +33,9 @@ def get_hypers():
 def get_score_from_logs(logs_name: str):
     # TODO Make sure this name is unique for parallelization.
     score = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
-    if VARIABLE_TO_OPTIMIZE == "#FirstZero" and score == -1:
-        score = 100000  # This is a kludge for #FirstZero
+    # I don't know where the # or | comes from.
+    if VARIABLE_TO_OPTIMIZE in ["#FirstZero", "#LastZero", "|FirstZero", "|LastZero"] and score == -1:
+        score = 100000  # This is a kludge to address the default value. Not sure if inf would mess up search.
     return float(score)
 
 
