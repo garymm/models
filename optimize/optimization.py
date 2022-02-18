@@ -9,10 +9,10 @@ import json
 MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top of each mech file
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "#FirstZero"
-NUM_EPOCHS = 100
-NUM_RUNS = 2
-NUM_TRIALS = 1
-NUM_PARALLEL = 4
+NUM_EPOCHS = 75
+NUM_RUNS = 1
+NUM_TRIALS = 10
+NUM_PARALLEL = 5
 
 
 def get_hypers():
@@ -24,14 +24,16 @@ def get_hypers():
     f = open(hyper_file)
     params = json.load(f)
     f.close()
-    print("GOT PARAMS")
-    print(params)
+    # print("GOT PARAMS")
+    # print(params)
     return params
 
 
 def get_score_from_logs(logs_name: str):
     # TODO Make sure this name is unique for parallelization.
     score = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")[VARIABLE_TO_OPTIMIZE].values[-1]
+    if VARIABLE_TO_OPTIMIZE == "#FirstZero" and score == -1:
+        score = 100000  # This is a kludge for #FirstZero
     return float(score)
 
 

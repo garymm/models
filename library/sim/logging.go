@@ -37,6 +37,22 @@ func (ss *Sim) StatCounters(train bool) {
 	ss.GUI.NetViewText = ss.Stats.Print([]string{"Run", "Epoch", "Trial", "TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
 }
 
+func (ss *Sim) ConfigLogsFromArgs() {
+	if ss.CmdArgs.saveEpcLog {
+		fnm := ss.LogFileName("epc")
+		ss.Logs.SetLogFile(elog.Train, elog.Epoch, fnm)
+
+		//Save test as well as train epoch logs
+		testfnm := ss.LogFileName("testepc")
+		ss.Logs.SetLogFile(elog.Test, elog.Epoch, testfnm)
+	}
+	if ss.CmdArgs.saveRunLog {
+		fnm := ss.LogFileName("run")
+		print("RUN LOG FILE NAME: " + fnm) // DO NOT SUBMIT
+		ss.Logs.SetLogFile(elog.Train, elog.Run, fnm)
+	}
+}
+
 func (ss *Sim) ConfigLogs() {
 	ss.ConfigLogItems()
 	ss.Logs.CreateTables()
@@ -47,6 +63,7 @@ func (ss *Sim) ConfigLogs() {
 	// note: Analyze not plotted by default
 	ss.Logs.SetMeta(elog.Train, elog.Run, "LegendCol", "Params")
 	ss.Stats.ConfigRasters(ss.Net, ss.Net.LayersByClass())
+	ss.ConfigLogsFromArgs()
 }
 
 // RunName returns a name for this run that combines Tag and Params -- add this to
