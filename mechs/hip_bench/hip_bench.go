@@ -6,7 +6,6 @@
 package main
 
 //
-//
 //import (
 //	"bytes"
 //	"flag"
@@ -127,7 +126,7 @@ package main
 //
 //	Net          *axon.Network            `view:"no-inline"`
 //	Hip          HipParams                `desc:"hippocampus sizing parameters"`
-//	Pat          Pat                `desc:"parameters for the input patterns"`
+//	Pat          Pat                      `desc:"parameters for the input patterns"`
 //	PoolVocab    patgen.Vocab             `view:"no-inline" desc:"pool patterns vocabulary"`
 //	TrainAB      *etable.Table            `view:"no-inline" desc:"AB training patterns to use"`
 //	TrainAC      *etable.Table            `view:"no-inline" desc:"AC training patterns to use"`

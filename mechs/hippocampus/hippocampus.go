@@ -62,20 +62,30 @@ type HipSim struct {
 	// Specific to the one2many module
 	Hip       HipParams    `desc:"hippocampus sizing parameters"`
 	PoolVocab patgen.Vocab `view:"no-inline" desc:"pool patterns vocabulary"`
+	Pat       PatParams
+}
+
+func (ss *HipSim) New() {
+	ss.Sim.New()
+	ss.PoolVocab = patgen.Vocab{}
+	ss.Hip = HipParams{}
+	ss.Hip.Defaults()
+	ss.Pat.Defaults()
 }
 
 func main() {
 	// TheSim is the overall state for this simulation
 	var TheSim HipSim
 	TheSim.New()
-
+	TrainEnv.InitTables(TrainAB, TrainBC, PretrainLure, TrainAll)
+	TestEnv.InitTables(TestAB, TestAC, TestLure)
 	Config(&TheSim)
 
 	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim.Sim, ProgramName, "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim.GuiRun(&TheSim.Sim, ProgramName, "Hippocampus", `This demonstrates a hippocampus Axon model.`)
 		})
 	}
 
@@ -133,13 +143,13 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Voff":     "5",
 						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
-					"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
-					"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-					"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
-					"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
-					"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
-					"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
-				}},
+						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
+						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+						"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
+						"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
+						"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
+						"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
+					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
 						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
@@ -197,7 +207,7 @@ func ConfigEnv(ss *HipSim) {
 	//Todo create the appropriate names
 	PholderMaxruns := -1
 	PholderMaxepochs := -1
-	PHOLDERPreTrainEpcs := -1
+	//PHOLDERPreTrainEpcs := -1
 	PholderTrainAB := etable.Table{}
 	PHolderTestAB := etable.Table{}
 	PholderStartRun := 0
@@ -208,7 +218,7 @@ func ConfigEnv(ss *HipSim) {
 	if PholderMaxepochs == 0 { // allow user override
 		PholderMaxepochs = 30
 		ss.NZeroStop = 1
-		PHOLDERPreTrainEpcs = 10 // 10 > 20 perf wise
+		//PHOLDERPreTrainEpcs = 10 // 10 > 20 perf wise
 	}
 
 	TrainEnv.Nm = "TrainEnv"
@@ -240,11 +250,11 @@ func ConfigPats(ss *HipSim) {
 	ecX := hp.ECSize.X
 	plY := hp.ECPool.Y // good idea to get shorter vars when used frequently
 	plX := hp.ECPool.X // makes much more readable
-	npats := trainEnv.Pat.ListSize
+	npats := ss.Pat.ListSize
 	pctAct := hp.ECPctAct
-	minDiff := trainEnv.Pat.MinDiffPct
+	minDiff := ss.Pat.MinDiffPct
 	nOn := patgen.NFmPct(pctAct, plY*plX)
-	ctxtflip := patgen.NFmPct(trainEnv.Pat.CtxtFlipPct, nOn)
+	ctxtflip := patgen.NFmPct(ss.Pat.CtxtFlipPct, nOn)
 	patgen.AddVocabEmpty(ss.PoolVocab, "empty", npats, plY, plX)
 	patgen.AddVocabPermutedBinary(ss.PoolVocab, "A", npats, plY, plX, pctAct, minDiff)
 	patgen.AddVocabPermutedBinary(ss.PoolVocab, "B", npats, plY, plX, pctAct, minDiff)
@@ -264,7 +274,7 @@ func ConfigPats(ss *HipSim) {
 	}
 
 	TrainAB, TestAB := trainEnv.EvalTables[TrainAB], TestEnv.EvalTables[TestAB]
-	TrainAC, TestAC := trainEnv.EvalTables[TestAC], testEnv.EvalTables[TestAC]
+	TrainAC, TestAC := trainEnv.EvalTables[TrainAC], testEnv.EvalTables[TestAC]
 	PreTrainLure, TestLure := trainEnv.EvalTables[PretrainLure], testEnv.EvalTables[TestLure]
 	TrainALL := trainEnv.EvalTables[TrainAll]
 
@@ -412,3 +422,5 @@ func ConfigNet(ss *HipSim, net *axon.Network) {
 	}
 	net.InitWts()
 }
+
+// TODO Move everything after this point out of here into libraries
