@@ -115,12 +115,12 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Voff":     "5",
 						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
-						//"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
-						//"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
+						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.3"},
+						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.04", "Min": "0.01"},
 						//"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
 						//"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
-						//"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
-						//"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
+						"Layer.Act.NMDA.Gbar":  {"StdDev": "0.1"},
+						"Layer.Act.GABAB.Gbar": {"StdDev": "0.1"},
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
@@ -149,14 +149,14 @@ func ConfigParams(ss *sim.Sim) {
 					Hypers: params.Hypers{
 						"Prjn.Learn.Lrate.Base": {"StdDev": "0.2"},
 						//"Prjn.SWt.Adapt.Lrate":  {"StdDev": "0.025"},
-						//"Prjn.SWt.Init.SPct":    {"StdDev": "0.1"},
+						"Prjn.SWt.Init.SPct": {"StdDev": "0.5", "Min": "0.1"},
 					}},
 				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
 					Params: params.Params{
 						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5 //importance: 9
 					},
 					Hypers: params.Hypers{
-						//"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
+						//"Prjn.PrjnScale.Rel": {"StdDev": ".2", "Min": "0.01"	},
 					}},
 			},
 			"Sim": &params.Sheet{ // sim params apply to sim object
