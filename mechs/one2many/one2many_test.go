@@ -9,6 +9,7 @@ import (
 	"github.com/emer/etable/etable"
 )
 
+/*
 func TestParamAssignment(t *testing.T) {
 	//go test -run TestParamAssignment mechs/one2many/*.go
 	ss := One2Sim{}
@@ -21,7 +22,7 @@ func TestParamAssignment(t *testing.T) {
 	// NOTE uncomment following to see the compiled hyper params
 	// fmt.Println(ss.Params.NetHypers.JSONString())
 	//ss.NewRun()
-}
+}*/
 
 func TestConfigNet(t *testing.T) {
 	simo := sim.Sim{}
