@@ -27,7 +27,7 @@ func (ss *Sim) ConfigHipItems() {
 			},
 		}})
 	ss.Logs.AddItem(&elog.Item{
-		Name:   "TrgOnWasOff",
+		Name:   "TrgOnWasOffAll",
 		Type:   etensor.FLOAT64,
 		Plot:   elog.DTrue,
 		FixMax: elog.DTrue,
@@ -35,14 +35,14 @@ func (ss *Sim) ConfigHipItems() {
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-				ctx.SetStatFloat("TrgOnWasOff")
+				ctx.SetStatFloat("TrgOnWasOffAll")
 			},
 			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
 	ss.Logs.AddItem(&elog.Item{
-		Name:   "TrgOnWasOn",
+		Name:   "TrgOffWasOn",
 		Type:   etensor.FLOAT64,
 		Plot:   elog.DTrue,
 		FixMax: elog.DTrue,
@@ -50,7 +50,7 @@ func (ss *Sim) ConfigHipItems() {
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-				ctx.SetStatFloat("TrgOnWasOn")
+				ctx.SetStatFloat("TrgOffWasOn")
 			},
 			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
