@@ -5,6 +5,9 @@ from collections import OrderedDict
 import json
 import copy
 import os
+
+import wandb
+
 import optimization
 import concurrent.futures
 import threading
@@ -17,7 +20,7 @@ from bones import ObservationInParam
 from bones import LinearSpace
 
 
-OBSERVATIONS_FILE = "bones_obs.txt"
+OBSERVATIONS_FILE = "bones_obs.txt" #todo doesn't seem to actually write to file
 
 
 def get_bones_suggestion(current_suggestions: dict, parametername, guidelines):
@@ -96,6 +99,7 @@ def run_bones(bones_obj, trialnumber, params):
     best_score = sys.float_info.max
     for i in range(trialnumber):
         trial_name = "Searching_" + str(i)
+        current_suggestion = None
         suggestions = bones_obj.suggest().suggestion
         # print("TRYING THESE SUGGESTIONS")
         # print(suggestions)
@@ -127,7 +131,7 @@ def single_bones_trial(bones_obj, params, lock, i):
     print(observed_value)
     with lock:
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
-    all_observations.append((observed_value, suggestions, trial_name))
+        all_observations.append((observed_value, suggestions, trial_name))
     print("WHAT WE'VE TRED SO FAR:")
     for so in all_observations:
         print(so[2] + " Score: " + str(so[0]) + " From Sugg: " + str(so[1]))
@@ -157,8 +161,9 @@ def main():
     initial_params = prep_params_dict["initial_params"]
     params_space_by_name = prep_params_dict["paramspace_conditions"]
     bone_params = BONESParams(
-        better_direction_sign=-1, is_wandb_logging_enabled=False, initial_search_radius=0.5, resample_frequency=-1
+        better_direction_sign=-1, is_wandb_logging_enabled=True, initial_search_radius=0.5, resample_frequency=-1
     )
+
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
     best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
@@ -166,5 +171,6 @@ def main():
 
 
 if __name__ == '__main__':
+    wandb.login(key = "")
     print("Starting optimization main func")
     main()
