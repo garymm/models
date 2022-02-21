@@ -15,7 +15,7 @@ const (
 	TrainBC      HipTableTypes = "TrainBC"
 	TestAB       HipTableTypes = "TestAB"
 	TestAC       HipTableTypes = "TestAC"
-	TrainAC      HipTableTypes = "TestAC"
+	TrainAC      HipTableTypes = "TrainAC"
 	PretrainLure HipTableTypes = "PreTrainLure"
 	TestLure     HipTableTypes = "TestLure"
 	TrainAll     HipTableTypes = "TrainAll" //needs special logic

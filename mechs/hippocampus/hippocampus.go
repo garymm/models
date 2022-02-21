@@ -62,20 +62,30 @@ type HipSim struct {
 	// Specific to the one2many module
 	Hip       HipParams    `desc:"hippocampus sizing parameters"`
 	PoolVocab patgen.Vocab `view:"no-inline" desc:"pool patterns vocabulary"`
+	Pat       PatParams
+}
+
+func (ss *HipSim) New() {
+	ss.Sim.New()
+	ss.PoolVocab = patgen.Vocab{}
+	ss.Hip = HipParams{}
+	ss.Hip.Defaults()
+	ss.Pat.Defaults()
 }
 
 func main() {
 	// TheSim is the overall state for this simulation
 	var TheSim HipSim
 	TheSim.New()
-
+	TrainEnv.InitTables(TrainAB, TrainAC, PretrainLure, TrainAll)
+	TestEnv.InitTables(TestAB, TestAC, TestLure)
 	Config(&TheSim)
 
 	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim.Sim, ProgramName, "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim.GuiRun(&TheSim.Sim, ProgramName, "Hippocampus", `This demonstrates a hippocampus Axon model.`)
 		})
 	}
 
@@ -240,11 +250,11 @@ func ConfigPats(ss *HipSim) {
 	ecX := hp.ECSize.X
 	plY := hp.ECPool.Y // good idea to get shorter vars when used frequently
 	plX := hp.ECPool.X // makes much more readable
-	npats := trainEnv.Pat.ListSize
+	npats := ss.Pat.ListSize
 	pctAct := hp.ECPctAct
-	minDiff := trainEnv.Pat.MinDiffPct
+	minDiff := ss.Pat.MinDiffPct
 	nOn := patgen.NFmPct(pctAct, plY*plX)
-	ctxtflip := patgen.NFmPct(trainEnv.Pat.CtxtFlipPct, nOn)
+	ctxtflip := patgen.NFmPct(ss.Pat.CtxtFlipPct, nOn)
 	patgen.AddVocabEmpty(ss.PoolVocab, "empty", npats, plY, plX)
 	patgen.AddVocabPermutedBinary(ss.PoolVocab, "A", npats, plY, plX, pctAct, minDiff)
 	patgen.AddVocabPermutedBinary(ss.PoolVocab, "B", npats, plY, plX, pctAct, minDiff)
@@ -263,8 +273,8 @@ func ConfigPats(ss *HipSim) {
 		//patgen.VocabDrift(ss.PoolVocab, ss.NFlipBits, "ctxt"+strconv.Itoa(i+1))
 	}
 
-	TrainAB, TestAB := trainEnv.EvalTables[TrainAB], TestEnv.EvalTables[TestAB]
-	TrainAC, TestAC := trainEnv.EvalTables[TestAC], testEnv.EvalTables[TestAC]
+	TrainAB, TestAB := trainEnv.EvalTables[TrainAB], testEnv.EvalTables[TestAB]
+	TrainAC, TestAC := trainEnv.EvalTables[TrainAC], testEnv.EvalTables[TestAC]
 	PreTrainLure, TestLure := trainEnv.EvalTables[PretrainLure], testEnv.EvalTables[TestLure]
 	TrainALL := trainEnv.EvalTables[TrainAll]
 
@@ -412,3 +422,5 @@ func ConfigNet(ss *HipSim, net *axon.Network) {
 	}
 	net.InitWts()
 }
+
+// TODO Move everything after this point out of here into libraries
