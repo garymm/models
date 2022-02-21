@@ -1,5 +1,6 @@
 import collections
 import sys
+import time
 from collections import OrderedDict
 import json
 import copy
@@ -111,6 +112,7 @@ def run_bones(bones_obj, trialnumber, params):
 
 
 all_observations = collections.deque()
+start_time = -1
 
 
 def single_bones_trial(bones_obj, params, lock, i):
@@ -129,11 +131,15 @@ def single_bones_trial(bones_obj, params, lock, i):
     print("WHAT WE'VE TRED SO FAR:")
     for so in all_observations:
         print(so[2] + " Score: " + str(so[0]) + " From Sugg: " + str(so[1]))
-    print("BEST RESULT: " + str(min(all_observations)))
+    best = sorted(all_observations, key=lambda a: a[0])[0]
+    print("BEST RESULT: " + str(best))
+    print("Average elapsed time: " + str((time.time() - start_time) / len(all_observations)))
 
 
 def run_bones_parallel(bones_obj, trialnumber, params):
     locky = threading.Lock()
+    global start_time
+    start_time = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=optimization.NUM_PARALLEL) as executor:
         for i in range(trialnumber):
             print("Starting to execute: " + str(i))

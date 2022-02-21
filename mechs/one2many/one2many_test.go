@@ -44,3 +44,12 @@ func TestConfigPats(t *testing.T) {
 		t.Errorf("Expected more patterns than that!")
 	}
 }
+
+func SimpleTest(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		fmt.Println("got to {}", i)
+	}
+	if 9 > 100 {
+		t.Errorf("oh no!")
+	}
+}
