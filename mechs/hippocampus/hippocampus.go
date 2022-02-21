@@ -204,12 +204,12 @@ func ConfigEnv(ss *HipSim) {
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
 
-	//Todo create the appropriate names
-	PholderMaxruns := -1
-	PholderMaxepochs := -1
+	//Todo call the trainenv maxruns
+	PholderMaxruns := 1
+	PholderMaxepochs := 2
 	//PHOLDERPreTrainEpcs := -1
-	PholderTrainAB := etable.Table{}
-	PHolderTestAB := etable.Table{}
+	PholderTrainAB := TrainEnv.EvalTables[TrainAB]
+	PHolderTestAB := TrainEnv.EvalTables[TestAB]
 	PholderStartRun := 0
 
 	if PholderMaxruns == 0 { // allow user override
@@ -224,7 +224,7 @@ func ConfigEnv(ss *HipSim) {
 	TrainEnv.Nm = "TrainEnv"
 	TrainEnv.Dsc = "training params and state"
 
-	TrainEnv.Table = etable.NewIdxView(&PholderTrainAB)
+	TrainEnv.Table = etable.NewIdxView(PholderTrainAB)
 	// to simulate training items in order, uncomment this line:
 	// ss.TrainEnv.Sequential = true
 	TrainEnv.Validate()
@@ -232,7 +232,7 @@ func ConfigEnv(ss *HipSim) {
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
-	TestEnv.Table = etable.NewIdxView(&PHolderTestAB)
+	TestEnv.Table = etable.NewIdxView(PHolderTestAB)
 	TestEnv.SetSequential(true)
 	ss.TestEnv.Validate()
 
@@ -244,7 +244,7 @@ func ConfigEnv(ss *HipSim) {
 func ConfigPats(ss *HipSim) {
 
 	trainEnv := &TrainEnv
-	testEnv := &TrainEnv
+	testEnv := &TestEnv
 	hp := &ss.Hip
 	ecY := hp.ECSize.Y
 	ecX := hp.ECSize.X
