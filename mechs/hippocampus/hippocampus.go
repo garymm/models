@@ -77,7 +77,7 @@ func main() {
 	// TheSim is the overall state for this simulation
 	var TheSim HipSim
 	TheSim.New()
-	TrainEnv.InitTables(TrainAB, TrainBC, PretrainLure, TrainAll)
+	TrainEnv.InitTables(TrainAB, TrainAC, PretrainLure, TrainAll)
 	TestEnv.InitTables(TestAB, TestAC, TestLure)
 	Config(&TheSim)
 
@@ -273,7 +273,7 @@ func ConfigPats(ss *HipSim) {
 		//patgen.VocabDrift(ss.PoolVocab, ss.NFlipBits, "ctxt"+strconv.Itoa(i+1))
 	}
 
-	TrainAB, TestAB := trainEnv.EvalTables[TrainAB], TestEnv.EvalTables[TestAB]
+	TrainAB, TestAB := trainEnv.EvalTables[TrainAB], testEnv.EvalTables[TestAB]
 	TrainAC, TestAC := trainEnv.EvalTables[TrainAC], testEnv.EvalTables[TestAC]
 	PreTrainLure, TestLure := trainEnv.EvalTables[PretrainLure], testEnv.EvalTables[TestLure]
 	TrainALL := trainEnv.EvalTables[TrainAll]
