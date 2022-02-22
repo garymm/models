@@ -4,6 +4,7 @@ import (
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/etable/etable"
+	"os"
 	"testing"
 )
 
@@ -26,4 +27,15 @@ func TestConfigPats(t *testing.T) {
 	if ss.Pats.Rows < 10 {
 		t.Errorf("Expected more patterns than that!")
 	}
+}
+
+// In GoLand, right-click the play triangle by this method and select "Profile TestModelTraining with 'CPU Profiler'"s
+func TestModelTraining(t *testing.T) {
+	var TheSim sim.Sim
+	TheSim.New()
+	os.Args = append(os.Args, "-nogui=true")
+	os.Args = append(os.Args, "-runs=1")
+	os.Args = append(os.Args, "-epochs=2")
+	Config(&TheSim)
+	TheSim.RunFromArgs()
 }
