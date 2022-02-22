@@ -151,7 +151,7 @@ def main():
     initial_params = prep_params_dict["initial_params"]
     params_space_by_name = prep_params_dict["paramspace_conditions"]
     bone_params = BONESParams(
-        better_direction_sign=-1, is_wandb_logging_enabled=False, initial_search_radius=0.5, resample_frequency=-1
+        better_direction_sign=-1, is_wandb_logging_enabled=True, initial_search_radius=0.5, resample_frequency=-1
     )
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)

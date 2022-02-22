@@ -20,6 +20,10 @@ func (ss *Sim) InitStats() {
 	ss.Stats.SetFloat("TrlCosDiff", 0.0)
 	ss.Stats.SetInt("FirstZero", -1) // critical to reset to -1
 	ss.Stats.SetInt("NZero", 0)
+
+	// TODO These need to be initialized. Maybe all stats should initialize to 0?
+	ss.Stats.SetFloat("Mem", 0)
+	ss.Stats.SetFloat("MemThr", 0)
 }
 
 // StatCounters saves current counters to Stats, so they are available for logging etc

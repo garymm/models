@@ -73,6 +73,11 @@ func (ss *HipSim) New() {
 	ss.Pat.Defaults()
 }
 
+// TODO This does not seem to get called.
+func (ss *HipSim) Update() {
+	ss.Hip.Update()
+}
+
 func main() {
 	// TheSim is the overall state for this simulation
 	var TheSim HipSim
@@ -94,7 +99,7 @@ func main() {
 // Config configures all the elements using the standard functions
 func Config(ss *HipSim) {
 	ConfigPats(ss)
-	OpenPats(&ss.Sim)
+	//OpenPats(&ss.Sim)
 	ConfigParams(&ss.Sim)
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
@@ -204,12 +209,12 @@ func ConfigEnv(ss *HipSim) {
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
 
-	//Todo call the trainenv maxruns
+	//Todo Delete these variables and get from CmdArgs instead
 	PholderMaxruns := 1
-	PholderMaxepochs := 2
+	PholderMaxepochs := 1
 	//PHOLDERPreTrainEpcs := -1
 	PholderTrainAB := TrainEnv.EvalTables[TrainAB]
-	PHolderTestAB := TrainEnv.EvalTables[TestAB]
+	PHolderTestAB := TestEnv.EvalTables[TestAB]
 	PholderStartRun := 0
 
 	if PholderMaxruns == 0 { // allow user override
@@ -229,6 +234,7 @@ func ConfigEnv(ss *HipSim) {
 	// ss.TrainEnv.Sequential = true
 	TrainEnv.Validate()
 	TrainEnv.Run().Max = PholderMaxruns // note: we are not setting epoch max -- do that manually
+	TrainEnv.Epoch().Max = PholderMaxepochs
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"

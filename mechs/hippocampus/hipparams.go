@@ -27,6 +27,10 @@ func (hp *HipParams) Defaults() {
 	hp.CA3Size.Set(30, 30) // using MedHip now
 	hp.DGRatio = 2.236     // c.f. Ketz et al., 2013
 
+	// TODO This was in Update(). Should it be there?
+	hp.DGSize.X = int(float32(hp.CA3Size.X) * hp.DGRatio)
+	hp.DGSize.Y = int(float32(hp.CA3Size.Y) * hp.DGRatio)
+
 	// ratio
 	hp.DGPCon = 0.25 // .35 is sig worse, .2 learns faster but AB recall is worse
 	hp.CA3PCon = 0.25

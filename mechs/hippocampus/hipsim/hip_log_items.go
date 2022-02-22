@@ -326,7 +326,7 @@ func (ss *Sim) ConfigLogItems() {
 	}
 
 	// hidden activities for PCA analysis, and PCA results
-	layers = ss.Net.LayersByClass("Hidden")
+	layers = ss.Net.LayersByClass("Hidden") // TODO This finds no layers
 	for _, lnm := range layers {
 		clnm := lnm
 		cly := ss.Net.LayerByName(clnm)
