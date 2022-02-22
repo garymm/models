@@ -17,6 +17,8 @@ sudo pip3 install wandb
 cd ~
 git clone https://github.com/Astera-org/models.git
 cd models
+mkdir logs
+sudo chmod -R +777 .
 sudo go test mechs/ra25/ra25_test.go
 
 # ssh-keygen -t rsa -b 2048 -C "<comment>"
