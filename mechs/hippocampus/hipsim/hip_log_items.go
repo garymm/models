@@ -9,6 +9,55 @@ import (
 	"github.com/emer/etable/minmax"
 )
 
+func (ss *Sim) ConfigHipItems() {
+	ss.ConfigLogItems()
+	ss.Logs.AddItem(&elog.Item{
+		Name:   "Mem",
+		Type:   etensor.FLOAT64,
+		Plot:   elog.DTrue,
+		FixMax: elog.DTrue,
+		FixMin: elog.DTrue,
+		Range:  minmax.F64{Max: 1},
+		Write: elog.WriteMap{
+			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+				ctx.SetStatFloat("Mem")
+			},
+			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			},
+		}})
+	ss.Logs.AddItem(&elog.Item{
+		Name:   "TrgOnWasOffAll",
+		Type:   etensor.FLOAT64,
+		Plot:   elog.DTrue,
+		FixMax: elog.DTrue,
+		FixMin: elog.DTrue,
+		Range:  minmax.F64{Max: 1},
+		Write: elog.WriteMap{
+			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+				ctx.SetStatFloat("TrgOnWasOffAll")
+			},
+			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			},
+		}})
+	ss.Logs.AddItem(&elog.Item{
+		Name:   "TrgOffWasOn",
+		Type:   etensor.FLOAT64,
+		Plot:   elog.DTrue,
+		FixMax: elog.DTrue,
+		FixMin: elog.DTrue,
+		Range:  minmax.F64{Max: 1},
+		Write: elog.WriteMap{
+			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+				ctx.SetStatFloat("TrgOffWasOn")
+			},
+			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			},
+		}})
+}
+
 func (ss *Sim) ConfigLogItems() {
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Run",
@@ -277,7 +326,7 @@ func (ss *Sim) ConfigLogItems() {
 	}
 
 	// hidden activities for PCA analysis, and PCA results
-	layers = ss.Net.LayersByClass("Hidden")
+	layers = ss.Net.LayersByClass("Hidden") // TODO This finds no layers
 	for _, lnm := range layers {
 		clnm := lnm
 		cly := ss.Net.LayerByName(clnm)

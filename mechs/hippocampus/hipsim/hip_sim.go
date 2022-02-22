@@ -1,7 +1,6 @@
 package sim
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -45,6 +44,10 @@ type Sim struct {
 	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
+
+	// TODO These are hippocampus specific
+	//MemThr float64 `desc:"threshold to use for memory test -- if error proportion is below this number, it is scored as a correct trial"`
+	//Mem    float64 `inactive:"+" desc:"whether current trial's ECout met memory criterion"`
 }
 
 // New creates new blank elements and initializes defaults
@@ -76,7 +79,7 @@ func (ss *Sim) Init() {
 	ss.Params.SetMsg = ss.CmdArgs.LogSetParams
 	ss.Params.SetAll()
 	// NOTE uncomment following to see the compiled hyper params
-	fmt.Println(ss.Params.NetHypers.JSONString())
+	// fmt.Println(ss.Params.NetHypers.JSONString())
 	ss.NewRun()
 	ss.GUI.UpdateNetView()
 	ss.Stats.ResetTimer("PerTrlMSec")
@@ -95,4 +98,69 @@ func (ss *Sim) NewRndSeed() {
 	for i := 0; i < 100; i++ {
 		ss.CmdArgs.RndSeeds[i] = rs + int64(i)
 	}
+}
+
+// MemStats computes ActM vs. Target on ECout with binary counts
+// must be called at end of 3rd quarter so that Targ values are
+// for the entire full pattern as opposed to the plus-phase target
+// values clamped from ECin activations
+func (ss *Sim) MemStats(train bool) {
+	ecout := ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
+	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon() // note: must be input b/c ECin can be active
+	nn := ecout.Shape().Len()
+	actThr := float32(0.2)
+	trgOnWasOffAll := 0.0 // all units
+	trgOnWasOffCmp := 0.0 // only those that required completion, missing in ECin
+	trgOffWasOn := 0.0    // should have been off
+	cmpN := 0.0           // completion target
+	trgOnN := 0.0
+	trgOffN := 0.0
+	actMi, _ := ecout.UnitVarIdx("ActM")
+	targi, _ := ecout.UnitVarIdx("Targ")
+	actQ1i, _ := ecout.UnitVarIdx("ActSt1")
+	for ni := 0; ni < nn; ni++ {
+		actm := ecout.UnitVal1D(actMi, ni)
+		trg := ecout.UnitVal1D(targi, ni) // full pattern target
+		inact := inp.UnitVal1D(actQ1i, ni)
+		if trg < actThr { // trgOff
+			trgOffN += 1
+			if actm > actThr {
+				trgOffWasOn += 1
+			}
+		} else { // trgOn
+			trgOnN += 1
+			if inact < actThr { // missing in ECin -- completion target
+				cmpN += 1
+				if actm < actThr {
+					trgOnWasOffAll += 1
+					trgOnWasOffCmp += 1
+				}
+			} else {
+				if actm < actThr {
+					trgOnWasOffAll += 1
+				}
+			}
+		}
+	}
+	trgOnWasOffAll /= trgOnN
+	trgOffWasOn /= trgOffN
+	if train { // no cmp
+		if trgOnWasOffAll < ss.Stats.Float("MemThr") && trgOffWasOn < ss.Stats.Float("MemThr") {
+			ss.Stats.SetFloat("Mem", 1)
+		} else {
+			ss.Stats.SetFloat("Mem", 0)
+		}
+	} else {          // test
+		if cmpN > 0 { // should be
+			trgOnWasOffCmp /= cmpN
+			if trgOnWasOffCmp < ss.Stats.Float("MemThr") && trgOffWasOn < ss.Stats.Float("MemThr") {
+				ss.Stats.SetFloat("Mem", 1)
+			} else {
+				ss.Stats.SetFloat("Mem", 0)
+			}
+		}
+	}
+	ss.Stats.SetFloat("TrgOnWasOffAll", trgOnWasOffAll)
+	ss.Stats.SetFloat("TrgOnWasOffCmp", trgOnWasOffCmp)
+	ss.Stats.SetFloat("TrgOffWasOn", trgOffWasOn)
 }

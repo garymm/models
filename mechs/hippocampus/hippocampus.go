@@ -13,17 +13,18 @@ import (
 	"fmt"
 	sim "github.com/Astera-org/models/mechs/hippocampus/hipsim"
 	"github.com/emer/axon/axon"
+	"github.com/emer/axon/hip"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/params"
 	"github.com/emer/emergent/patgen"
 	"github.com/emer/emergent/prjn"
+	"github.com/emer/emergent/relpos"
 	"github.com/emer/etable/etable"
-	"github.com/emer/etable/etensor"
 	"github.com/goki/gi/gimain"
 	"log"
 )
 
-var ProgramName = "One2Many"
+var ProgramName = "Hippocampus"
 
 var TestEnv = EnvHipBench{}
 var TrainEnv = EnvHipBench{}
@@ -56,41 +57,54 @@ func TrialStats(ss *sim.Sim, accum bool) {
 
 }
 
-type One2Sim struct {
+type HipSim struct {
 	sim.Sim
 	// Specific to the one2many module
-	NInputs  int `desc:"Number of input/output pattern pairs"`
-	NOutputs int `desc:"The number of output patterns potentially associated with each input pattern."`
+	Hip       HipParams    `desc:"hippocampus sizing parameters"`
+	PoolVocab patgen.Vocab `view:"no-inline" desc:"pool patterns vocabulary"`
+	Pat       PatParams
+}
+
+func (ss *HipSim) New() {
+	ss.Sim.New()
+	ss.PoolVocab = patgen.Vocab{}
+	ss.Hip = HipParams{}
+	ss.Hip.Defaults()
+	ss.Pat.Defaults()
+}
+
+// TODO This does not seem to get called.
+func (ss *HipSim) Update() {
+	ss.Hip.Update()
 }
 
 func main() {
 	// TheSim is the overall state for this simulation
-	var TheSim One2Sim
+	var TheSim HipSim
 	TheSim.New()
-	TheSim.NInputs = 25
-	TheSim.NOutputs = 2
-
+	TrainEnv.InitTables(TrainAB, TrainAC, PretrainLure, TrainAll)
+	TestEnv.InitTables(TestAB, TestAC, TestLure)
 	Config(&TheSim)
 
 	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim.Sim, ProgramName, "One to Many", `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			sim.GuiRun(&TheSim.Sim, ProgramName, "Hippocampus", `This demonstrates a hippocampus Axon model.`)
 		})
 	}
 
 }
 
 // Config configures all the elements using the standard functions
-func Config(ss *One2Sim) {
+func Config(ss *HipSim) {
 	ConfigPats(ss)
-	OpenPats(&ss.Sim)
+	//OpenPats(&ss.Sim)
 	ConfigParams(&ss.Sim)
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
-	ConfigEnv(&ss.Sim)
-	ConfigNet(&ss.Sim, ss.Net)
+	ConfigEnv(ss)
+	ConfigNet(ss, ss.Net)
 	ss.ConfigLogs()
 }
 
@@ -99,81 +113,6 @@ func ConfigParams(ss *sim.Sim) {
 	ss.Params.AddNetwork(ss.Net)
 	ss.Params.AddSim(ss)
 	ss.Params.AddNetSize()
-
-	// ParamSetsMin sets the minimal non-default params
-	// Base is always applied, and others can be optionally selected to apply on top of that
-	//ss.Params.Params = params.Sets{
-	//	{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
-	//		"NetSize": &params.Sheet{
-	//			{Sel: ".Hidden", Desc: "all hidden layers",
-	//				Params: params.Params{
-	//					"Layer.X": "8",
-	//					"Layer.Y": "8",
-	//				}},
-	//			{Sel: ".InputAndOutput", Desc: "all input and output layers",
-	//				Params: params.Params{
-	//					"Layer.X": "5",
-	//					"Layer.Y": "5",
-	//				}},
-	//		},
-	//		"Network": &params.Sheet{
-	//			{Sel: "Layer", Desc: "all defaults",
-	//				Params: params.Params{
-	//					"Layer.Inhib.Layer.Gi":    "1.2",  // 1.2 > 1.1
-	//					"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1
-	//					"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0
-	//					"Layer.Act.Decay.Glong":   "0.6",  // 0.6
-	//					"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0
-	//					"Layer.Act.Dend.GbarR":    "3",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels
-	//					"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect
-	//					"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better
-	//					"Layer.Act.Dt.GeTau":      "5",
-	//					"Layer.Act.NMDA.Gbar":     "0.15", //
-	//					"Layer.Act.GABAB.Gbar":    "0.2",  // 0.2 > 0.15
-	//				}, Hypers: params.Hypers{
-	//					"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-	//				}},
-	//			{Sel: "#Input", Desc: "critical now to specify the activity level",
-	//				Params: params.Params{
-	//					"Layer.Inhib.Layer.Gi": "0.9", // 0.9 > 1.0
-	//					"Layer.Act.Clamp.Ge":   "1.0", // 1.0 > 0.6 >= 0.7 == 0.5
-	//					// This should only be 0.04 in one-hot encoding
-	//					"Layer.Inhib.ActAvg.Init": "0.04", // .24 nominal, lower to give higher excitation
-	//				},
-	//				Hypers: params.Hypers{
-	//					"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-	//					"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
-	//				}},
-	//			{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
-	//				Params: params.Params{
-	//					"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 >= 0.8 > 1.0 > 0.7 even with adapt -- not beneficial to start low
-	//					"Layer.Inhib.ActAvg.Init": "0.04", // this has to be exact for adapt
-	//					"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum.
-	//					"Layer.Act.Clamp.Ge":      "0.6",  // .6 > .5 v94
-	//					// "Layer.Act.NMDA.Gbar":     "0.3",  // higher not better
-	//				}},
-	//			{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
-	//				Params: params.Params{
-	//					"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close
-	//					"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint
-	//					"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..
-	//				}},
-	//			{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
-	//				Params: params.Params{
-	//					"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5
-	//				},
-	//				Hypers: params.Hypers{
-	//					"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
-	//				}},
-	//		},
-	//		"Sim": &params.Sheet{ // sim params apply to sim object
-	//			{Sel: "Sim", Desc: "best params always finish in this time",
-	//				Params: params.Params{
-	//					"Sim.CmdArgs.MaxEpcs": "100",
-	//				}},
-	//		},
-	//	}},
-	//}
 	ss.Params.Params = params.Sets{
 		{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
 			"NetSize": &params.Sheet{
@@ -266,61 +205,114 @@ func ConfigParams(ss *sim.Sim) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 //// 		Configs
 
-func ConfigEnv(ss *sim.Sim) {
-
+func ConfigEnv(ss *HipSim) {
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
 
-	ss.TrialStatsFunc = TrialStats
+	//Todo Delete these variables and get from CmdArgs instead
+	PholderMaxruns := 1
+	PholderMaxepochs := 1
+	//PHOLDERPreTrainEpcs := -1
+	PholderTrainAB := TrainEnv.EvalTables[TrainAB]
+	PHolderTestAB := TestEnv.EvalTables[TestAB]
+	PholderStartRun := 0
 
-	ss.NZeroStop = 5
+	if PholderMaxruns == 0 { // allow user override
+		PholderMaxruns = 1
+	}
+	if PholderMaxepochs == 0 { // allow user override
+		PholderMaxepochs = 30
+		ss.NZeroStop = 1
+		//PHOLDERPreTrainEpcs = 10 // 10 > 20 perf wise
+	}
 
 	TrainEnv.Nm = "TrainEnv"
 	TrainEnv.Dsc = "training params and state"
-	TrainEnv.Table = etable.NewIdxView(ss.Pats)
-	ss.TrainEnv.Validate()
-	ss.Run.Max = ss.CmdArgs.MaxRuns // note: we are not setting epoch max -- do that manually
-	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
+
+	TrainEnv.Table = etable.NewIdxView(PholderTrainAB)
+	// to simulate training items in order, uncomment this line:
+	// ss.TrainEnv.Sequential = true
+	TrainEnv.Validate()
+	TrainEnv.Run().Max = PholderMaxruns // note: we are not setting epoch max -- do that manually
+	TrainEnv.Epoch().Max = PholderMaxepochs
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
-	TestEnv.Table = etable.NewIdxView(ss.Pats)
+	TestEnv.Table = etable.NewIdxView(PHolderTestAB)
 	TestEnv.SetSequential(true)
 	ss.TestEnv.Validate()
-	TestEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
-	TestEnv.Run().Max = ss.CmdArgs.MaxRuns
 
-	// note: to create a train / test split of pats, do this:
-	// all := etable.NewIdxView(ss.Pats)
-	// splits, _ := split.Permuted(all, []float64{.8, .2}, []string{"Train", "Test"})
-	// ss.TrainEnv.Table = splits.Splits[0]
-	// ss.TestEnv.Table = splits.Splits[1]
-
-	ss.TrainEnv.Init(0)
-	ss.TestEnv.Init(0)
+	ss.TrainEnv.Init(PholderStartRun) //What should this be?
+	ss.TestEnv.Init(PholderStartRun)  //what should this be
 }
 
 //ConfigPats used to configure patterns
-func ConfigPats(ss *One2Sim) {
-	dt := ss.Pats
-	dt.SetMetaData("name", "TrainPats")
-	dt.SetMetaData("desc", "Training patterns")
-	sch := etable.Schema{
-		{"Name", etensor.STRING, nil, nil},
-		{"Input", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
-		{"Output", etensor.FLOAT32, []int{5, 5}, []string{"Y", "X"}},
-	}
-	dt.SetFromSchema(sch, ss.NInputs*ss.NOutputs)
+func ConfigPats(ss *HipSim) {
 
-	patgen.PermutedBinaryRows(dt.Cols[1], 6, 1, 0)
-	patgen.PermutedBinaryRows(dt.Cols[2], 6, 1, 0)
-	for i := 0; i < ss.NInputs; i++ {
-		for j := 0; j < ss.NOutputs; j++ {
-			dt.SetCellTensor("Input", i*ss.NOutputs+j, dt.CellTensor("Input", i*ss.NOutputs))
-			dt.SetCellString("Name", i*ss.NOutputs+j, fmt.Sprintf("%d", i))
-		}
+	trainEnv := &TrainEnv
+	testEnv := &TestEnv
+	hp := &ss.Hip
+	ecY := hp.ECSize.Y
+	ecX := hp.ECSize.X
+	plY := hp.ECPool.Y // good idea to get shorter vars when used frequently
+	plX := hp.ECPool.X // makes much more readable
+	npats := ss.Pat.ListSize
+	pctAct := hp.ECPctAct
+	minDiff := ss.Pat.MinDiffPct
+	nOn := patgen.NFmPct(pctAct, plY*plX)
+	ctxtflip := patgen.NFmPct(ss.Pat.CtxtFlipPct, nOn)
+	patgen.AddVocabEmpty(ss.PoolVocab, "empty", npats, plY, plX)
+	patgen.AddVocabPermutedBinary(ss.PoolVocab, "A", npats, plY, plX, pctAct, minDiff)
+	patgen.AddVocabPermutedBinary(ss.PoolVocab, "B", npats, plY, plX, pctAct, minDiff)
+	patgen.AddVocabPermutedBinary(ss.PoolVocab, "C", npats, plY, plX, pctAct, minDiff)
+	patgen.AddVocabPermutedBinary(ss.PoolVocab, "lA", npats, plY, plX, pctAct, minDiff)
+	patgen.AddVocabPermutedBinary(ss.PoolVocab, "lB", npats, plY, plX, pctAct, minDiff)
+	patgen.AddVocabPermutedBinary(ss.PoolVocab, "ctxt", 3, plY, plX, pctAct, minDiff) // totally diff
+
+	for i := 0; i < (ecY-1)*ecX*3; i++ { // 12 contexts! 1: 1 row of stimuli pats; 3: 3 diff ctxt bases
+		list := i / ((ecY - 1) * ecX)
+		ctxtNm := fmt.Sprintf("ctxt%d", i+1)
+		tsr, _ := patgen.AddVocabRepeat(ss.PoolVocab, ctxtNm, npats, "ctxt", list)
+		patgen.FlipBitsRows(tsr, ctxtflip, ctxtflip, 1, 0)
+		//todo: also support drifting
+		//solution 2: drift based on last trial (will require sequential learning)
+		//patgen.VocabDrift(ss.PoolVocab, ss.NFlipBits, "ctxt"+strconv.Itoa(i+1))
 	}
-	dt.SaveCSV("random_5x5_25_gen.tsv", etable.Tab, etable.Headers)
+
+	TrainAB, TestAB := trainEnv.EvalTables[TrainAB], testEnv.EvalTables[TestAB]
+	TrainAC, TestAC := trainEnv.EvalTables[TrainAC], testEnv.EvalTables[TestAC]
+	PreTrainLure, TestLure := trainEnv.EvalTables[PretrainLure], testEnv.EvalTables[TestLure]
+	TrainALL := trainEnv.EvalTables[TrainAll]
+
+	patgen.InitPats(TrainAB, "TrainAB", "TrainAB Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(TrainAB, ss.PoolVocab, "Input", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+	patgen.MixPats(TrainAB, ss.PoolVocab, "ECout", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+
+	patgen.InitPats(TestAB, "TestAB", "TestAB Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(TestAB, ss.PoolVocab, "Input", []string{"A", "empty", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+	patgen.MixPats(TestAB, ss.PoolVocab, "ECout", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+
+	patgen.InitPats(TrainAC, "TrainAC", "TrainAC Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(TrainAC, ss.PoolVocab, "Input", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+	patgen.MixPats(TrainAC, ss.PoolVocab, "ECout", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+
+	patgen.InitPats(TestAC, "TestAC", "TestAC Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(TestAC, ss.PoolVocab, "Input", []string{"A", "empty", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+	patgen.MixPats(TestAC, ss.PoolVocab, "ECout", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+
+	patgen.InitPats(PreTrainLure, "PreTrainLure", "PreTrainLure Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(PreTrainLure, ss.PoolVocab, "Input", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
+	patgen.MixPats(PreTrainLure, ss.PoolVocab, "ECout", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
+
+	patgen.InitPats(TestLure, "TestLure", "TestLure Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(TestLure, ss.PoolVocab, "Input", []string{"lA", "empty", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
+	patgen.MixPats(TestLure, ss.PoolVocab, "ECout", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"})    // arbitrary ctxt here
+
+	//shuold potentially go in Environments
+	TrainALL = TrainAB.Clone()
+	TrainALL.AppendRows(TrainAC)
+	TrainALL.AppendRows(PreTrainLure)
+	trainEnv.EvalTables[TrainAll] = TrainALL
 }
 
 func OpenPats(ss *sim.Sim) {
@@ -333,48 +325,102 @@ func OpenPats(ss *sim.Sim) {
 	}
 }
 
-func ConfigNet(ss *sim.Sim, net *axon.Network) {
-	ss.Params.AddLayers([]string{"Hidden1", "Hidden2"}, "Hidden")
-	//ss.Params.AddLayers([]string{"Input", "Output"}, "InputAndOutput")
-	ss.Params.SetObject("NetSize")
+func ConfigNet(ss *HipSim, net *axon.Network) {
+	net.InitName(net, ProgramName)
+	hp := &ss.Hip
 
-	net.InitName(net, ProgramName) // TODO this should have a name that corresponds to project, leaving for now as it will cause a problem in optimize
-	// TODO need some param unit tests even if it's just incorporated inot htis project
-	//inp := net.AddLayer2D("Input", ss.Params.LayY("Input", 666), ss.Params.LayX("Input", 666), emer.Input)
-	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
-	hid1 := net.AddLayer2D("Hidden1", ss.Params.LayY("Hidden1", 10), ss.Params.LayX("Hidden1", 10), emer.Hidden)
-	hid2 := net.AddLayer2D("Hidden2", ss.Params.LayY("Hidden2", 10), ss.Params.LayX("Hidden2", 10), emer.Hidden)
-	//out := net.AddLayer2D("Output", ss.Params.LayY("Output", 666), ss.Params.LayY("Output", 666), emer.Target)
-	out := net.AddLayer2D("Output", 5, 5, emer.Target)
+	in := net.AddLayer4D("Input", hp.ECSize.Y, hp.ECSize.X, hp.ECPool.Y, hp.ECPool.X, emer.Input)
+	ecin := net.AddLayer4D("ECin", hp.ECSize.Y, hp.ECSize.X, hp.ECPool.Y, hp.ECPool.X, emer.Hidden)
+	ecout := net.AddLayer4D("ECout", hp.ECSize.Y, hp.ECSize.X, hp.ECPool.Y, hp.ECPool.X, emer.Target) // clamped in plus phase
+	ca1 := net.AddLayer4D("CA1", hp.ECSize.Y, hp.ECSize.X, hp.CA1Pool.Y, hp.CA1Pool.X, emer.Hidden)
+	dg := net.AddLayer2D("DG", hp.DGSize.Y, hp.DGSize.X, emer.Hidden)
+	ca3 := net.AddLayer2D("CA3", hp.CA3Size.Y, hp.CA3Size.X, emer.Hidden)
 
-	// use this to position layers relative to each other
-	// default is Above, YAlign = Front, XAlign = Center
-	// hid2.SetRelPos(relpos.Rel{Rel: relpos.RightOf, Other: "Hidden1", YAlign: relpos.Front, Space: 2})
+	ecin.SetClass("EC")
+	ecout.SetClass("EC")
 
-	// note: see emergent/prjn module for all the options on how to connect
-	// NewFull returns a new prjn.Full connectivity pattern
+	ecin.SetRelPos(relpos.Rel{Rel: relpos.RightOf, Other: "Input", YAlign: relpos.Front, Space: 2})
+	ecout.SetRelPos(relpos.Rel{Rel: relpos.RightOf, Other: "ECin", YAlign: relpos.Front, Space: 2})
+	dg.SetRelPos(relpos.Rel{Rel: relpos.Above, Other: "Input", YAlign: relpos.Front, XAlign: relpos.Left, Space: 0})
+	ca3.SetRelPos(relpos.Rel{Rel: relpos.Above, Other: "DG", YAlign: relpos.Front, XAlign: relpos.Left, Space: 0})
+	ca1.SetRelPos(relpos.Rel{Rel: relpos.RightOf, Other: "CA3", YAlign: relpos.Front, Space: 2})
+
+	onetoone := prjn.NewOneToOne()
+	pool1to1 := prjn.NewPoolOneToOne()
 	full := prjn.NewFull()
 
-	net.ConnectLayers(inp, hid1, full, emer.Forward)
-	net.BidirConnectLayers(hid1, hid2, full)
-	net.BidirConnectLayers(hid2, out, full)
+	net.ConnectLayers(in, ecin, onetoone, emer.Forward)
+	net.ConnectLayers(ecout, ecin, onetoone, emer.Back)
 
-	// net.LateralConnectLayerPrjn(hid1, full, &axon.HebbPrjn{}).SetType(emer.Inhib)
+	// EC <-> CA1 encoder pathways
+	if false { // false = actually works better to use the regular projections here
+		pj := net.ConnectLayersPrjn(ecin, ca1, pool1to1, emer.Forward, &hip.EcCa1Prjn{})
+		pj.SetClass("EcCa1Prjn")
+		pj = net.ConnectLayersPrjn(ca1, ecout, pool1to1, emer.Forward, &hip.EcCa1Prjn{})
+		pj.SetClass("EcCa1Prjn")
+		pj = net.ConnectLayersPrjn(ecout, ca1, pool1to1, emer.Back, &hip.EcCa1Prjn{})
+		pj.SetClass("EcCa1Prjn")
+	} else {
+		pj := net.ConnectLayers(ecin, ca1, pool1to1, emer.Forward)
+		pj.SetClass("EcCa1Prjn")
+		pj = net.ConnectLayers(ca1, ecout, pool1to1, emer.Forward)
+		pj.SetClass("EcCa1Prjn")
+		pj = net.ConnectLayers(ecout, ca1, pool1to1, emer.Back)
+		pj.SetClass("EcCa1Prjn")
+	}
 
-	// note: can set these to do parallel threaded computation across multiple cpus
-	// not worth it for this small of a model, but definitely helps for larger ones
-	// if Thread {
-	// 	hid2.SetThread(1)
-	// 	out.SetThread(1)
-	// }
+	// Perforant pathway
+	ppathDG := prjn.NewUnifRnd()
+	ppathDG.PCon = hp.DGPCon
+	ppathCA3 := prjn.NewUnifRnd()
+	ppathCA3.PCon = hp.CA3PCon
+
+	pj := net.ConnectLayersPrjn(ecin, dg, ppathDG, emer.Forward, &hip.CHLPrjn{})
+	pj.SetClass("HippoCHL")
+
+	if true { // toggle for bcm vs. ppath, zycyc: must use false for orig_param, true for def_param
+		pj = net.ConnectLayersPrjn(ecin, ca3, ppathCA3, emer.Forward, &hip.EcCa1Prjn{})
+		pj.SetClass("PPath")
+		pj = net.ConnectLayersPrjn(ca3, ca3, full, emer.Lateral, &hip.EcCa1Prjn{})
+		pj.SetClass("PPath")
+	} else {
+		// so far, this is sig worse, even with error-driven MinusQ1 case (which is better than off)
+		pj = net.ConnectLayersPrjn(ecin, ca3, ppathCA3, emer.Forward, &hip.CHLPrjn{})
+		pj.SetClass("HippoCHL")
+		pj = net.ConnectLayersPrjn(ca3, ca3, full, emer.Lateral, &hip.CHLPrjn{})
+		pj.SetClass("HippoCHL")
+	}
+
+	// always use this for now:
+	if false { // todo: was true
+		pj = net.ConnectLayersPrjn(ca3, ca1, full, emer.Forward, &hip.CHLPrjn{})
+		pj.SetClass("HippoCHL")
+	} else {
+		// note: this requires lrate = 1.0 or maybe 1.2, doesn't work *nearly* as well
+		pj = net.ConnectLayers(ca3, ca1, full, emer.Forward) // default con
+		// pj.SetClass("HippoCHL")
+	}
+
+	// Mossy fibers
+	mossy := prjn.NewUnifRnd()
+	mossy.PCon = hp.MossyPCon
+	pj = net.ConnectLayersPrjn(dg, ca3, mossy, emer.Forward, &hip.CHLPrjn{}) // no learning
+	pj.SetClass("HippoCHL")
+
+	// using 4 threads total (rest on 0)
+	dg.SetThread(1)
+	ca3.SetThread(2)
+	ca1.SetThread(3) // this has the most
 
 	// note: if you wanted to change a layer type from e.g., Target to Compare, do this:
-	// out.SetType(emer.Compare)
+	// outLay.SetType(emer.Compare)
 	// that would mean that the output layer doesn't reflect target values in plus phase
 	// and thus removes error-driven learning -- but stats are still computed.
 
 	net.Defaults()
+
 	ss.Params.SetObject("Network")
+	//ss.SetParams("Network", ss.LogSetParams) // only set Network params
 	err := net.Build()
 	if err != nil {
 		log.Println(err)
@@ -382,3 +428,5 @@ func ConfigNet(ss *sim.Sim, net *axon.Network) {
 	}
 	net.InitWts()
 }
+
+// TODO Move everything after this point out of here into libraries
