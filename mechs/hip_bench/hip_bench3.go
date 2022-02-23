@@ -323,6 +323,7 @@ func (ss *Sim) ConfigEnv() {
 }
 
 // SetEnv select which set of patterns to train on: AB or AC
+// TODO NEED COPY
 func (ss *Sim) SetEnv(trainAC bool) {
 	if trainAC {
 		ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAC)
@@ -2378,6 +2379,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 }
 
 // These props register Save methods so they can be used
+// TODO NEED COPY
 var SimProps = ki.Props{
 	"CallMethods": ki.PropSlice{
 		{"SaveWeights", ki.Props{
@@ -2413,6 +2415,7 @@ var InnerLoopParams = []string{"List040", "List060"}
 // var InnerLoopParams = []string{"List020", "List040", "List060", "List080", "List100"}
 
 // TwoFactorRun runs outer-loop crossed with inner-loop params
+// TODO NEED COPY
 func (ss *Sim) TwoFactorRun() {
 	tag := ss.Tag
 	usetag := tag

@@ -1,3 +1,5 @@
+# Created for Ubuntu 20.04
+
 sudo apt update
 sudo apt -y upgrade
 sudo apt -y install libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libgl1-mesa-dev libgl1-mesa-dev xorg-dev
