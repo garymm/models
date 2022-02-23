@@ -1,3 +1,5 @@
+bone_config.yaml
+configs/bone_config.yaml
 .idea/
 .DS_Store
 *.pt

@@ -84,10 +84,17 @@ func KlDivergeAcross(normedTrue, normedPredicted map[string]map[string]float64) 
 }
 func KLDiverge(trueDistribution, predDistribution map[string]float64) float64 {
 	diverge := 0.0
-	for name, p := range predDistribution {
-		q := predDistribution[name]
+	for name, p := range trueDistribution {
+		q, _ := predDistribution[name]
+		//Handle exception where only 1 value in distribution
+		if q == 1.0 {
+			q = .9999
+		} else if q == 0.0 {
+			q = .0001
+		}
 		logpq := mat32.Log2(float32(p / q))
 		diverge += (p * float64(logpq))
+
 	}
 	return diverge
 }
@@ -145,12 +152,18 @@ func TrialStats(ss *sim.Sim, accum bool) {
 	}
 
 	addToInputPredictedCounts(cnm, strconv.Itoa(row)) //Alternatively, I could only measure the values that are part of it
-	if TrainEnv.Epoch().Cur == 2 {
+	if TrainEnv.Epoch().Cur > 2 {
 		if TrainEnv.Epoch().Chg == true {
-			normedOutputDistr := calculateNorms(InputOutputCounts)
-			normedPredDistr := calculateNorms(InputPredictedCounts)
+			//normedOutputDistr := calculateNorms(InputOutputCounts)
+			//normedPredDistr := calculateNorms(InputPredictedCounts)
 
-			KlDivergeAcross(normedOutputDistr, normedPredDistr)
+			if TrainEnv.Epoch().Cur%2 == 0 {
+				//result := KlDivergeAcross(normedOutputDistr, normedPredDistr)
+				InputPredictedCounts = make(Input2OutputCount) //Calculate input output counts for doing KL
+				//fmt.Println(result)
+			}
+
+			//InputOutputCounts = make(Input2OutputCount)    //calculate input predicted counts for doing KL
 
 		}
 	}
@@ -313,6 +326,9 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.MgC":      "1.4",
 						"Layer.Act.NMDA.Voff":     "5",
 						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
+						//	"Layer.Act.Noise.Dist":    "Gaussian",
+						//	"Layer.Act.Noise.Mean":    "1000", // .05 max for blowup
+						//	"Layer.Act.Noise.Var":     "0.05",
 					}, Hypers: params.Hypers{
 						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
 						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},

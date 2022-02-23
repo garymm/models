@@ -5,6 +5,8 @@ from collections import OrderedDict
 import json
 import copy
 import os
+import yaml
+from decimal import *
 
 import wandb
 
@@ -18,8 +20,6 @@ from bones import BONES
 from bones import BONESParams
 from bones import ObservationInParam
 from bones import LinearSpace
-from bones import LogSpace
-
 
 OBSERVATIONS_FILE = "bones_obs.txt" #todo doesn't seem to actually write to file
 
@@ -62,22 +62,18 @@ def prepare_hyperparams_bones(the_params):
             stddev = float(relevantvalues["Sigma"])
         # TODO Have a parameter for Linear/LogLinear/Etc.
         # TODO Allow integer and categorical spaces.
-        bones_args = {
-            "is_integer": ("Type" in relevantvalues and relevantvalues["Type"] == "Int"),
-            "scale": stddev
-        }
-        if "Min" in relevantvalues:
-            bones_args["min"] = float(relevantvalues["Min"])
-        if "Max" in relevantvalues:
-            bones_args["max"] = float(relevantvalues["Max"])
-        if value <= 0 or ("Space" in relevantvalues and relevantvalues["Space"] == "Linear"):
-            distribution_type = LinearSpace(**bones_args)
-        else:
-            distribution_type = LogSpace(**bones_args)
+        is_int = "Type" in relevantvalues and relevantvalues["Type"] == "Int"
+        distribution_type = LinearSpace(scale=stddev, is_integer=is_int)
+        if "Min" in relevantvalues and "Max" in relevantvalues:
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), max=float(relevantvalues["Max"]), is_integer=is_int)
+        elif "Min" in relevantvalues:
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), is_integer=is_int)
+        elif "Max" in relevantvalues:
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Max"]), is_integer=is_int)
         initial_params.update({uniquename: value})
         params_space_by_name.update([(uniquename, distribution_type)])
 
-    return initial_params, params_space_by_name
+    return {"initial_params": initial_params, "paramspace_conditions": params_space_by_name}
 
 
 def optimize_bones(params, suggestions: dict, trial_name: str):
@@ -157,17 +153,19 @@ def run_bones_parallel(bones_obj, trialnumber, params):
     best = sorted(all_observations, key=lambda a: a[0])[0]
     return best[1], best[0]
 
+def loadyaml(name):
+    with open(name, 'r') as file:
+        return yaml.safe_load(file)
 
 def main():
     os.chdir('../')  # Move into the models/ directory
     params = optimization.get_hypers()
 
-    initial_params, params_space_by_name = prepare_hyperparams_bones(params)
-    wandb_key = ""
-    if wandb_key != "":
-        wandb.login(key = wandb_key)
+    prep_params_dict = prepare_hyperparams_bones(params)
+    initial_params = prep_params_dict["initial_params"]
+    params_space_by_name = prep_params_dict["paramspace_conditions"]
     bone_params = BONESParams(
-        better_direction_sign=-1, is_wandb_logging_enabled=wandb_key!="", initial_search_radius=0.5, resample_frequency=-1
+        better_direction_sign=-1, is_wandb_logging_enabled=True, initial_search_radius=0.5, resample_frequency=-1
     )
 
     bones = BONES(bone_params, params_space_by_name)
@@ -175,7 +173,13 @@ def main():
     best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
 
+def load_key(config_path = "bone_config.yaml"):
+    config_file = loadyaml(config_path)
+    wandb_key = config_file["wandb_key"]
+    return wandb_key
+
 
 if __name__ == '__main__':
+    wandb.login(key = load_key("../configs/bone_config.yaml"))
     print("Starting optimization main func")
     main()
