@@ -5,6 +5,8 @@ from collections import OrderedDict
 import json
 import copy
 import os
+import yaml
+from decimal import *
 
 import wandb
 
@@ -18,7 +20,6 @@ from bones import BONES
 from bones import BONESParams
 from bones import ObservationInParam
 from bones import LinearSpace
-
 
 OBSERVATIONS_FILE = "bones_obs.txt" #todo doesn't seem to actually write to file
 
@@ -152,6 +153,9 @@ def run_bones_parallel(bones_obj, trialnumber, params):
     best = sorted(all_observations, key=lambda a: a[0])[0]
     return best[1], best[0]
 
+def loadyaml(name):
+    with open(name, 'r') as file:
+        return yaml.safe_load(file)
 
 def main():
     os.chdir('../')  # Move into the models/ directory
@@ -169,8 +173,13 @@ def main():
     best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
 
+def load_key(config_path = "bone_config.yaml"):
+    config_file = loadyaml(config_path)
+    wandb_key = config_file["wandb_key"]
+    return wandb_key
+
 
 if __name__ == '__main__':
-    wandb.login(key = "")
+    wandb.login(key = load_key("../configs/bone_config.yaml"))
     print("Starting optimization main func")
     main()
