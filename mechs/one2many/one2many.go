@@ -154,11 +154,11 @@ func TrialStats(ss *sim.Sim, accum bool) {
 	addToInputPredictedCounts(cnm, strconv.Itoa(row)) //Alternatively, I could only measure the values that are part of it
 	if TrainEnv.Epoch().Cur > 2 {
 		if TrainEnv.Epoch().Chg == true {
-			normedOutputDistr := calculateNorms(InputOutputCounts)
-			normedPredDistr := calculateNorms(InputPredictedCounts)
+			//normedOutputDistr := calculateNorms(InputOutputCounts)
+			//normedPredDistr := calculateNorms(InputPredictedCounts)
 
 			if TrainEnv.Epoch().Cur%2 == 0 {
-				result := KlDivergeAcross(normedOutputDistr, normedPredDistr)
+				//result := KlDivergeAcross(normedOutputDistr, normedPredDistr)
 				InputPredictedCounts = make(Input2OutputCount) //Calculate input output counts for doing KL
 				//fmt.Println(result)
 			}
