@@ -326,6 +326,9 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.MgC":      "1.4",
 						"Layer.Act.NMDA.Voff":     "5",
 						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
+						//	"Layer.Act.Noise.Dist":    "Gaussian",
+						//	"Layer.Act.Noise.Mean":    "1000", // .05 max for blowup
+						//	"Layer.Act.Noise.Var":     "0.05",
 					}, Hypers: params.Hypers{
 						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
 						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
