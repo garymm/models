@@ -30,6 +30,8 @@ cd ~
 git clone git@gitlab.com:generally-intelligent/bones.git
 sudo pip3 install -e bones/
 
+# Add your wandb authorization string to bone_config.yaml
+
 # screen # This lets you run the command in the background and close the console window.
 # cd ~/models/optimize
 # python3 hyperbones.py > optimize_log.txt 2>&1 &

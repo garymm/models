@@ -35,26 +35,16 @@ var TrainEnv = EnvHipBench{}
 // different time-scales over which stats could be accumulated etc.
 // You can also aggregate directly from log data, as is done for testing stats
 func TrialStats(ss *sim.Sim, accum bool) {
-	out := ss.Net.LayerByName("Output").(axon.AxonLayer).AsAxon()
-
-	ss.Stats.SetFloat("TrlCosDiff", float64(out.CosDiff.Cos))
-
-	_, cor, cnm := ss.Stats.ClosestPat(ss.Net, "Output", "ActM", ss.Pats, "Output", "Name")
-
-	ss.Stats.SetString("TrlClosest", cnm)
-	ss.Stats.SetFloat("TrlCorrel", float64(cor))
-	tnm := ""
-	if accum { // really train
-		tnm = ss.TrainEnv.TrialName().Cur
-	} else {
-		tnm = ss.TestEnv.TrialName().Cur
+	outLay := ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
+	ss.Stats.SetFloat("TrlCosDiff", float64(outLay.CosDiff.Cos))
+	ss.Stats.SetFloat("TrlUnitErr", outLay.PctUnitErr())
+	if accum {
+		ss.Stats.SetFloat("SumUnitErr", ss.Stats.Float("SumUnitErr")+ss.Stats.Float("TrlUnitErr"))
+		ss.Stats.SetFloat("SumCosDiff", ss.Stats.Float("SumCosDiff")+ss.Stats.Float("TrlCosDiff"))
+		if ss.Stats.Float("TrlCosDiff") != 0 {
+			ss.Stats.SetInt("CntErr", ss.Stats.Int("CntErr")+1)
+		}
 	}
-	if cnm == tnm {
-		ss.Stats.SetFloat("TrlErr", 0)
-	} else {
-		ss.Stats.SetFloat("TrlErr", 1)
-	}
-
 }
 
 type HipSim struct {
@@ -71,9 +61,12 @@ func (ss *HipSim) New() {
 	ss.Hip = HipParams{}
 	ss.Hip.Defaults()
 	ss.Pat.Defaults()
+	ss.Hip.Defaults()
+	ss.Pat.Defaults()
+	ss.Run.Cur = 0 // for initializing envs if using Gui // TODO Makesure this works right. It was StartRun.
+	ss.Update()
 }
 
-// TODO This does not seem to get called.
 func (ss *HipSim) Update() {
 	ss.Hip.Update()
 }
@@ -88,9 +81,10 @@ func main() {
 
 	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
+
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim.Sim, ProgramName, "Hippocampus", `This demonstrates a hippocampus Axon model.`)
+			sim.GuiRun(&TheSim.Sim, ProgramName, "Hippocampus AB-AC", `This demonstrates a basic Hippocampus model in Axon. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 		})
 	}
 
@@ -115,87 +109,271 @@ func ConfigParams(ss *sim.Sim) {
 	ss.Params.AddNetSize()
 	ss.Params.Params = params.Sets{
 		{Name: "Base", Desc: "these are the best params", Sheets: params.Sheets{
-			"NetSize": &params.Sheet{
-				{Sel: ".Hidden", Desc: "all hidden layers",
-					Params: params.Params{
-						"Layer.X": "10", //todo layer size correspondence between areas that are connected upstream parameter - get there when we get there
-						"Layer.Y": "10",
-					},
-					Hypers: params.Hypers{
-						"Layer.X": {"StdDev": "0.3", "Min": "2"},
-						"Layer.Y": {"StdDev": "0.3", "Min": "2"},
-					},
-				},
-			},
 			"Network": &params.Sheet{
-				{Sel: "Layer", Desc: "all defaults",
+				{Sel: "Layer", Desc: "generic layer params",
 					Params: params.Params{
-						// All params with importance >=5 have hypers
-						"Layer.Inhib.Layer.Gi": "1.2", // 1.2 > 1.1     importance: 10
-						// TODO This param should vary with Gi it looks like
-						"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1  importance: 10
-						"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0   importance: 2
-						"Layer.Act.Decay.Glong":   "0.6",  // 0.6   importance: 2
-						"Layer.Act.Dend.GbarExp":  "0.5",  // 0.2 > 0.1 > 0   importance: 5
-						"Layer.Act.Dend.GbarR":    "6",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels importance: 5
-						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect importance: 1
-						"Layer.Act.Dend.VGCCCa":   "20",
-						"Layer.Act.Dend.CaMax":    "90",
-						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better importance: 1
-						"Layer.Act.Dt.GeTau":      "5",    // importance: 1
-						"Layer.Act.NMDA.Gbar":     "0.15", //  importance: 7
-						"Layer.Act.NMDA.MgC":      "1.4",
-						"Layer.Act.NMDA.Voff":     "5",
-						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
-					}, Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.2"},
-						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.01", "Min": "0.01"},
-						"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
-						"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
-						"Layer.Act.NMDA.Gbar":     {"StdDev": "0.04"},
-						"Layer.Act.GABAB.Gbar":    {"StdDev": "0.05"},
+						"Layer.Act.KNa.On":         "false", // false > true
+						"Layer.Learn.TrgAvgAct.On": "false", // true > false?
+						"Layer.Learn.RLrate.On":    "false", // no diff..
+						"Layer.Act.Gbar.L":         "0.2",   // .2 > .1
+						"Layer.Act.Decay.Act":      "1.0",   // 1.0 both is best by far!
+						"Layer.Act.Decay.Glong":    "1.0",
+						"Layer.Inhib.Pool.Bg":      "0.0",
 					}},
-				{Sel: "#Input", Desc: "critical now to specify the activity level",
+				{Sel: ".EC", Desc: "all EC layers: only pools, no layer-level",
 					Params: params.Params{
-						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
-						"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
-						"Layer.Inhib.ActAvg.Init": "0.15", // .24 nominal, lower to give higher excitation
-					},
-					Hypers: params.Hypers{
-						"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-						"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
+						"Layer.Learn.TrgAvgAct.On": "false", // def true, not rel?
+						"Layer.Learn.RLrate.On":    "false", // def true, too slow?
+						"Layer.Inhib.ActAvg.Init":  "0.15",
+						"Layer.Inhib.Layer.On":     "false",
+						"Layer.Inhib.Layer.Gi":     "0.2", // weak just to keep it from blowing up
+						"Layer.Inhib.Pool.Gi":      "1.1",
+						"Layer.Inhib.Pool.On":      "true",
 					}},
-				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
+				{Sel: "#ECout", Desc: "all EC layers: only pools, no layer-level",
 					Params: params.Params{
-						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 >= 0.8 > 1.0 > 0.7 even with adapt -- not beneficial to start low
-						"Layer.Inhib.ActAvg.Init": "0.24", // this has to be exact for adapt
-						"Layer.Act.Spike.Tr":      "1",    // 1 is new minimum.
-						"Layer.Act.Clamp.Ge":      "0.6",  // .6 > .5 v94
-						// "Layer.Act.NMDA.Gbar":     "0.3",  // higher not better
+						"Layer.Inhib.Pool.Gi": "1.1",
+						"Layer.Act.Clamp.Ge":  "0.6",
 					}},
-				{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
+				{Sel: "#CA1", Desc: "CA1 only Pools",
 					Params: params.Params{
-						"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
-						"Prjn.SWt.Adapt.Lrate":  "0.1", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
-						"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
-					},
-					Hypers: params.Hypers{
-						"Prjn.Learn.Lrate.Base": {"StdDev": "0.05"},
-						"Prjn.SWt.Adapt.Lrate":  {"StdDev": "0.025"},
-						"Prjn.SWt.Init.SPct":    {"StdDev": "0.1"},
+						"Layer.Learn.TrgAvgAct.On": "true",  // actually a bit better
+						"Layer.Learn.RLrate.On":    "false", // def true, too slow?
+						"Layer.Inhib.ActAvg.Init":  "0.02",
+						"Layer.Inhib.Layer.On":     "false",
+						"Layer.Inhib.Pool.Gi":      "1.3", // 1.3 > 1.2 > 1.1
+						"Layer.Inhib.Pool.On":      "true",
+						"Layer.Inhib.Pool.FFEx0":   "1.0", // blowup protection
+						"Layer.Inhib.Pool.FFEx":    "0.0",
 					}},
-				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
+				{Sel: "#DG", Desc: "very sparse = high inibhition",
 					Params: params.Params{
-						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5 //importance: 9
-					},
-					Hypers: params.Hypers{
-						"Prjn.PrjnScale.Rel": {"StdDev": ".05"},
+						"Layer.Inhib.ActAvg.Init": "0.005", // actual .002-3
+						"Layer.Inhib.Layer.Gi":    "2.2",   // 2.2 > 2.0 on larger
+					}},
+				{Sel: "#CA3", Desc: "sparse = high inibhition",
+					Params: params.Params{
+						"Layer.Inhib.ActAvg.Init": "0.02",
+						"Layer.Inhib.Layer.Gi":    "1.8", // 1.8 > 1.6 > 2.0
+					}},
+				{Sel: "Prjn", Desc: "keeping default params for generic prjns",
+					Params: params.Params{
+						"Prjn.SWt.Init.SPct": "0.5", // 0.5 == 1.0 > 0.0
+					}},
+				{Sel: ".EcCa1Prjn", Desc: "encoder projections",
+					Params: params.Params{
+						"Prjn.Learn.Lrate.Base": "0.04", // 0.04 for Axon -- 0.01 for EcCa1
+					}},
+				{Sel: ".HippoCHL", Desc: "hippo CHL projections",
+					Params: params.Params{
+						"Prjn.CHL.Hebb":         "0.05",
+						"Prjn.Learn.Lrate.Base": "0.02", // .2 def
+					}},
+				{Sel: ".PPath", Desc: "perforant path, new Dg error-driven EcCa1Prjn prjns",
+					Params: params.Params{
+						"Prjn.Learn.Lrate.Base": "0.1", // .1 > .04 -- makes a diff
+						// moss=4, delta=4, lr=0.2, test = 3 are best
+					}},
+				{Sel: "#CA1ToECout", Desc: "extra strong from CA1 to ECout",
+					Params: params.Params{
+						"Prjn.PrjnScale.Abs": "2.0", // 2.0 > 3.0 for larger
+					}},
+				{Sel: "#ECinToCA3", Desc: "stronger",
+					Params: params.Params{
+						"Prjn.PrjnScale.Abs": "3.0", // 4.0 > 3.0
+					}},
+				{Sel: "#ECinToDG", Desc: "DG learning is surprisingly critical: maxed out fast, hebbian works best",
+					Params: params.Params{
+						"Prjn.Learn.Learn":      "true", // absolutely essential to have on!
+						"Prjn.CHL.Hebb":         "0.5",  // .5 > 1 overall
+						"Prjn.CHL.SAvgCor":      "0.1",  // .1 > .2 > .3 > .4 ?
+						"Prjn.CHL.MinusQ1":      "true", // dg self err?
+						"Prjn.Learn.Lrate.Base": "0.01", // 0.01 > 0.04 maybe
+					}},
+				{Sel: "#InputToECin", Desc: "one-to-one input to EC",
+					Params: params.Params{
+						"Prjn.Learn.Learn":   "false",
+						"Prjn.SWt.Init.Mean": "0.9",
+						"Prjn.SWt.Init.Var":  "0.0",
+						"Prjn.PrjnScale.Abs": "1.0",
+					}},
+				{Sel: "#ECoutToECin", Desc: "one-to-one out to in",
+					Params: params.Params{
+						"Prjn.Learn.Learn":   "false",
+						"Prjn.SWt.Init.Mean": "0.9",
+						"Prjn.SWt.Init.Var":  "0.01",
+						"Prjn.PrjnScale.Rel": "0.5", // 0.5 > 1 (sig worse)
+					}},
+				{Sel: "#DGToCA3", Desc: "Mossy fibers: strong, non-learning",
+					Params: params.Params{
+						"Prjn.Learn.Learn":   "false",
+						"Prjn.SWt.Init.Mean": "0.9",
+						"Prjn.SWt.Init.Var":  "0.01",
+						"Prjn.PrjnScale.Rel": "3", // 4 def
+					}},
+				{Sel: "#CA3ToCA3", Desc: "CA3 recurrent cons",
+					Params: params.Params{
+						"Prjn.PrjnScale.Rel":    "0.1",  // 0.1 > 0.2 == 0
+						"Prjn.Learn.Lrate.Base": "0.04", // 0.1 v.s .04 not much diff
+					}},
+				{Sel: "#CA3ToCA1", Desc: "Schaffer collaterals -- slower, less hebb",
+					Params: params.Params{
+						// "Prjn.CHL.Hebb":         "0.01",
+						// "Prjn.CHL.SAvgCor":      "0.4",
+						"Prjn.Learn.Lrate.Base": "0.1", // 0.1 > 0.04
+						"Prjn.PrjnScale.Rel":    "2",   // 2 > 1
+					}},
+				{Sel: "#ECoutToCA1", Desc: "weaker",
+					Params: params.Params{
+						"Prjn.PrjnScale.Rel": "1.0", // 1.0 -- try 0.5
 					}},
 			},
-			"Sim": &params.Sheet{ // sim params apply to sim object
-				{Sel: "Sim", Desc: "best params always finish in this time",
+			// NOTE: it is essential not to put Pat / Hip params here, as we have to use Base
+			// to initialize the network every time, even if it is a different size.
+		}},
+		{Name: "List010", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
 					Params: params.Params{
-						"Sim.CmdArgs.MaxEpcs": "100",
+						"Pat.ListSize": "10",
+					}},
+			},
+		}},
+		{Name: "List020", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "20",
+					}},
+			},
+		}},
+		{Name: "List030", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "30",
+					}},
+			},
+		}},
+		{Name: "List040", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "40",
+					}},
+			},
+		}},
+		{Name: "List050", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "50",
+					}},
+			},
+		}},
+		{Name: "List060", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "60",
+					}},
+			},
+		}},
+		{Name: "List070", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "70",
+					}},
+			},
+		}},
+		{Name: "List080", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "80",
+					}},
+			},
+		}},
+		{Name: "List090", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "90",
+					}},
+			},
+		}},
+		{Name: "List100", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "100",
+					}},
+			},
+		}},
+		{Name: "List125", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "125",
+					}},
+			},
+		}},
+		{Name: "List150", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "150",
+					}},
+			},
+		}},
+		{Name: "List200", Desc: "list size", Sheets: params.Sheets{
+			"Pat": &params.Sheet{
+				{Sel: "Pat", Desc: "pattern params",
+					Params: params.Params{
+						"Pat.ListSize": "200",
+					}},
+			},
+		}},
+		{Name: "SmallHip", Desc: "hippo size", Sheets: params.Sheets{
+			"Hip": &params.Sheet{
+				{Sel: "HipParams", Desc: "hip sizes",
+					Params: params.Params{
+						"HipParams.ECPool.Y":  "7",
+						"HipParams.ECPool.X":  "7",
+						"HipParams.CA1Pool.Y": "10",
+						"HipParams.CA1Pool.X": "10",
+						"HipParams.CA3Size.Y": "20",
+						"HipParams.CA3Size.X": "20",
+						"HipParams.DGRatio":   "2.236", // 1.5 before, sqrt(5) aligns with Ketz et al. 2013
+					}},
+			},
+		}},
+		{Name: "MedHip", Desc: "hippo size", Sheets: params.Sheets{
+			"Hip": &params.Sheet{
+				{Sel: "HipParams", Desc: "hip sizes",
+					Params: params.Params{
+						"HipParams.ECPool.Y":  "7",
+						"HipParams.ECPool.X":  "7",
+						"HipParams.CA1Pool.Y": "15",
+						"HipParams.CA1Pool.X": "15",
+						"HipParams.CA3Size.Y": "30",
+						"HipParams.CA3Size.X": "30",
+						"HipParams.DGRatio":   "2.236", // 1.5 before
+					}},
+			},
+		}},
+		{Name: "BigHip", Desc: "hippo size", Sheets: params.Sheets{
+			"Hip": &params.Sheet{
+				{Sel: "HipParams", Desc: "hip sizes",
+					Params: params.Params{
+						"HipParams.ECPool.Y":  "7",
+						"HipParams.ECPool.X":  "7",
+						"HipParams.CA1Pool.Y": "20",
+						"HipParams.CA1Pool.X": "20",
+						"HipParams.CA3Size.Y": "40",
+						"HipParams.CA3Size.X": "40",
+						"HipParams.DGRatio":   "2.236", // 1.5 before
 					}},
 			},
 		}},
@@ -208,7 +386,9 @@ func ConfigParams(ss *sim.Sim) {
 func ConfigEnv(ss *HipSim) {
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
-
+	ss.PreTrainEpcs = 10 //from hip sim
+	ss.TrialStatsFunc = TrialStats
+	ss.Stop()
 	//Todo Delete these variables and get from CmdArgs instead
 	PholderMaxruns := 1
 	PholderMaxepochs := 1
@@ -316,13 +496,7 @@ func ConfigPats(ss *HipSim) {
 }
 
 func OpenPats(ss *sim.Sim) {
-	dt := ss.Pats
-	dt.SetMetaData("name", "TrainPats")
-	dt.SetMetaData("desc", "Training patterns")
-	err := dt.OpenCSV("random_5x5_25.tsv", etable.Tab)
-	if err != nil {
-		log.Println(err)
-	}
+	// TODO
 }
 
 func ConfigNet(ss *HipSim, net *axon.Network) {
@@ -429,4 +603,84 @@ func ConfigNet(ss *HipSim, net *axon.Network) {
 	net.InitWts()
 }
 
-// TODO Move everything after this point out of here into libraries
+// SetParamsSet sets the params for given params.Set name.
+// If sheet is empty, then it applies all avail sheets (e.g., Network, Sim)
+// otherwise just the named sheet
+// if setMsg = true then we output a message for each param that was set.
+func SetParamsSet(ss *HipSim, setNm string, sheet string, setMsg bool) error {
+	pset, err := ss.Params.Params.SetByNameTry(setNm)
+	if err != nil {
+		return err
+	}
+	if sheet == "" || sheet == "Network" {
+		netp, ok := pset.Sheets["Network"]
+		if ok {
+			ss.Net.ApplyParams(netp, setMsg)
+		}
+	}
+
+	if sheet == "" || sheet == "Sim" {
+		simp, ok := pset.Sheets["Sim"]
+		if ok {
+			simp.Apply(ss, setMsg)
+		}
+	}
+
+	if sheet == "" || sheet == "Hip" {
+		simp, ok := pset.Sheets["Hip"]
+		if ok {
+			simp.Apply(&ss.Hip, setMsg)
+		}
+	}
+
+	if sheet == "" || sheet == "Pat" {
+		simp, ok := pset.Sheets["Pat"]
+		if ok {
+			simp.Apply(&ss.Pat, setMsg)
+		}
+	}
+
+	// note: if you have more complex environments with parameters, definitely add
+	// sheets for them, e.g., "TrainEnv", "TestEnv" etc
+	return err
+}
+
+// zycyc
+// ModelSizeParams are the parameters to run for outer crossed factor testing
+//var ModelSizeParams = []string{"BigHip"}
+// var ModelSizeParams = []string{"MedHip", "BigHip"}
+var ModelSizeParams = []string{"MedHip"}
+
+// ListSizeParams are the parameters to run for inner crossed factor testing
+// var ListSizeParams = []string{"List010"}
+
+var ListSizeParams = []string{"List040", "List060"}
+
+// var ListSizeParams = []string{"List020", "List040", "List060", "List080", "List100"}
+
+// TwoFactorRun runs outer-loop crossed with inner-loop params
+// TODO This needs to be called
+func TwoFactorRun(ss *HipSim) {
+	tag := ss.Tag
+	usetag := tag
+	if usetag != "" {
+		usetag += "_"
+	}
+	for _, modelSize := range ModelSizeParams {
+		for _, listSize := range ListSizeParams {
+			ss.Tag = usetag + modelSize + "_" + listSize
+			ss.InitRndSeed()
+			SetParamsSet(ss, modelSize, "", ss.CmdArgs.LogSetParams)
+			SetParamsSet(ss, listSize, "", ss.CmdArgs.LogSetParams)
+			// TODO Need to uncomment this
+			//ss.ReConfigNet() // note: this applies Base params to Network
+			//ConfigEnv(ss)
+			ss.GUI.StopNow = false
+			// TODO Need to uncomment this
+			//ss.PreTrain() // zycyc
+			ss.NewRun()
+			ss.Train()
+		}
+	}
+	ss.Tag = tag
+}

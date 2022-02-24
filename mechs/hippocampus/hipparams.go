@@ -18,7 +18,6 @@ type HipParams struct {
 	MossyDelTest float32    `desc:"delta in mossy strength for testing (relative to base param)"`
 }
 
-// TODO add to hipParams.go
 func (hp *HipParams) Defaults() {
 	// size
 	hp.ECSize.Set(2, 3)

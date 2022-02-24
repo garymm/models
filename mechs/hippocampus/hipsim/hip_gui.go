@@ -196,6 +196,15 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	return ss.GUI.Win
 }
 
+// TODO HIP Copied also fix
+func (ss *Sim) UpdateView(train bool) {
+	//if ss.NetView != nil && ss.NetView.IsVisible() {
+	//	ss.NetView.Record(ss.Counters(train))
+	//	// note: essential to use Go version of update when called from another goroutine
+	//	ss.NetView.GoUpdate() // note: using counters is significantly slower..
+	//}
+}
+
 // UpdateViewTime based on differetn time scales change the values accoridngly
 func (ss *Sim) UpdateViewTime(viewUpdt axon.TimeScales) {
 	switch viewUpdt {

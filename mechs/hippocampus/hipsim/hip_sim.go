@@ -45,9 +45,9 @@ type Sim struct {
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
 
-	// TODO These are hippocampus specific
-	//MemThr float64 `desc:"threshold to use for memory test -- if error proportion is below this number, it is scored as a correct trial"`
-	//Mem    float64 `inactive:"+" desc:"whether current trial's ECout met memory criterion"`
+	HipStopNow   bool   `view:"-" desc:"flag to stop running"`           //TODO is this GUI
+	PreTrainEpcs int    `desc:"number of epochs to run for pretraining"` //TODO where would this be most appropriate
+	PreTrainWts  []byte `view:"-" desc:"pretrained weights file"`        //TODO is this GUI
 }
 
 // New creates new blank elements and initializes defaults
@@ -104,6 +104,7 @@ func (ss *Sim) NewRndSeed() {
 // must be called at end of 3rd quarter so that Targ values are
 // for the entire full pattern as opposed to the plus-phase target
 // values clamped from ECin activations
+// TODO This was copied
 func (ss *Sim) MemStats(train bool) {
 	ecout := ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
 	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon() // note: must be input b/c ECin can be active
@@ -150,7 +151,7 @@ func (ss *Sim) MemStats(train bool) {
 		} else {
 			ss.Stats.SetFloat("Mem", 0)
 		}
-	} else {          // test
+	} else { // test
 		if cmpN > 0 { // should be
 			trgOnWasOffCmp /= cmpN
 			if trgOnWasOffCmp < ss.Stats.Float("MemThr") && trgOffWasOn < ss.Stats.Float("MemThr") {
