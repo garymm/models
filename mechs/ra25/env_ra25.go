@@ -35,6 +35,7 @@ func (env *EnvRa25) SetSequential(s bool) {
 	env.FixedTable.Sequential = s
 }
 
+// TODO Remove this from this interface and store runs on Sim.
 func (env *EnvRa25) Run() *env.Ctr {
 	return &env.FixedTable.Run
 }

@@ -23,6 +23,7 @@ func (ss *Sim) SetDgCa3Off(net *axon.Network, off bool) {
 	dg.Off = off
 }
 
+// TODO HIP Copied
 func (ss *Sim) LoadPretrainedWts() bool {
 	if ss.PreTrainWts == nil {
 		return false
@@ -38,19 +39,18 @@ func (ss *Sim) LoadPretrainedWts() bool {
 }
 
 // PreTrain runs pre-training, saves weights to PreTrainWts
-// TODO NEED COPY
 func (ss *Sim) PreTrain() {
 	ss.SetDgCa3Off(ss.Net, true)
 
 	ss.TrainEnv.AssignTable("TrainAll")
-	ss.HipStopNow = false
+	ss.GUI.StopNow = false
 
 	curRun := ss.TrainEnv.Run().Cur
 	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
 	done := false
 	for {
 		done = ss.PreTrainTrial()
-		if ss.HipStopNow || done {
+		if ss.GUI.StopNow || done {
 			break
 		}
 	}
@@ -67,7 +67,7 @@ func (ss *Sim) PreTrain() {
 
 // PreTrainTrial runs one trial of pretraining using TrainEnv
 // returns true if done with pretraining
-// TODO NEED COPY This is also very important
+// TODO HIP Copied. Hip specific.
 func (ss *Sim) PreTrainTrial() bool {
 	//if ss.NeedsNewRun {
 	//	ss.NewRun()
@@ -84,7 +84,7 @@ func (ss *Sim) PreTrainTrial() bool {
 			ss.UpdateView(true)
 		}
 		if epc >= ss.PreTrainEpcs { // done with training..
-			ss.HipStopNow = true //TODO move to gui.stopped = True i think?
+			ss.GUI.StopNow = true
 			return true
 		}
 	}
@@ -426,6 +426,7 @@ func (ss *Sim) TrainTrial() {
 		if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
 			ss.TestAll()
 		}
+		// TODO Early stopping logic should be on the environment
 		if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
 			// done with training..
 			ss.RunEnd()
@@ -467,10 +468,13 @@ func (ss *Sim) NewRun() {
 	TestEnv := ss.TestEnv
 
 	run := ss.Run.Cur
+	// TODO HIP Copied. This should be on a function.
+	TrainEnv.AssignTable("TrainAB")
 	TrainEnv.Init(run)
 	TestEnv.Init(run)
 	ss.Time.Reset()
 	ss.Net.InitWts()
+	ss.LoadPretrainedWts()
 	ss.InitStats()
 	ss.StatCounters(true)
 

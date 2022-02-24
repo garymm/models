@@ -106,11 +106,10 @@ type PatParams struct {
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
 type Sim struct {
-	Net       *axon.Network `view:"no-inline"`
-	Hip       HipParams     `desc:"hippocampus sizing parameters"`
-	Pat       PatParams     `desc:"parameters for the input patterns"`
-	PoolVocab patgen.Vocab  `view:"no-inline" desc:"pool patterns vocabulary"`
-	// TODO NEED COPY
+	Net          *axon.Network            `view:"no-inline"`
+	Hip          HipParams                `desc:"hippocampus sizing parameters"`
+	Pat          PatParams                `desc:"parameters for the input patterns"`
+	PoolVocab    patgen.Vocab             `view:"no-inline" desc:"pool patterns vocabulary"`
 	TrainAB      *etable.Table            `view:"no-inline" desc:"AB training patterns to use"`
 	TrainAC      *etable.Table            `view:"no-inline" desc:"AC training patterns to use"`
 	TestAB       *etable.Table            `view:"no-inline" desc:"AB testing patterns to use"`
@@ -438,7 +437,6 @@ func (ss *Sim) ConfigNet(net *axon.Network) {
 	net.InitWts()
 }
 
-// TODO NEED COPY Seems generally useful for sim library
 func (ss *Sim) ReConfigNet() {
 	ss.Update()
 	ss.ConfigPats()
@@ -455,7 +453,6 @@ func (ss *Sim) ReConfigNet() {
 
 // Init restarts the run, and initializes everything, including network weights
 // and resets the epoch log table
-// TODO NEED COPY hip_sim.Init does some of this
 func (ss *Sim) Init() {
 	ss.InitRndSeed()
 	ss.SetParams("", ss.LogSetParams) // all sheets
@@ -758,6 +755,7 @@ func (ss *Sim) TrainTrial() {
 		if ss.TestInterval > 0 && epc%ss.TestInterval == 0 { // note: epc is *next* so won't trigger first time
 			ss.TestAll()
 		}
+		// TODO NEED COPY
 		learned := (ss.NZeroStop > 0 && ss.NZero >= ss.NZeroStop)
 		if ss.TrainEnv.Table.Table == ss.TrainAB && (learned || epc == ss.MaxEpcs/2) {
 			ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAC)
@@ -783,7 +781,6 @@ func (ss *Sim) TrainTrial() {
 
 // PreTrainTrial runs one trial of pretraining using TrainEnv
 // returns true if done with pretraining
-// TODO NEED COPY This is also very important
 func (ss *Sim) PreTrainTrial() bool {
 	//if ss.NeedsNewRun {
 	//	ss.NewRun()
@@ -826,7 +823,7 @@ func (ss *Sim) RunEnd() {
 // for the new run value
 func (ss *Sim) NewRun() {
 	run := ss.StartRun + ss.TrainEnv.Run.Cur
-	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAB) // TODO NEED COPY What is this?
+	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAB)
 	ss.TrainEnv.Init(run)
 	ss.TestEnv.Init(run)
 	ss.Time.Reset()
@@ -839,7 +836,6 @@ func (ss *Sim) NewRun() {
 	ss.NeedsNewRun = false
 }
 
-// TODO NEED COPY
 func (ss *Sim) LoadPretrainedWts() bool {
 	if ss.PreTrainWts == nil {
 		return false
@@ -856,7 +852,6 @@ func (ss *Sim) LoadPretrainedWts() bool {
 
 // InitStats initializes all the statistics, especially important for the
 // cumulative epoch stats -- called at start of new run
-// TODO NEED COPY Some of these need to be copied into sim's InitStats
 func (ss *Sim) InitStats() {
 	// accumulators
 	ss.SumUnitErr = 0
@@ -2221,7 +2216,6 @@ func (ss *Sim) ConfigGui() *gi.Window {
 		}
 	})
 
-	// TODO NEED COPY This stuff into the gui
 	tbar.AddAction(gi.ActOpts{Label: "Pre Train", Icon: "fast-fwd", Tooltip: "Does full pretraining.", UpdateFunc: func(act *gi.Action) {
 		act.SetActiveStateUpdt(!ss.IsRunning)
 	}}, win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -2399,7 +2393,6 @@ func (ss *Sim) ConfigGui() *gi.Window {
 }
 
 // These props register Save methods so they can be used
-// TODO NEED COPY
 var SimProps = ki.Props{
 	"CallMethods": ki.PropSlice{
 		{"SaveWeights", ki.Props{
@@ -2469,7 +2462,6 @@ func (ss *Sim) CmdArgs() {
 	flag.StringVar(&note, "note", "", "user note -- describe the run params etc")
 	flag.IntVar(&ss.StartRun, "run", 0, "starting run number -- determines the random seed -- runs counts from there -- can do all runs in parallel by launching separate jobs with each run, runs = 1")
 	flag.IntVar(&ss.MaxRuns, "runs", 1, "number of runs to do")
-	// TODO NEED COPY This comment maybe?
 	flag.IntVar(&ss.MaxEpcs, "epcs", 30, "maximum number of epochs to run (split between AB / AC)")
 	flag.BoolVar(&ss.LogSetParams, "setparams", false, "if true, print a record of each parameter that is set")
 	flag.BoolVar(&ss.SaveWts, "wts", false, "if true, save final weights after each run")

@@ -43,9 +43,11 @@ type Sim struct {
 	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 
+	// Callbacks
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
+	Initialization func()                    `view:"-" desc:"This is called during sim.Init"`
 
-	HipStopNow   bool   `view:"-" desc:"flag to stop running"`           //TODO is this GUI
+	// TODO HIP Copied
 	PreTrainEpcs int    `desc:"number of epochs to run for pretraining"` //TODO where would this be most appropriate
 	PreTrainWts  []byte `view:"-" desc:"pretrained weights file"`        //TODO is this GUI
 }
@@ -76,8 +78,10 @@ func (ss *Sim) Init() {
 	//ss.ConfigEnv()  // re-config env just in case a different set of patterns was
 	// selected or patterns have been modified etc
 	ss.GUI.StopNow = false
-	ss.Params.SetMsg = ss.CmdArgs.LogSetParams
+	ss.Params.SetMsg = ss.CmdArgs.LogSetParams // TODO Should this always happen?
 	ss.Params.SetAll()
+	// TODO HIP Copied
+	ss.Initialization()
 	// NOTE uncomment following to see the compiled hyper params
 	// fmt.Println(ss.Params.NetHypers.JSONString())
 	ss.NewRun()

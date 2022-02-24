@@ -142,6 +142,7 @@ func (ss *Sim) TrainTrial() {
 		if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
 			ss.TestAll()
 		}
+		// TODO Early stopping logic should be on the environment
 		if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
 			// done with training..
 			ss.RunEnd()
@@ -222,6 +223,7 @@ func (ss *Sim) TrainRun() {
 }
 
 // Train runs the full training from this point onward
+// TODO This should loop through Runs, Epochs, and Trials with explicit nested for loops
 func (ss *Sim) Train() {
 	ss.GUI.StopNow = false
 	for {

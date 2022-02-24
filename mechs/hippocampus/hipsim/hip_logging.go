@@ -12,14 +12,22 @@ import (
 // InitStats initializes all the statistics.
 // called at start of new run
 func (ss *Sim) InitStats() {
-	// clear rest just to make Sim look initialized
-	ss.Stats.SetFloat("TrlErr", 0.0)
-	ss.Stats.SetString("TrlClosest", "")
-	ss.Stats.SetFloat("TrlCorrel", 0.0)
-	ss.Stats.SetFloat("TrlUnitErr", 0.0)
-	ss.Stats.SetFloat("TrlCosDiff", 0.0)
-	ss.Stats.SetInt("FirstZero", -1) // critical to reset to -1
+	// TODO HIP Copied
+	// accumulators
+	ss.Stats.SetFloat("SumUnitErr", 0)
+	ss.Stats.SetFloat("SumCosDiff", 0)
+	ss.Stats.SetInt("CntErr", 0)
+	ss.Stats.SetInt("FirstZero", -1)
 	ss.Stats.SetInt("NZero", 0)
+	// clear rest just to make Sim look initialized
+	ss.Stats.SetFloat("Mem", 0)
+	ss.Stats.SetFloat("TrgOnWasOffAll", 0)
+	ss.Stats.SetFloat("TrgOnWasOffCmp", 0)
+	ss.Stats.SetFloat("TrgOffWasOn", 0)
+	ss.Stats.SetFloat("TrlUnitErr", 0)
+	ss.Stats.SetFloat("EpcUnitErr", 0)
+	ss.Stats.SetFloat("EpcPctErr", 0)
+	ss.Stats.SetFloat("EpcCosDiff", 0)
 
 	// TODO These need to be initialized. Maybe all stats should initialize to 0?
 	ss.Stats.SetFloat("Mem", 0)
