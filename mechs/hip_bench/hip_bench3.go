@@ -1338,7 +1338,7 @@ func (ss *Sim) LogFileName(lognm string) string {
 //////////////////////////////////////////////
 //  TrnTrlLog
 
-// TODO NEED COPY The content from logging
+// TODO NEED COPY The layer stuff from logging
 
 // LogTrnTrl adds data from current trial to the TrnTrlLog table.
 // log always contains number of testing items
