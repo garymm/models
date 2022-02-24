@@ -13,11 +13,95 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 // 	    Running the Network, starting bottom-up..
 
+// PreThetaCyc runs one theta cycle (200 msec) of processing.
+// This one is for pretraining: no connection switching.
+// TODO HIP Copied
+// TODO Make sure this is called by PreTrainTrial
+func (ss *Sim) PreThetaCyc(train bool) {
+	// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
+	viewUpdt := ss.TrainUpdt
+	if !train {
+		viewUpdt = ss.TestUpdt
+	}
+
+	// update prior weight changes at start, so any DWt values remain visible at end
+	// you might want to do this less frequently to achieve a mini-batch update
+	// in which case, move it out to the TrainTrial method where the relevant
+	// counters are being dealt with.
+	if train {
+		ss.Net.WtFmDWt()
+	}
+
+	ca1 := ss.Net.LayerByName("CA1").(axon.AxonLayer).AsAxon()
+	// ca3 := ss.Net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
+	// ecin := ss.Net.LayerByName("ECin").(axon.AxonLayer).AsAxon()
+	ecout := ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
+	ca1FmECin := ca1.RcvPrjns.SendName("ECin").(axon.AxonPrjn).AsAxon()
+	ca1FmCa3 := ca1.RcvPrjns.SendName("CA3").(axon.AxonPrjn).AsAxon()
+
+	// First Quarter: CA1 is driven by ECin, not by CA3 recall
+	// (which is not really active yet anyway)
+	ca1FmECin.PrjnScale.Abs = 1
+	ca1FmCa3.PrjnScale.Abs = 0
+
+	if train {
+		ecout.SetType(emer.Target) // clamp a plus phase during testing
+	} else {
+		ecout.SetType(emer.Compare) // don't clamp
+	}
+	ecout.UpdateExtFlags() // call this after updating type
+
+	ss.Net.InitGScale() // update computed scaling factors
+
+	cycPerQtr := []int{100, 50, 50, 50} // 100, 50, 50, 50 notably better
+
+	ss.Net.NewState()
+	ss.Time.NewState()
+	for qtr := 0; qtr < 4; qtr++ {
+		maxCyc := cycPerQtr[qtr]
+		for cyc := 0; cyc < maxCyc; cyc++ {
+			ss.Net.Cycle(&ss.Time)
+			if !train {
+				ss.Logs.Log(elog.Test, elog.Cycle)
+			}
+			ss.Time.CycleInc()
+
+			if ss.ViewOn {
+				ss.UpdateViewTime(viewUpdt)
+			}
+		}
+		switch qtr + 1 {
+		case 1: // Second, Third Quarters: CA1 is driven by CA3 recall
+			ss.Net.ActSt1(&ss.Time)
+		case 2:
+			ss.Net.ActSt2(&ss.Time)
+		case 3: // Fourth Quarter: CA1 back to ECin drive only
+			ss.Net.MinusPhase(&ss.Time)
+			ss.MemStats(train) // must come after QuarterFinal
+		case 4:
+			ss.Net.PlusPhase(&ss.Time)
+		}
+		if ss.ViewOn {
+			ss.UpdateViewTime(viewUpdt)
+		}
+	}
+
+	if train {
+		ss.Net.DWt()
+	}
+	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
+		ss.UpdateView(train)
+	}
+
+	ss.GUI.Plot(elog.Test, elog.Cycle)
+}
+
 // HipThetaCyc runs one theta cycle (200 msec) of processing.
 // External inputs must have already been applied prior to calling,
 // using ApplyExt method on relevant layers (see TrainTrial, TestTrial).
 // If train is true, then learning DWt or WtFmDWt calls are made.
 // Handles netview updating within scope
+// TODO HIP Copied
 func (ss *Sim) HipThetaCyc(train bool) {
 	// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
 	viewUpdt := ss.TrainUpdt
@@ -411,7 +495,7 @@ func (ss *Sim) TestItem(idx int) {
 	cur := TestEnv.Trial().Cur
 	TestEnv.Trial().Cur = idx
 	ss.ApplyInputs(ss.TestEnv)
-	ss.HipThetaCyc(false)
+	ss.HipThetaCyc(false) // TODO HIP generalize this
 	//ss.ThetaCyc(false) // !train
 	TestEnv.Trial().Cur = cur
 }

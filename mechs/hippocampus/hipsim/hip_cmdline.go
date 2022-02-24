@@ -32,6 +32,10 @@ type CmdArgs struct {
 	MaxRuns  int `desc:"maximum number of model runs to perform (starting from StartRun)"`
 	MaxEpcs  int `desc:"maximum number of epochs to run per model run"`
 	StartRun int `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
+
+	// TODO HIP Copied but maybe not necessary??! TODO
+	UsePretrain  bool `desc:"If true, do a pretraining step, as in hippocampus model"`
+	TwoFactorRun bool `desc:"If true, do multiple runs of different sizes."`
 }
 
 // ParseArgs updates the Sim object with command line arguments.

@@ -140,7 +140,6 @@ def single_bones_trial(bones_obj, params, lock, i):
         print("BEST RESULT: " + str(best))
     print("Average elapsed time: " + str((time.time() - start_time) / len(all_observations)))
 
-
 def run_bones_parallel(bones_obj, trialnumber, params):
     locky = threading.Lock()
     global start_time
@@ -172,6 +171,7 @@ def main():
     bones.set_search_center(initial_params)
     best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
+    print("FINAL TIME", str((time.time() - start_time)))
 
 def load_key(config_path = "bone_config.yaml"):
     config_file = loadyaml(config_path)
