@@ -219,6 +219,7 @@ def load_key(config_path = "bone_config.yaml"):
 
 if __name__ == '__main__':
     wandb.login(key = load_key("../configs/bone_config.yaml"))
+    wandb.log({"numtrials":optimization.NUM_TRIALS, "numparallel":optimization.NUM_PARALLEL, "numepochs":optimization.NUM_EPOCHS})
     print("Starting optimization main func")
     main()
     print("FINAL TIME", str((time.time() - start_time)))
