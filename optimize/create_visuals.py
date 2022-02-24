@@ -63,4 +63,3 @@ class visualize_bones():
         self.create_best_figure()
         plt.savefig(path)
         plt.show()
-
