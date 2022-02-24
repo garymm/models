@@ -7,7 +7,6 @@ import (
 	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
-	"github.com/emer/etable/etable"
 	_ "github.com/emer/etable/etable"
 	"github.com/goki/gi/gi"
 	"log"
@@ -40,29 +39,30 @@ func (ss *Sim) LoadPretrainedWts() bool {
 
 // PreTrain runs pre-training, saves weights to PreTrainWts
 // TODO NEED COPY
-//func (ss *Sim) PreTrain() {
-//	ss.SetDgCa3Off(ss.Net, true)
-//	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAll)
-//	ss.HipStopNow = false
-//
-//	curRun := ss.TrainEnv.Run().Cur
-//	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
-//	done := false
-//	for {
-//		done = ss.PreTrainTrial()
-//		if ss.HipStopNow || done {
-//			break
-//		}
-//	}
-//	if done {
-//		b := &bytes.Buffer{}
-//		ss.Net.WriteWtsJSON(b)
-//		ss.PreTrainWts = b.Bytes()
-//		ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAB)
-//		ss.TrainEnv.Init(0)
-//		ss.SetDgCa3Off(ss.Net, false)
-//	}
-//	ss.Stopped()
+func (ss *Sim) PreTrain() {
+	ss.SetDgCa3Off(ss.Net, true)
+
+	ss.TrainEnv.AssignTable("TrainAll")
+	ss.HipStopNow = false
+
+	curRun := ss.TrainEnv.Run().Cur
+	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
+	done := false
+	for {
+		done = ss.PreTrainTrial()
+		if ss.HipStopNow || done {
+			break
+		}
+	}
+	if done {
+		b := &bytes.Buffer{}
+		ss.Net.WriteWtsJSON(b)
+		ss.PreTrainWts = b.Bytes()
+		ss.TrainEnv.AssignTable("TrainAB")
+		ss.TrainEnv.Init(0)
+		ss.SetDgCa3Off(ss.Net, false)
+	}
+	ss.Stopped()
 }
 
 // PreTrainTrial runs one trial of pretraining using TrainEnv

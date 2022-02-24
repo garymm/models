@@ -30,6 +30,8 @@ type Environment interface {
 	GroupCol() string
 	SetGroupCol(s string)
 
+	AssignTable(s string)
+
 	Validate() error
 
 	Step()

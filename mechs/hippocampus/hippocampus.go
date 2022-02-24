@@ -20,7 +20,10 @@ import (
 	"github.com/emer/emergent/prjn"
 	"github.com/emer/emergent/relpos"
 	"github.com/emer/etable/etable"
+	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
+	"github.com/goki/ki/ki"
+	"github.com/goki/ki/kit"
 	"log"
 )
 
@@ -495,8 +498,14 @@ func ConfigPats(ss *HipSim) {
 	trainEnv.EvalTables[TrainAll] = TrainALL
 }
 
-func OpenPats(ss *sim.Sim) {
-	// TODO
+func (ss *HipSim) OpenPat(dt *etable.Table, fname, name, desc string) {
+	err := dt.OpenCSV(gi.FileName(fname), etable.Tab)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	dt.SetMetaData("name", name)
+	dt.SetMetaData("desc", desc)
 }
 
 func ConfigNet(ss *HipSim, net *axon.Network) {
@@ -643,6 +652,28 @@ func SetParamsSet(ss *HipSim, setNm string, sheet string, setMsg bool) error {
 	// note: if you have more complex environments with parameters, definitely add
 	// sheets for them, e.g., "TrainEnv", "TestEnv" etc
 	return err
+}
+
+var KiT_HipSim = kit.Types.AddType(&HipSim{}, SimProps)
+var SimProps = ki.Props{
+	"CallMethods": ki.PropSlice{
+		{"SaveWeights", ki.Props{
+			"desc": "save network weights to file",
+			"icon": "file-save",
+			"Args": ki.PropSlice{
+				{"File Name", ki.Props{
+					"ext": ".wts,.wts.gz",
+				}},
+			},
+		}},
+		{"SetEnv", ki.Props{
+			"desc": "select which set of patterns to train on: AB or AC",
+			"icon": "gear",
+			"Args": ki.PropSlice{
+				{"Train on AC", ki.Props{}},
+			},
+		}},
+	},
 }
 
 // zycyc

@@ -1020,7 +1020,7 @@ func (ss *Sim) SaveWeights(filename gi.FileName) {
 }
 
 // SetDgCa3Off sets the DG and CA3 layers off (or on)
-// TODO NEED COPY
+
 func (ss *Sim) SetDgCa3Off(net *axon.Network, off bool) {
 	ca3 := net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
 	dg := net.LayerByName("DG").(axon.AxonLayer).AsAxon()
@@ -1029,7 +1029,7 @@ func (ss *Sim) SetDgCa3Off(net *axon.Network, off bool) {
 }
 
 // PreTrain runs pre-training, saves weights to PreTrainWts
-// TODO NEED COPY
+
 func (ss *Sim) PreTrain() {
 	ss.SetDgCa3Off(ss.Net, true)
 	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAll)
@@ -1226,7 +1226,6 @@ func (ss *Sim) SetParamsSet(setNm string, sheet string, setMsg bool) error {
 	return err
 }
 
-// TODO NEED COPY Maybe
 func (ss *Sim) OpenPat(dt *etable.Table, fname, name, desc string) {
 	err := dt.OpenCSV(gi.FileName(fname), etable.Tab)
 	if err != nil {
