@@ -44,6 +44,9 @@ type Sim struct {
 	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
+
+	HipStopNow   bool `view:"-" desc:"flag to stop running"`
+	PreTrainEpcs int  `desc:"number of epochs to run for pretraining"` //TODO where would this be most appropriate
 }
 
 // New creates new blank elements and initializes defaults

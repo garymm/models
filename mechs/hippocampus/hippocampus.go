@@ -81,6 +81,7 @@ func main() {
 
 	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
+
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
 			sim.GuiRun(&TheSim.Sim, ProgramName, "Hippocampus AB-AC", `This demonstrates a basic Hippocampus model in Axon. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
@@ -385,9 +386,9 @@ func ConfigParams(ss *sim.Sim) {
 func ConfigEnv(ss *HipSim) {
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
-
+	ss.PreTrainEpcs = 10 //from hip sim
 	ss.TrialStatsFunc = TrialStats
-
+	ss.Stop()
 	//Todo Delete these variables and get from CmdArgs instead
 	PholderMaxruns := 1
 	PholderMaxepochs := 1
@@ -673,7 +674,7 @@ func TwoFactorRun(ss *HipSim) {
 			SetParamsSet(ss, listSize, "", ss.CmdArgs.LogSetParams)
 			// TODO Need to uncomment this
 			//ss.ReConfigNet() // note: this applies Base params to Network
-			ConfigEnv(ss)
+			//ConfigEnv(ss)
 			ss.GUI.StopNow = false
 			// TODO Need to uncomment this
 			//ss.PreTrain() // zycyc

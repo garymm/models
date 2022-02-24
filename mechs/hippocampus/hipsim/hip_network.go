@@ -2,16 +2,79 @@ package sim
 
 import (
 	"fmt"
-	"github.com/emer/emergent/emer"
-
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/elog"
+	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
 	"github.com/goki/gi/gi"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 // 	    Running the Network, starting bottom-up..
+
+func (ss *Sim) SetDgCa3Off(net *axon.Network, off bool) {
+	ca3 := net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
+	dg := net.LayerByName("DG").(axon.AxonLayer).AsAxon()
+	ca3.Off = off
+	dg.Off = off
+}
+
+// PreTrain runs pre-training, saves weights to PreTrainWts
+// TODO NEED COPY
+//func (ss *Sim) PreTrain() {
+//	ss.SetDgCa3Off(ss.Net, true)
+//	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAll)
+//	ss.StopNow = false
+//	curRun := ss.TrainEnv.Run().Cur
+//	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
+//	done := false
+//	for {
+//		done = ss.PreTrainTrial()
+//		if ss.StopNow || done {
+//			break
+//		}
+//	}
+//	if done {
+//		b := &bytes.Buffer{}
+//		ss.Net.WriteWtsJSON(b)
+//		ss.PreTrainWts = b.Bytes()
+//		ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAB)
+//		ss.TrainEnv.Init(0)
+//		ss.SetDgCa3Off(ss.Net, false)
+//	}
+//	ss.Stopped()
+//}
+
+// PreTrainTrial runs one trial of pretraining using TrainEnv
+// returns true if done with pretraining
+// TODO NEED COPY This is also very important
+func (ss *Sim) PreTrainTrial() bool {
+	//if ss.NeedsNewRun {
+	//	ss.NewRun()
+	//}
+
+	ss.TrainEnv.Step() // the Env encapsulates and manages all counter state
+
+	// Key to query counters FIRST because current state is in NEXT epoch
+	// if epoch counter has changed
+	epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
+	if chg {
+		ss.Logs.Log(elog.Train, elog.Epoch)
+		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
+			ss.UpdateView(true)
+		}
+		if epc >= ss.PreTrainEpcs { // done with training..
+			ss.HipStopNow = true //TODO move to gui.stopped = True i think?
+			return true
+		}
+	}
+
+	ss.ApplyInputs(ss.TrainEnv)
+	ss.PreThetaCyc(true)        // special!
+	ss.TrialStatsFunc(ss, true) // accumulate
+	ss.Logs.Log(elog.Train, elog.Trial)
+	return false
+}
 
 // PreThetaCyc runs one theta cycle (200 msec) of processing.
 // This one is for pretraining: no connection switching.
