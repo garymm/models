@@ -45,8 +45,9 @@ type Sim struct {
 
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
 
-	HipStopNow   bool `view:"-" desc:"flag to stop running"`
-	PreTrainEpcs int  `desc:"number of epochs to run for pretraining"` //TODO where would this be most appropriate
+	HipStopNow   bool   `view:"-" desc:"flag to stop running"`           //TODO is this GUI
+	PreTrainEpcs int    `desc:"number of epochs to run for pretraining"` //TODO where would this be most appropriate
+	PreTrainWts  []byte `view:"-" desc:"pretrained weights file"`        //TODO is this GUI
 }
 
 // New creates new blank elements and initializes defaults

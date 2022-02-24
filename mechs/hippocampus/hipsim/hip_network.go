@@ -1,12 +1,15 @@
 package sim
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
+	_ "github.com/emer/etable/etable"
 	"github.com/goki/gi/gi"
+	"log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,18 +22,33 @@ func (ss *Sim) SetDgCa3Off(net *axon.Network, off bool) {
 	dg.Off = off
 }
 
+func (ss *Sim) LoadPretrainedWts() bool {
+	if ss.PreTrainWts == nil {
+		return false
+	}
+	b := bytes.NewReader(ss.PreTrainWts)
+	err := ss.Net.ReadWtsJSON(b)
+	if err != nil {
+		log.Println(err)
+	} else {
+		fmt.Printf("loaded pretrained wts\n")
+	}
+	return true
+}
+
 // PreTrain runs pre-training, saves weights to PreTrainWts
 // TODO NEED COPY
 //func (ss *Sim) PreTrain() {
 //	ss.SetDgCa3Off(ss.Net, true)
 //	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAll)
-//	ss.StopNow = false
+//	ss.HipStopNow = false
+//
 //	curRun := ss.TrainEnv.Run().Cur
 //	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
 //	done := false
 //	for {
 //		done = ss.PreTrainTrial()
-//		if ss.StopNow || done {
+//		if ss.HipStopNow || done {
 //			break
 //		}
 //	}

@@ -18,6 +18,7 @@ type Environment interface {
 
 	Epoch() *env.Ctr
 	Trial() *env.Ctr
+	Run() *env.Ctr
 
 	TrialName() *env.CurPrvString
 
