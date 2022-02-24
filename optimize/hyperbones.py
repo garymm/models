@@ -174,7 +174,7 @@ def single_bones_trial(bones_obj, params, lock, i,timeobj:SimpleTimerObj):
         print(all_times_np)
         avg_time =(time.time() - start_time) / len(all_observations)
         print((all_times_np.mean()),(all_times_np.max()), int(all_times_np.min()))
-        wandb.log({"runtime'": elapsed_time, "avgtime":avg_time})
+        wandb.log({"runtime'": elapsed_time, "avgtime":avg_time, "totaltime":str(time.time() - start_time)})
         print("Average elapsed time: " + str((time.time() - start_time) / len(all_observations)))
 
 
