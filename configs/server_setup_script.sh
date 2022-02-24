@@ -1,3 +1,5 @@
+# Created for Ubuntu 20.04
+
 sudo apt update
 sudo apt -y upgrade
 sudo apt -y install libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libgl1-mesa-dev libgl1-mesa-dev xorg-dev
@@ -27,6 +29,8 @@ sudo go test mechs/ra25/ra25_test.go
 cd ~
 git clone git@gitlab.com:generally-intelligent/bones.git
 sudo pip3 install -e bones/
+
+# Add your wandb authorization string to bone_config.yaml
 
 # screen # This lets you run the command in the background and close the console window.
 # cd ~/models/optimize
