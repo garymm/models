@@ -7,6 +7,7 @@ import (
 	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
+	"github.com/emer/etable/etable"
 	_ "github.com/emer/etable/etable"
 	"github.com/goki/gi/gi"
 	"log"
@@ -15,6 +16,7 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 // 	    Running the Network, starting bottom-up..
 
+// todo need to consider where this is going ot be used or placed
 func (ss *Sim) SetDgCa3Off(net *axon.Network, off bool) {
 	ca3 := net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
 	dg := net.LayerByName("DG").(axon.AxonLayer).AsAxon()
@@ -61,7 +63,7 @@ func (ss *Sim) LoadPretrainedWts() bool {
 //		ss.SetDgCa3Off(ss.Net, false)
 //	}
 //	ss.Stopped()
-//}
+}
 
 // PreTrainTrial runs one trial of pretraining using TrainEnv
 // returns true if done with pretraining
