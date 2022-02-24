@@ -12,8 +12,8 @@ EXECUTABLE_PATH = "ra25"  # the directory the file comes from
 VARIABLE_TO_OPTIMIZE = "|LastZero"
 NUM_EPOCHS = 200
 NUM_RUNS = 1
-NUM_TRIALS = 128
-NUM_PARALLEL = 8
+NUM_TRIALS = 16
+NUM_PARALLEL = 1
 
 
 def get_hypers():
