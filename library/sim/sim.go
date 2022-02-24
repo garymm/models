@@ -18,6 +18,7 @@ import (
 // state information organized and available without having to pass everything around
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
+//Todo discuss how we actually want to pass the sim object, maybe as an interface
 type Sim struct {
 	// TODO Net maybe shouldn't be in Sim because it won't always be an axon.Network
 	Net *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`

@@ -15,6 +15,7 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 // 	    Running the Network, starting bottom-up..
 
+// todo need to consider where this is going ot be used or placed
 func (ss *Sim) SetDgCa3Off(net *axon.Network, off bool) {
 	ca3 := net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
 	dg := net.LayerByName("DG").(axon.AxonLayer).AsAxon()
@@ -38,30 +39,31 @@ func (ss *Sim) LoadPretrainedWts() bool {
 
 // PreTrain runs pre-training, saves weights to PreTrainWts
 // TODO NEED COPY
-//func (ss *Sim) PreTrain() {
-//	ss.SetDgCa3Off(ss.Net, true)
-//	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAll)
-//	ss.HipStopNow = false
-//
-//	curRun := ss.TrainEnv.Run().Cur
-//	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
-//	done := false
-//	for {
-//		done = ss.PreTrainTrial()
-//		if ss.HipStopNow || done {
-//			break
-//		}
-//	}
-//	if done {
-//		b := &bytes.Buffer{}
-//		ss.Net.WriteWtsJSON(b)
-//		ss.PreTrainWts = b.Bytes()
-//		ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAB)
-//		ss.TrainEnv.Init(0)
-//		ss.SetDgCa3Off(ss.Net, false)
-//	}
-//	ss.Stopped()
-//}
+func (ss *Sim) PreTrain() {
+	ss.SetDgCa3Off(ss.Net, true)
+
+	ss.TrainEnv.AssignTable("TrainAll")
+	ss.HipStopNow = false
+
+	curRun := ss.TrainEnv.Run().Cur
+	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
+	done := false
+	for {
+		done = ss.PreTrainTrial()
+		if ss.HipStopNow || done {
+			break
+		}
+	}
+	if done {
+		b := &bytes.Buffer{}
+		ss.Net.WriteWtsJSON(b)
+		ss.PreTrainWts = b.Bytes()
+		ss.TrainEnv.AssignTable("TrainAB")
+		ss.TrainEnv.Init(0)
+		ss.SetDgCa3Off(ss.Net, false)
+	}
+	ss.Stopped()
+}
 
 // PreTrainTrial runs one trial of pretraining using TrainEnv
 // returns true if done with pretraining

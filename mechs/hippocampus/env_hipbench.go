@@ -50,6 +50,10 @@ func (envhip *EnvHipBench) InitTables(tableNames ...HipTableTypes) {
 	}
 }
 
+func (envhip *EnvHipBench) AssignTable(name string) {
+	envhip.Table = etable.NewIdxView(envhip.EvalTables[HipTableTypes(name)])
+}
+
 func (envhip *EnvHipBench) SetName(name string) {
 	envhip.FixedTable.Nm = name
 }
