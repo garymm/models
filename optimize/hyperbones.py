@@ -174,8 +174,8 @@ def single_bones_trial(bones_obj, params, lock, i,timeobj:SimpleTimerObj):
         print(all_times_np)
         avg_time =(time.time() - start_time) / len(all_observations)
         print((all_times_np.mean()),(all_times_np.max()), int(all_times_np.min()))
-        wandb.log({"runtime'": elapsed_time, "avgtime":avg_time, "totaltime":str(time.time() - start_time)})
-        print("Average elapsed time: " + str((time.time() - start_time) / len(all_observations)))
+        wandb.log({"runtime'": elapsed_time, "avgtime":avg_time, "totaltime":time.time() - start_time})
+        print("Average elapsed time: " + ((time.time() - start_time) / len(all_observations)))
 
 
 def run_bones_parallel(bones_obj, trialnumber, params):
@@ -223,4 +223,4 @@ if __name__ == '__main__':
 
     print("Starting optimization main func")
     main()
-    print("FINAL TIME", str((time.time() - start_time)))
+    print("FINAL TIME",(time.time() - start_time))
