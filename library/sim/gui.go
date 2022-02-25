@@ -196,6 +196,22 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	return ss.GUI.Win
 }
 
+func (ss *Sim) Counters(train bool) string {
+	if train {
+		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\tName:\t%v\t\t\t", ss.Run.Cur, ss.TrainEnv.Epoch().Cur, ss.TrainEnv.Trial().Cur, ss.Time.Cycle, ss.TrainEnv.TrialName().Cur)
+	} else {
+		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\tName:\t%v\t\t\t", ss.Run.Cur, ss.TrainEnv.Epoch().Cur, ss.TestEnv.Trial().Cur, ss.Time.Cycle, ss.TestEnv.TrialName().Cur)
+	}
+}
+
+func (ss *Sim) UpdateView(train bool) {
+	if ss.GUI.NetView != nil && ss.GUI.NetView.IsVisible() {
+		ss.GUI.NetView.Record(ss.Counters(train))
+		// note: essential to use Go version of update when called from another goroutine
+		ss.GUI.NetView.GoUpdate() // note: using counters is significantly slower..
+	}
+}
+
 // UpdateViewTime based on differetn time scales change the values accoridngly
 func (ss *Sim) UpdateViewTime(viewUpdt axon.TimeScales) {
 	switch viewUpdt {

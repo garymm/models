@@ -85,3 +85,7 @@ func (env *EnvOne2Many) State(s string) etensor.Tensor {
 func (env *EnvOne2Many) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
 	return env.FixedTable.Counter(scale)
 }
+
+func (env *EnvOne2Many) InputAndOutputLayers() []string {
+	return []string{"Input", "Output"}
+}

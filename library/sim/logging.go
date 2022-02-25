@@ -2,26 +2,13 @@ package sim
 
 import (
 	"fmt"
+	"github.com/emer/axon/axon"
 
 	"github.com/emer/emergent/elog"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/split"
 )
-
-// InitStats initializes all the statistics.
-// called at start of new run
-func (ss *Sim) InitStats() {
-	// clear rest just to make Sim look initialized
-	ss.Stats.SetFloat("TrlErr", 0.0)
-	ss.Stats.SetString("TrlClosest", "")
-	ss.Stats.SetFloat("TrlCorrel", 0.0)
-	ss.Stats.SetFloat("TrlUnitErr", 0.0)
-	ss.Stats.SetFloat("TrlCosDiff", 0.0)
-	ss.Stats.SetInt("FirstZero", -1) // critical to reset to -1
-	ss.Stats.SetInt("LastZero", -1)  // critical to reset to -1
-	ss.Stats.SetInt("NZero", 0)
-}
 
 // StatCounters saves current counters to Stats, so they are available for logging etc
 // Also saves a string rep of them to the GUI, if the GUI is active
@@ -54,7 +41,6 @@ func (ss *Sim) ConfigLogsFromArgs() {
 }
 
 func (ss *Sim) ConfigLogs() {
-	ss.ConfigLogItems()
 	ss.Logs.CreateTables()
 	ss.Logs.SetContext(&ss.Stats, ss.Net)
 	// don't plot certain combinations we don't use
@@ -63,7 +49,7 @@ func (ss *Sim) ConfigLogs() {
 	// note: Analyze not plotted by default
 	ss.Logs.SetMeta(elog.Train, elog.Run, "LegendCol", "Params")
 	ss.Stats.ConfigRasters(ss.Net, ss.Net.LayersByClass())
-	ss.ConfigLogsFromArgs()
+	ss.ConfigLogsFromArgs() // This must occur after logs are configged.
 }
 
 // RunName returns a name for this run that combines Tag and Params -- add this to
@@ -160,4 +146,70 @@ func (ss *Sim) PCAStats() {
 // RasterRec updates spike raster record for given cycle
 func (ss *Sim) RasterRec(cyc int) {
 	ss.Stats.RasterRec(ss.Net, cyc, "Spike", ss.Net.LayersByClass())
+}
+
+// MemStats computes ActM vs. Target on ECout with binary counts
+// must be called at end of 3rd quarter so that Targ values are
+// for the entire full pattern as opposed to the plus-phase target
+// values clamped from ECin activations
+// TODO Hippocampus specific
+func (ss *Sim) MemStats(train bool) {
+	ecout := ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
+	inp := ss.Net.LayerByName("Input").(axon.AxonLayer).AsAxon() // note: must be input b/c ECin can be active
+	nn := ecout.Shape().Len()
+	actThr := float32(0.2)
+	trgOnWasOffAll := 0.0 // all units
+	trgOnWasOffCmp := 0.0 // only those that required completion, missing in ECin
+	trgOffWasOn := 0.0    // should have been off
+	cmpN := 0.0           // completion target
+	trgOnN := 0.0
+	trgOffN := 0.0
+	actMi, _ := ecout.UnitVarIdx("ActM")
+	targi, _ := ecout.UnitVarIdx("Targ")
+	actQ1i, _ := ecout.UnitVarIdx("ActSt1")
+	for ni := 0; ni < nn; ni++ {
+		actm := ecout.UnitVal1D(actMi, ni)
+		trg := ecout.UnitVal1D(targi, ni) // full pattern target
+		inact := inp.UnitVal1D(actQ1i, ni)
+		if trg < actThr { // trgOff
+			trgOffN += 1
+			if actm > actThr {
+				trgOffWasOn += 1
+			}
+		} else { // trgOn
+			trgOnN += 1
+			if inact < actThr { // missing in ECin -- completion target
+				cmpN += 1
+				if actm < actThr {
+					trgOnWasOffAll += 1
+					trgOnWasOffCmp += 1
+				}
+			} else {
+				if actm < actThr {
+					trgOnWasOffAll += 1
+				}
+			}
+		}
+	}
+	trgOnWasOffAll /= trgOnN
+	trgOffWasOn /= trgOffN
+	if train { // no cmp
+		if trgOnWasOffAll < ss.Stats.Float("MemThr") && trgOffWasOn < ss.Stats.Float("MemThr") {
+			ss.Stats.SetFloat("Mem", 1)
+		} else {
+			ss.Stats.SetFloat("Mem", 0)
+		}
+	} else { // test
+		if cmpN > 0 { // should be
+			trgOnWasOffCmp /= cmpN
+			if trgOnWasOffCmp < ss.Stats.Float("MemThr") && trgOffWasOn < ss.Stats.Float("MemThr") {
+				ss.Stats.SetFloat("Mem", 1)
+			} else {
+				ss.Stats.SetFloat("Mem", 0)
+			}
+		}
+	}
+	ss.Stats.SetFloat("TrgOnWasOffAll", trgOnWasOffAll)
+	ss.Stats.SetFloat("TrgOnWasOffCmp", trgOnWasOffCmp)
+	ss.Stats.SetFloat("TrgOffWasOn", trgOffWasOn)
 }

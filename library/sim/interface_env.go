@@ -18,6 +18,7 @@ type Environment interface {
 
 	Epoch() *env.Ctr
 	Trial() *env.Ctr
+	Run() *env.Ctr
 
 	TrialName() *env.CurPrvString
 
@@ -28,6 +29,10 @@ type Environment interface {
 	SetNameCol(s string)
 	GroupCol() string
 	SetGroupCol(s string)
+
+	AssignTable(s string)
+
+	InputAndOutputLayers() []string
 
 	Validate() error
 

@@ -18,7 +18,6 @@ import (
 // state information organized and available without having to pass everything around
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
-//Todo discuss how we actually want to pass the sim object, maybe as an interface
 type Sim struct {
 	// TODO Net maybe shouldn't be in Sim because it won't always be an axon.Network
 	Net *axon.Network `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
@@ -44,7 +43,13 @@ type Sim struct {
 	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 
+	// Callbacks
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
+	Initialization func()                    `view:"-" desc:"This is called during sim.Init"`
+
+	// Used by Hippocampus model
+	PreTrainWts []byte `view:"-" desc:"pretrained weights file"`
+	UseHipTheta bool   `view:"-" desc:"If true, use the hippocampus theta cycle. This is a hack."` // TODO Find a more graceful solution.
 }
 
 // New creates new blank elements and initializes defaults
@@ -75,6 +80,9 @@ func (ss *Sim) Init() {
 	ss.GUI.StopNow = false
 	ss.Params.SetMsg = ss.CmdArgs.LogSetParams
 	ss.Params.SetAll()
+	if ss.Initialization != nil {
+		ss.Initialization()
+	}
 	// NOTE uncomment following to see the compiled hyper params
 	// fmt.Println(ss.Params.NetHypers.JSONString())
 	ss.NewRun()

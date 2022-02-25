@@ -30,11 +30,12 @@ type PatParams struct {
 	DriftPct    float32 `desc:"percentage of active bits that drift, per step, for drifting context"`
 }
 
-type EnvHipBench struct {
+type EnvHip struct {
 	sim.Environment
 	env.FixedTable
-	EvalTables TableMaps //a map of tables used for handling stuff
+	EvalTables TableMaps `desc:"a map of tables used for handling stuff"`
 	Pat        PatParams
+	IsTest     bool `desc:"Whether this is the Test environment or the Train"`
 }
 
 func (pp *PatParams) Defaults() {
@@ -43,88 +44,95 @@ func (pp *PatParams) Defaults() {
 	pp.CtxtFlipPct = .25
 }
 
-func (envhip *EnvHipBench) InitTables(tableNames ...HipTableTypes) {
+func (envhip *EnvHip) InitTables(tableNames ...HipTableTypes) {
 	envhip.EvalTables = make(TableMaps)
 	for _, nm := range tableNames {
 		envhip.EvalTables[nm] = &etable.Table{}
 	}
 }
 
-func (envhip *EnvHipBench) AssignTable(name string) {
+func (envhip *EnvHip) AssignTable(name string) {
 	envhip.Table = etable.NewIdxView(envhip.EvalTables[HipTableTypes(name)])
 }
 
-func (envhip *EnvHipBench) SetName(name string) {
+func (envhip *EnvHip) SetName(name string) {
 	envhip.FixedTable.Nm = name
 }
-func (envhip *EnvHipBench) Name() string {
+func (envhip *EnvHip) Name() string {
 	return envhip.FixedTable.Nm
 }
-func (envhip *EnvHipBench) SetDesc(desc string) {
+func (envhip *EnvHip) SetDesc(desc string) {
 	envhip.FixedTable.Dsc = desc
 }
-func (envhip *EnvHipBench) Desc() string {
+func (envhip *EnvHip) Desc() string {
 	return envhip.FixedTable.Dsc
 }
 
-func (envhip *EnvHipBench) Order() []int {
+func (envhip *EnvHip) Order() []int {
 	return envhip.FixedTable.Order
 }
-func (envhip *EnvHipBench) Sequential() bool {
+func (envhip *EnvHip) Sequential() bool {
 	return envhip.FixedTable.Sequential
 }
-func (envhip *EnvHipBench) SetSequential(s bool) {
+func (envhip *EnvHip) SetSequential(s bool) {
 	envhip.FixedTable.Sequential = s
 }
 
-func (envhip *EnvHipBench) Run() *env.Ctr {
+func (envhip *EnvHip) Run() *env.Ctr {
 	return &envhip.FixedTable.Run
 }
-func (envhip *EnvHipBench) Epoch() *env.Ctr {
+func (envhip *EnvHip) Epoch() *env.Ctr {
 	return &envhip.FixedTable.Epoch
 }
-func (envhip *EnvHipBench) Trial() *env.Ctr {
+func (envhip *EnvHip) Trial() *env.Ctr {
 	return &envhip.FixedTable.Trial
 }
-func (envhip *EnvHipBench) TrialName() *env.CurPrvString {
+func (envhip *EnvHip) TrialName() *env.CurPrvString {
 	return &envhip.FixedTable.TrialName
 }
-func (envhip *EnvHipBench) GroupName() *env.CurPrvString {
+func (envhip *EnvHip) GroupName() *env.CurPrvString {
 	return &envhip.FixedTable.GroupName
 }
-func (envhip *EnvHipBench) NameCol() string {
+func (envhip *EnvHip) NameCol() string {
 	return envhip.FixedTable.NameCol
 }
-func (envhip *EnvHipBench) SetNameCol(s string) {
+func (envhip *EnvHip) SetNameCol(s string) {
 	envhip.FixedTable.NameCol = s
 }
-func (envhip *EnvHipBench) GroupCol() string {
+func (envhip *EnvHip) GroupCol() string {
 	return envhip.FixedTable.GroupCol
 }
-func (envhip *EnvHipBench) SetGroupCol(s string) {
+func (envhip *EnvHip) SetGroupCol(s string) {
 	envhip.FixedTable.GroupCol = s
 }
 
-func (envhip *EnvHipBench) Validate() error {
+func (envhip *EnvHip) Validate() error {
 
 	return envhip.FixedTable.Validate()
 }
-func (envhip *EnvHipBench) Init(run int) {
+func (envhip *EnvHip) Init(run int) {
+	if !envhip.IsTest {
+		envhip.AssignTable("TrainAB")
+	}
 	envhip.FixedTable.Init(run)
 	envhip.Pat.Defaults()
 }
 
-func (envhip *EnvHipBench) CurTrialName() string {
+func (envhip *EnvHip) CurTrialName() string {
 	return envhip.TrialName().Cur
 }
-func (envhip *EnvHipBench) Step() {
+func (envhip *EnvHip) Step() {
 	envhip.FixedTable.Step()
 }
 
-func (envhip *EnvHipBench) State(s string) etensor.Tensor {
+func (envhip *EnvHip) State(s string) etensor.Tensor {
 	return envhip.FixedTable.State(s)
 }
 
-func (envhip *EnvHipBench) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
+func (envhip *EnvHip) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
 	return envhip.FixedTable.Counter(scale)
+}
+
+func (envhip *EnvHip) InputAndOutputLayers() []string {
+	return []string{"Input", "ECout"}
 }

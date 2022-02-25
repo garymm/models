@@ -11,7 +11,7 @@ package main
 
 import (
 	"fmt"
-	sim "github.com/Astera-org/models/mechs/hippocampus/hipsim"
+	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/hip"
 	"github.com/emer/emergent/egui"
@@ -29,8 +29,8 @@ import (
 
 var ProgramName = "Hippocampus"
 
-var TestEnv = EnvHipBench{}
-var TrainEnv = EnvHipBench{}
+var TestEnv = EnvHip{IsTest: true}
+var TrainEnv = EnvHip{}
 
 // TrialStats computes the trial-level statistics and adds them to the epoch accumulators if
 // accum is true.  Note that we're accumulating stats here on the Sim side so the
@@ -106,10 +106,14 @@ func Config(ss *HipSim) {
 	}
 
 	ConfigParams(&ss.Sim)
+	ss.UseHipTheta = true
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigNet(ss, ss.Net)
+	InitHipStats(&ss.Sim)
+	ConfigHipItems(&ss.Sim)
+	ss.ConfigLogItems()
 	ss.ConfigLogs()
 }
 
@@ -123,7 +127,7 @@ func ConfigGui(ss *HipSim) {
 		Func: func() {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
-				go ss.PreTrain()
+				go PreTrain(&ss.Sim)
 			}
 		}})
 
@@ -135,7 +139,7 @@ func ConfigGui(ss *HipSim) {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
 				ss.GUI.StopNow = false
-				go ss.PreTrainTrial()
+				go PreTrainTrial(&ss.Sim)
 				ss.GUI.Stopped()
 			}
 		}})
@@ -172,7 +176,7 @@ func ConfigGui(ss *HipSim) {
 func ConfigEnv(ss *HipSim) {
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
-	ss.PreTrainEpcs = 10 //from hip sim
+	ss.CmdArgs.PreTrainEpcs = 10 //from hip sim
 	ss.TrialStatsFunc = TrialStats
 	ss.Stop()
 
@@ -475,7 +479,7 @@ func TwoFactorRun(ss *HipSim) {
 			ReconfigPatsAndNet(ss) // note: this applies Base params to Network
 			//ConfigEnv(ss)
 			ss.GUI.StopNow = false
-			ss.PreTrain() // zycyc
+			PreTrain(&ss.Sim) // zycyc
 			ss.NewRun()
 			ss.Train()
 		}

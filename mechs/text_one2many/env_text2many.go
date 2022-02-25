@@ -81,3 +81,7 @@ func (env *EnvText2Many) State(s string) etensor.Tensor {
 func (env *EnvText2Many) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
 	return env.CorpusEnv.Counter(scale)
 }
+
+func (env *EnvText2Many) InputAndOutputLayers() []string {
+	return []string{"Input", "Output"}
+}

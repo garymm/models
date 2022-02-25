@@ -78,6 +78,8 @@ func Config(ss *sim.Sim) {
 	ConfigEnv(ss)
 	ConfigPats(ss)
 	ConfigNet(ss, ss.Net)
+	ss.InitStats()
+	ss.ConfigLogItems()
 	ss.ConfigLogs()
 }
 

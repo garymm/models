@@ -209,6 +209,8 @@ func Config(ss *One2Sim) {
 	ss.ParseArgs()
 	ConfigEnv(&ss.Sim)
 	ConfigNet(&ss.Sim, ss.Net)
+	ss.InitStats()
+	ss.ConfigLogItems()
 	ss.ConfigLogs()
 }
 

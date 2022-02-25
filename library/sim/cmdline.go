@@ -28,9 +28,10 @@ type CmdArgs struct {
 	paramsFile  string
 	noRun       bool
 
-	MaxRuns  int `desc:"maximum number of model runs to perform (starting from StartRun)"`
-	MaxEpcs  int `desc:"maximum number of epochs to run per model run"`
-	StartRun int `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
+	MaxRuns      int `desc:"maximum number of model runs to perform (starting from StartRun)"`
+	MaxEpcs      int `desc:"maximum number of epochs to run per model run"`
+	StartRun     int `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
+	PreTrainEpcs int `desc:"number of epochs to run for pretraining"`
 }
 
 // ParseArgs updates the Sim object with command line arguments.
@@ -40,11 +41,12 @@ func (ss *Sim) ParseArgs() {
 	flag.IntVar(&ss.CmdArgs.StartRun, "run", 0, "starting run number -- determines the random seed -- runs counts from there -- can do all runs in parallel by launching separate jobs with each run, runs = 1")
 	flag.IntVar(&ss.CmdArgs.MaxRuns, "runs", 10, "number of runs to do (note that MaxEpcs is in paramset)")
 	flag.IntVar(&ss.CmdArgs.MaxEpcs, "epochs", 150, "number of epochs per run")
+	flag.IntVar(&ss.CmdArgs.PreTrainEpcs, "pretrainEpochs", 150, "number of epochs to run for pretraining")
 	flag.BoolVar(&ss.CmdArgs.LogSetParams, "setparams", false, "if true, print a record of each parameter that is set")
 	flag.BoolVar(&ss.CmdArgs.SaveWts, "wts", false, "if true, save final weights after each run")
 	flag.StringVar(&ss.CmdArgs.note, "note", "", "user note -- describe the run params etc")
 	flag.BoolVar(&ss.CmdArgs.saveEpcLog, "epclog", true, "if true, save train epoch log to file")
-	flag.BoolVar(&ss.CmdArgs.saveRunLog, "runlog", true, "if true, save run run log to file")
+	flag.BoolVar(&ss.CmdArgs.saveRunLog, "runlog", true, "if true, save run log to file")
 	flag.BoolVar(&ss.CmdArgs.saveNetData, "netdata", false, "if true, save network activation etc data from testing trials, for later viewing in netview")
 	flag.BoolVar(&ss.CmdArgs.NoGui, "nogui", len(os.Args) > 1, "if not passing any other args and want to run nogui, use nogui")
 	flag.StringVar(&ss.CmdArgs.hyperFile, "hyperFile", "", "Name of the file to output hyperparameter data. If not empty string, program should write and then exit")

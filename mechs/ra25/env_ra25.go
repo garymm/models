@@ -85,3 +85,7 @@ func (env *EnvRa25) State(s string) etensor.Tensor {
 func (env *EnvRa25) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
 	return env.FixedTable.Counter(scale)
 }
+
+func (env *EnvRa25) InputAndOutputLayers() []string {
+	return []string{"Input", "Output"}
+}

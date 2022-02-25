@@ -9,6 +9,22 @@ import (
 	"github.com/emer/etable/minmax"
 )
 
+// These log items are common across many models.
+
+// InitStats initializes all the statistics.
+// called at start of new run
+func (ss *Sim) InitStats() {
+	// clear rest just to make Sim look initialized
+	ss.Stats.SetFloat("TrlErr", 0.0)
+	ss.Stats.SetString("TrlClosest", "")
+	ss.Stats.SetFloat("TrlCorrel", 0.0)
+	ss.Stats.SetFloat("TrlUnitErr", 0.0)
+	ss.Stats.SetFloat("TrlCosDiff", 0.0)
+	ss.Stats.SetInt("FirstZero", -1) // critical to reset to -1
+	ss.Stats.SetInt("LastZero", -1)  // critical to reset to -1
+	ss.Stats.SetInt("NZero", 0)
+}
+
 func (ss *Sim) ConfigLogItems() {
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Run",

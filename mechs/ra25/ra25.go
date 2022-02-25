@@ -69,6 +69,8 @@ func Config(ss *sim.Sim) {
 	ss.ParseArgs()
 	ConfigEnv(ss)
 	ConfigNet(ss, ss.Net)
+	ss.InitStats()
+	ss.ConfigLogItems()
 	ss.ConfigLogs()
 }
 
