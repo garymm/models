@@ -1,7 +1,7 @@
 package main
 
 import (
-	sim "github.com/Astera-org/models/mechs/hippocampus/hipsim"
+	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/emergent/evec"
 	"github.com/emer/emergent/params"
 )

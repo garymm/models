@@ -279,9 +279,9 @@ func (ss *Sim) TrainTrial() {
 
 	ss.ApplyInputs(TrainEnv)
 	if ss.UseHipTheta {
-		ss.HipThetaCyc(false)
+		ss.HipThetaCyc(true)
 	} else {
-		ss.ThetaCyc(false) // !train
+		ss.ThetaCyc(true) // !train
 	}
 	ss.Log(elog.Train, elog.Trial)
 	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) {
