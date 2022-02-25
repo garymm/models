@@ -348,6 +348,72 @@ func (ss *Sim) TrainRun() {
 	ss.Stopped()
 }
 
+func (ss *Sim) TrueTrain() {
+
+	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Incr() {
+		if ss.CmdArgs.NeedsNewRun {
+			ss.NewRun()
+		}
+		for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Incr() {
+			for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Incr() {
+				ss.TrueTrainTrial()
+				if ss.GUI.StopNow == true {
+					ss.Stopped()
+					return
+				}
+			}
+
+			epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
+			if chg {
+				//epc := ss.TrainEnv.Epoch().Cur
+				if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
+					ss.PCAStats()
+				}
+				ss.Log(elog.Train, elog.Epoch)
+				ss.LrateSched(epc)
+				if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
+					ss.GUI.UpdateNetView()
+				}
+				if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
+					ss.TestAll()
+				}
+				if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
+					// done with training..
+					ss.RunEnd()
+					if ss.Run.Incr() { // we are done!
+						ss.GUI.StopNow = true
+						return
+					} else {
+						ss.CmdArgs.NeedsNewRun = true
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
+func (ss *Sim) TrueTrainEpoch() {
+	//Do the epoch logic, this should be in a separate function
+
+}
+
+func (ss *Sim) TrueTrainTrial() {
+	epc := ss.TrainEnv.Epoch().Cur
+	ss.TrainEnv.Step()
+	ss.ApplyInputs(ss.TrainEnv)
+	if ss.UseHipTheta {
+		ss.HipThetaCyc(true)
+	} else {
+		ss.ThetaCyc(true) // !train
+	}
+	ss.Log(elog.Train, elog.Trial)
+	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) {
+		ss.Log(elog.Analyze, elog.Trial)
+	}
+
+}
+
 // Train runs the full training from this point onward
 // TODO This should loop through Runs, Epochs, and Trials with explicit nested for loops
 func (ss *Sim) Train() {
