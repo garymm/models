@@ -58,10 +58,6 @@ func (ss *Sim) New() {
 	ss.Pats = &etable.Table{}
 	ss.Stats.Init()
 	ss.Run.Scale = env.Run
-	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
-	for i := 0; i < 100; i++ {
-		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0
-	}
 	ss.ViewOn = true
 	ss.TrainUpdt = axon.AlphaCycle
 	ss.TestUpdt = axon.Cycle
@@ -100,7 +96,7 @@ func (ss *Sim) InitRndSeed() {
 // the same random seeds for every run
 func (ss *Sim) NewRndSeed() {
 	rs := time.Now().UnixNano()
-	for i := 0; i < 100; i++ {
-		ss.CmdArgs.RndSeeds[i] = rs + int64(i)
+	for i := 0; i < len(ss.CmdArgs.RndSeeds); i++ {
+		ss.CmdArgs.RndSeeds[i] = (rs + int64(i)) % 10000
 	}
 }

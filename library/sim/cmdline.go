@@ -13,12 +13,13 @@ import (
 )
 
 type CmdArgs struct {
-	SaveWts      bool             `desc:"for command-line run only, auto-save final weights after each run"`
-	NoGui        bool             `desc:"if true, runing in no GUI mode"`
-	LogSetParams bool             `desc:"if true, print message for all params that are set"`
-	NeedsNewRun  bool             `desc:"flag to initialize NewRun if last one finished"`
-	RndSeeds     []int64          `desc:"a list of random seeds to use for each run"`
-	NetData      *netview.NetData `desc:"net data for recording in nogui mode"`
+	SaveWts        bool             `desc:"for command-line run only, auto-save final weights after each run"`
+	NoGui          bool             `desc:"if true, runing in no GUI mode"`
+	RandomizeEvery bool             `desc:"If true, randomize seed for every run"`
+	LogSetParams   bool             `desc:"if true, print message for all params that are set"`
+	NeedsNewRun    bool             `desc:"flag to initialize NewRun if last one finished"`
+	RndSeeds       []int64          `desc:"a list of random seeds to use for each run"`
+	NetData        *netview.NetData `desc:"net data for recording in nogui mode"`
 
 	saveEpcLog  bool
 	saveRunLog  bool
@@ -43,6 +44,7 @@ func (ss *Sim) ParseArgs() {
 	flag.IntVar(&ss.CmdArgs.MaxEpcs, "epochs", 150, "number of epochs per run")
 	flag.IntVar(&ss.CmdArgs.PreTrainEpcs, "pretrainEpochs", 150, "number of epochs to run for pretraining")
 	flag.BoolVar(&ss.CmdArgs.LogSetParams, "setparams", false, "if true, print a record of each parameter that is set")
+	flag.BoolVar(&ss.CmdArgs.RandomizeEvery, "randomize", false, "If true, randomize seed for every run")
 	flag.BoolVar(&ss.CmdArgs.SaveWts, "wts", false, "if true, save final weights after each run")
 	flag.StringVar(&ss.CmdArgs.note, "note", "", "user note -- describe the run params etc")
 	flag.BoolVar(&ss.CmdArgs.saveEpcLog, "epclog", true, "if true, save train epoch log to file")
@@ -76,6 +78,13 @@ func (ss *Sim) ParseArgs() {
 	}
 	if ss.CmdArgs.MaxEpcs == 0 { // allow user override
 		ss.CmdArgs.MaxEpcs = 100
+	}
+	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
+	for i := 0; i < len(ss.CmdArgs.RndSeeds); i++ {
+		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0
+	}
+	if ss.CmdArgs.RandomizeEvery {
+		ss.NewRndSeed()
 	}
 
 	if ss.CmdArgs.saveNetData {
