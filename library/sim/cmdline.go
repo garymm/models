@@ -73,12 +73,6 @@ func (ss *Sim) ParseArgs() {
 	if ss.Params.ExtraSets != "" {
 		fmt.Printf("Using ParamSet: %s\n", ss.Params.ExtraSets)
 	}
-	if ss.CmdArgs.MaxRuns == 0 { // allow user override
-		ss.CmdArgs.MaxRuns = 5
-	}
-	if ss.CmdArgs.MaxEpcs == 0 { // allow user override
-		ss.CmdArgs.MaxEpcs = 100
-	}
 	ss.CmdArgs.RndSeeds = make([]int64, 100) // make enough for plenty of runs
 	for i := 0; i < len(ss.CmdArgs.RndSeeds); i++ {
 		ss.CmdArgs.RndSeeds[i] = int64(i) + 1 // exclude 0
