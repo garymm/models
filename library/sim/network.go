@@ -348,40 +348,29 @@ func (ss *Sim) TrainRun() {
 	ss.Stopped()
 }
 
-func (ss *Sim) TrueTrain() {
-
-	runIncr := ss.Run.Cur
-	epochIncr := ss.TrainEnv.Epoch().Cur
-	trialIncr := ss.TrainEnv.Trial().Cur
-	if trialIncr == -1 {
-		// TODO THIS IS A HACK
-		trialIncr = 0
+// TODO Replace Train and TrainTrial with this new version and rename back to Train
+func (ss *Sim) ForLoopTrain() {
+	if ss.TrainEnv.Trial().Cur == -1 {
+		// This is a hack, and it should be initialized at 0
+		ss.TrainEnv.Trial().Cur = 0
 	}
-	for ; runIncr < ss.Run.Max; runIncr += 1 {
-		ss.Run.Cur = runIncr
-		if ss.CmdArgs.NeedsNewRun {
-			ss.NewRun()
+	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
+		ss.NewRun()
+		if ss.TrainEnv.Trial().Cur == -1 {
+			// This is a hack, and it should be initialized at 0
+			ss.TrainEnv.Trial().Cur = 0
 		}
-		//ss.TrainEnv.Epoch().Incr()
-		for ; epochIncr < ss.TrainEnv.Epoch().Max; epochIncr += 1 {
-			// TODO Set epoch number also
-			ss.TrainEnv.Epoch().Cur = epochIncr
-			for ; trialIncr < ss.TrainEnv.Trial().Max; trialIncr += 1 {
-				ss.TrainEnv.Trial().Cur = trialIncr
-				ss.TrueTrainTrial()
+		for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
+			for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Cur += 1 {
+				ss.SimpleTrainTrial()
 				if ss.GUI.StopNow == true {
 					ss.Stopped()
 					return
 				}
 			}
-			trialIncr = 0 // TODO This is a bit hacky
+			ss.TrainEnv.Trial().Cur = 0
 
-			//epoch incremement
-			// TODO Don't change like this with Counter
-			//epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
-			//if chg {
-			//epc := ss.TrainEnv.Epoch().Cur
-			epc := epochIncr                                           // DO NOT SUBMIT Unnecessary variable
+			epc := ss.TrainEnv.Epoch().Cur
 			if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
 				ss.PCAStats()
 			}
@@ -393,21 +382,16 @@ func (ss *Sim) TrueTrain() {
 			if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
 				ss.TestAll()
 			}
-			if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
-				// done with training..
-				ss.RunEnd()
-				if ss.Run.Incr() { // we are done!
-					ss.GUI.StopNow = true
-					return
-				} else {
-					ss.CmdArgs.NeedsNewRun = true
-					return
-				}
+			if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
+				// End this run early
+				break
 			}
-			//}
 		}
-		epochIncr = 0
+		ss.TrainEnv.Epoch().Cur = 0
+		ss.RunEnd()
 	}
+	ss.GUI.StopNow = true
+	ss.GUI.Stopped()
 }
 
 func (ss *Sim) TrueTrainEpoch() {
@@ -415,11 +399,8 @@ func (ss *Sim) TrueTrainEpoch() {
 
 }
 
-func (ss *Sim) TrueTrainTrial() {
+func (ss *Sim) SimpleTrainTrial() {
 	epc := ss.TrainEnv.Epoch().Cur
-
-	// TODO This is counting and should probably be removed
-	//ss.TrainEnv.Step()
 
 	ss.ApplyInputs(ss.TrainEnv)
 	if ss.UseHipTheta {

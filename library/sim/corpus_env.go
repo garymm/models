@@ -146,7 +146,7 @@ func (ev *CorpusEnv) Init(run int) {
 	ev.Epoch.Init()
 	ev.Trial.Init()
 	ev.Run.Cur = run
-	ev.Trial.Cur = -1 // init state -- key so that first Step() = 0
+	ev.Trial.Cur = 0 // init state -- key so that first Step() = 0
 }
 
 func (ev *CorpusEnv) Config(inputfile string, inputsize evec.Vec2i, localist bool, ncontext, ntopsuccessors, nrandomizeword int) {
