@@ -19,11 +19,12 @@ import threading
 import os
 import psutil
 
+
 def print_cpu_usage():
     l1, l2, l3 = psutil.getloadavg()
     print(l3)
     print(os.cpu_count())
-    CPU_use = (l3/os.cpu_count()) * 100
+    CPU_use = (l3 / os.cpu_count()) * 100
 
     print(CPU_use)
 
@@ -35,7 +36,7 @@ from bones import BONESParams
 from bones import ObservationInParam
 from bones import LinearSpace
 
-OBSERVATIONS_FILE = "bones_obs.txt" #todo doesn't seem to actually write to file
+OBSERVATIONS_FILE = "bones_obs.txt"  # todo doesn't seem to actually write to file
 
 
 def get_bones_suggestion(current_suggestions: dict, parametername, guidelines):
@@ -79,7 +80,8 @@ def prepare_hyperparams_bones(the_params):
         is_int = "Type" in relevantvalues and relevantvalues["Type"] == "Int"
         distribution_type = LinearSpace(scale=stddev, is_integer=is_int)
         if "Min" in relevantvalues and "Max" in relevantvalues:
-            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), max=float(relevantvalues["Max"]), is_integer=is_int)
+            distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]),
+                                            max=float(relevantvalues["Max"]), is_integer=is_int)
         elif "Min" in relevantvalues:
             distribution_type = LinearSpace(scale=stddev, min=float(relevantvalues["Min"]), is_integer=is_int)
         elif "Max" in relevantvalues:
@@ -133,21 +135,26 @@ def run_bones(bones_obj, trialnumber, params):
 all_observations = collections.deque()
 start_time = -1
 all_times = []
+num_currently_parallel = 0
 
-class SimpleTimerObj ():
+
+class SimpleTimerObj():
     def __init__(self):
         self.start = time.time()
         self.end = -1
+
     def start_timer(self):
         self.start = time.time()
+
     def end_timer(self):
-        self.end = float(int(time.time() - self.start)) #seconds are fine
+        self.end = float(int(time.time() - self.start))  # seconds are fine
 
 
-
-def single_bones_trial(bones_obj, params, lock, i,timeobj:SimpleTimerObj):
+def single_bones_trial(bones_obj, params, lock, i, timeobj: SimpleTimerObj):
+    global num_currently_parallel
+    num_currently_parallel += 1
     trial_name = "Searching_" + str(i)
-    print("Starting trial: " + trial_name)
+    print("Starting trial: " + trial_name + " with " + str(num_currently_parallel) + " in parallel")
     with lock:
         suggestions = bones_obj.suggest().suggestion
     print("TRYING THESE SUGGESTIONS")
@@ -172,10 +179,12 @@ def single_bones_trial(bones_obj, params, lock, i,timeobj:SimpleTimerObj):
         all_times.append(elapsed_time)
         all_times_np = np.array(all_times)
         print(all_times_np)
-        avg_time =(time.time() - start_time) / len(all_observations)
-        print((all_times_np.mean()),(all_times_np.max()), int(all_times_np.min()))
-        wandb.log({"runtime'": elapsed_time, "avgtime":avg_time, "totaltime":time.time() - start_time})
+        avg_time = (time.time() - start_time) / len(all_observations)
+        print((all_times_np.mean()), (all_times_np.max()), int(all_times_np.min()))
+        wandb.log({"runtime'": elapsed_time, "avgtime": avg_time, "totaltime": time.time() - start_time})
         print("Average elapsed time: " + ((time.time() - start_time) / len(all_observations)))
+    num_currently_parallel += -1
+
 
 def run_bones_parallel(bones_obj, trialnumber, params):
     locky = threading.Lock()
@@ -185,14 +194,16 @@ def run_bones_parallel(bones_obj, trialnumber, params):
         for i in range(trialnumber):
             timeobj = SimpleTimerObj()
             print("Starting to execute: " + str(i))
-            executor.submit(single_bones_trial, bones_obj, params, locky, i,timeobj)
+            executor.submit(single_bones_trial, bones_obj, params, locky, i, timeobj)
 
     best = sorted(all_observations, key=lambda a: a[0])[0]
     return best[1], best[0]
 
+
 def loadyaml(name):
     with open(name, 'r') as file:
         return yaml.safe_load(file)
+
 
 def main():
     os.chdir('../')  # Move into the models/ directory
@@ -207,20 +218,22 @@ def main():
 
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
-    wandb.log({"numtrials":optimization.NUM_TRIALS, "numparallel":optimization.NUM_PARALLEL, "numepochs":optimization.NUM_EPOCHS})
+    wandb.log({"numtrials": optimization.NUM_TRIALS, "numparallel": optimization.NUM_PARALLEL,
+               "numepochs": optimization.NUM_EPOCHS})
     best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
     print("FINAL TIME", str((time.time() - start_time)))
 
-def load_key(config_path = "bone_config.yaml"):
+
+def load_key(config_path="bone_config.yaml"):
     config_file = loadyaml(config_path)
     wandb_key = config_file["wandb_key"]
     return wandb_key
 
 
 if __name__ == '__main__':
-    wandb.login(key = load_key("../configs/bone_config.yaml"))
+    wandb.login(key=load_key("../configs/bone_config.yaml"))
 
     print("Starting optimization main func")
     main()
-    print("FINAL TIME",(time.time() - start_time))
+    print("FINAL TIME", (time.time() - start_time))
