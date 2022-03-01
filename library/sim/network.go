@@ -350,12 +350,15 @@ func (ss *Sim) TrainRun() {
 
 func (ss *Sim) TrueTrain() {
 
-	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Incr() {
+	runIncr := ss.Run.Cur
+	epochIncr := ss.TrainEnv.Epoch().Cur
+	trialIncr := ss.TrainEnv.Trial().Cur
+	for ; runIncr < ss.Run.Max; runIncr += 1 {
 		if ss.CmdArgs.NeedsNewRun {
 			ss.NewRun()
 		}
-		for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Incr() {
-			for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Incr() {
+		for ; epochIncr < ss.TrainEnv.Epoch().Max; epochIncr += 1 {
+			for ; trialIncr < ss.TrainEnv.Trial().Max; trialIncr += 1 {
 				ss.TrueTrainTrial()
 				if ss.GUI.StopNow == true {
 					ss.Stopped()
@@ -363,6 +366,7 @@ func (ss *Sim) TrueTrain() {
 				}
 			}
 
+			//epoch incremement
 			epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
 			if chg {
 				//epc := ss.TrainEnv.Epoch().Cur
