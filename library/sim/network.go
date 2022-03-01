@@ -353,47 +353,60 @@ func (ss *Sim) TrueTrain() {
 	runIncr := ss.Run.Cur
 	epochIncr := ss.TrainEnv.Epoch().Cur
 	trialIncr := ss.TrainEnv.Trial().Cur
+	if trialIncr == -1 {
+		// TODO THIS IS A HACK
+		trialIncr = 0
+	}
 	for ; runIncr < ss.Run.Max; runIncr += 1 {
+		ss.Run.Cur = runIncr
 		if ss.CmdArgs.NeedsNewRun {
 			ss.NewRun()
 		}
+		//ss.TrainEnv.Epoch().Incr()
 		for ; epochIncr < ss.TrainEnv.Epoch().Max; epochIncr += 1 {
+			// TODO Set epoch number also
+			ss.TrainEnv.Epoch().Cur = epochIncr
 			for ; trialIncr < ss.TrainEnv.Trial().Max; trialIncr += 1 {
+				ss.TrainEnv.Trial().Cur = trialIncr
 				ss.TrueTrainTrial()
 				if ss.GUI.StopNow == true {
 					ss.Stopped()
 					return
 				}
 			}
+			trialIncr = 0 // TODO This is a bit hacky
 
 			//epoch incremement
-			epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
-			if chg {
-				//epc := ss.TrainEnv.Epoch().Cur
-				if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
-					ss.PCAStats()
-				}
-				ss.Log(elog.Train, elog.Epoch)
-				ss.LrateSched(epc)
-				if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-					ss.GUI.UpdateNetView()
-				}
-				if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
-					ss.TestAll()
-				}
-				if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
-					// done with training..
-					ss.RunEnd()
-					if ss.Run.Incr() { // we are done!
-						ss.GUI.StopNow = true
-						return
-					} else {
-						ss.CmdArgs.NeedsNewRun = true
-						return
-					}
+			// TODO Don't change like this with Counter
+			//epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
+			//if chg {
+			//epc := ss.TrainEnv.Epoch().Cur
+			epc := epochIncr                                           // DO NOT SUBMIT Unnecessary variable
+			if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
+				ss.PCAStats()
+			}
+			ss.Log(elog.Train, elog.Epoch)
+			ss.LrateSched(epc)
+			if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
+				ss.GUI.UpdateNetView()
+			}
+			if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
+				ss.TestAll()
+			}
+			if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
+				// done with training..
+				ss.RunEnd()
+				if ss.Run.Incr() { // we are done!
+					ss.GUI.StopNow = true
+					return
+				} else {
+					ss.CmdArgs.NeedsNewRun = true
+					return
 				}
 			}
+			//}
 		}
+		epochIncr = 0
 	}
 }
 
@@ -404,7 +417,10 @@ func (ss *Sim) TrueTrainEpoch() {
 
 func (ss *Sim) TrueTrainTrial() {
 	epc := ss.TrainEnv.Epoch().Cur
-	ss.TrainEnv.Step()
+
+	// TODO This is counting and should probably be removed
+	//ss.TrainEnv.Step()
+
 	ss.ApplyInputs(ss.TrainEnv)
 	if ss.UseHipTheta {
 		ss.HipThetaCyc(true)
