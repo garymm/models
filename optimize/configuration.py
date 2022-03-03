@@ -5,6 +5,9 @@ from typing import Any, Dict, List
 import yaml
 import copy
 import warnings
+
+import optimization
+
 #temporary for now
 warnings.filterwarnings(action="once")
 warnings.simplefilter("ignore")
@@ -14,14 +17,14 @@ class ConfigOptimizer():
     """
     Handles the parsing of relevant parameters for hyperbones optimization
     """
-    projectname: str #names on app names defined explicitely in each mech file
+    projectname:str #names on app names defined explicitely in each mech file
     projectpath:str #the exact path of each project file
     variable_to_optimize:str
     num_epochs: int
     num_runs:int
     num_trials:int
     num_parallel:int
-    minimize:bool
+    minimize:bool = True #minimize or maximize
     go_args:str = "" #args to optionally pass into go
     wandb_key:str = "" #if you decide to do wandb logging, specify an id
     use_onlinelogging:bool = field(init = False)
@@ -31,20 +34,31 @@ class ConfigOptimizer():
         assert self.num_runs > 0
         assert self.num_trials > 0
         assert self.num_parallel > 0 #should also check if this goes beyond available cpuus
-        assert os.path.exists(self.projectpath)
-        #assert os.path.exists(os.path.join(self.projectpath,self.projectname))
+       # assert os.path.exists(self.projectpath) #todo discuss with andrew deciding on a consistent path, rather than changing path on run
+        #todo confirming that the projectname variable exists in the GO file, we reference it
 
         if len(self.wandb_key) > 0:
             self.use_onlinelogging = True
         else:
             self.use_onlinelogging = False
 
+def assign_to_optimizer_constants(configobj:ConfigOptimizer):
+    optimization.MECHNAME = configobj.projectname
+    optimization.EXECUTABLE_PATH = configobj.projectpath
+    optimization.NUM_EPOCHS = configobj.num_epochs
+    optimization.NUM_RUNS = configobj.num_runs
+    optimization.NUM_PARALLEL = configobj.num_parallel
+    optimization.MINIMIZE = configobj.minimize
+    optimization.VARIABLE_TO_OPTIMIZE = configobj.variable_to_optimize
+    optimization.GO_ARGS = configobj.go_args
+    optimization.WANDLOGGING = configobj.use_onlinelogging
+
+
 def keep_relevant_keys(parsed_yaml:Dict[Any,Any]) ->Dict[Any,Any]:
     copy_yaml = copy.deepcopy(parsed_yaml)
     for key in parsed_yaml:
         if (key in ConfigOptimizer.__dataclass_fields__)==False:
             del copy_yaml[key]
-
             warnings.warn("at least one additional key in yamlfile does not exist in ConfigOptimizer, "
                           "this may or may not be intentional, missing element called: {}".format(key),UserWarning)
     return copy_yaml

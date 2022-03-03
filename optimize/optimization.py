@@ -14,13 +14,16 @@ NUM_EPOCHS = 150
 NUM_RUNS = 1
 NUM_TRIALS = 1000
 NUM_PARALLEL = 8
+MINIMIZE = True
+WANDLOGGING = False
+GO_ARGS = "-hyperFile=hyperparamsExample.json"
 
 
 def get_hypers():
     hyper_file = "hyperparamsExample.json" #this
     # Run go with -hyperFile cmd arg to save them to file
     print("GETTING HYPERPARAMETERS")
-    run_model("-hyperFile=" + hyper_file)
+    run_model(GO_ARGS)
     # Load hypers from file
     f = open(hyper_file)
     params = json.load(f)
