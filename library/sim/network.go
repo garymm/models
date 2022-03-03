@@ -319,7 +319,7 @@ func (ss *Sim) TrainEpoch() {
 	if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 		ss.GUI.UpdateNetView()
 	}
-	if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
+	if (ss.TestInterval > 0) && ((epc+1)%ss.TestInterval == 0) {
 		ss.TestAll()
 	}
 	return
@@ -336,6 +336,10 @@ func (ss *Sim) Train() {
 		}
 		for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
 			ss.TrainEpoch()
+			if ss.GUI.StopNow == true {
+				ss.GUI.StopNow = false
+				return
+			}
 			if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
 				// End this run early
 				break

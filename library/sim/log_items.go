@@ -99,6 +99,10 @@ func (ss *Sim) ConfigLogItems() {
 			}, elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean)
 			}, elog.Scope(elog.AllModes, elog.Run): func(ctx *elog.Context) {
+				if ctx.Row == 0 {
+					ctx.SetFloat64(0)
+					return
+				}
 				ix := ctx.LastNRows(ctx.Mode, elog.Epoch, 5)
 				ctx.SetFloat64(agg.Mean(ix, ctx.Item.Name)[0])
 			}}})
@@ -133,6 +137,10 @@ func (ss *Sim) ConfigLogItems() {
 			}, elog.Scope(elog.Test, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAggItem(ctx.Mode, elog.Trial, "Err", agg.AggMean)
 			}, elog.Scope(elog.AllModes, elog.Run): func(ctx *elog.Context) {
+				if ctx.Row == 0 {
+					ctx.SetFloat64(0)
+					return
+				}
 				ix := ctx.LastNRows(ctx.Mode, elog.Epoch, 5) // cached
 				ctx.SetFloat64(agg.Mean(ix, ctx.Item.Name)[0])
 			}}})
@@ -145,6 +153,10 @@ func (ss *Sim) ConfigLogItems() {
 			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetFloat64(1 - ctx.ItemFloatScope(ctx.Scope, "PctErr"))
 			}, elog.Scope(elog.AllModes, elog.Run): func(ctx *elog.Context) {
+				if ctx.Row == 0 {
+					ctx.SetFloat64(0)
+					return
+				}
 				ix := ctx.LastNRows(ctx.Mode, elog.Epoch, 5) // cached
 				ctx.SetFloat64(agg.Mean(ix, ctx.Item.Name)[0])
 			}}})
@@ -159,6 +171,10 @@ func (ss *Sim) ConfigLogItems() {
 			}, elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean)
 			}, elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
+				if ctx.Row == 0 {
+					ctx.SetFloat64(0)
+					return
+				}
 				ix := ctx.LastNRows(elog.Train, elog.Epoch, 5) // cached
 				ctx.SetFloat64(agg.Mean(ix, ctx.Item.Name)[0])
 			}}})
@@ -173,6 +189,10 @@ func (ss *Sim) ConfigLogItems() {
 			}, elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean)
 			}, elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
+				if ctx.Row == 0 {
+					ctx.SetFloat64(0)
+					return
+				}
 				ix := ctx.LastNRows(elog.Train, elog.Epoch, 5) // cached
 				ctx.SetFloat64(agg.Mean(ix, ctx.Item.Name)[0])
 			}}})
