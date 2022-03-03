@@ -23,14 +23,7 @@ import configuration
 
 
 
-
-def print_cpu_usage():
-    l1, l2, l3 = psutil.getloadavg()
-    print(l3)
-    print(os.cpu_count())
-    CPU_use = (l3 / os.cpu_count()) * 100
-
-    print(CPU_use)
+# TODO REMOVE EXTRANEOUS PRINT STATEMENTS
 
 
 # NOTE bones must be pulled and installed locally from
@@ -41,6 +34,12 @@ from bones import ObservationInParam
 from bones import LinearSpace
 
 OBSERVATIONS_FILE = "bones_obs.txt"  # todo doesn't seem to actually write to file
+
+
+def print_cpu_usage():
+    l1, l2, l3 = psutil.getloadavg()
+    cpu_use = (l3 / os.cpu_count()) * 100
+    print("CPU Usage: {} {} {}".format(l3, os.cpu_count(), cpu_use))
 
 
 def get_bones_suggestion(current_suggestions: dict, parametername, guidelines):
@@ -97,7 +96,7 @@ def prepare_hyperparams_bones(the_params):
 
 
 def optimize_bones(params, suggestions: dict, trial_name: str):
-    print("BEGIN OPTIMIZE")
+    print("BEGIN OPTIMIZE " + str(trial_name))
     # This creates a version of Params that has stripped out everything that didn't have Hypers
     updated_parameters = create_bones_suggested_params(params, suggestions, trial_name)
 
@@ -122,8 +121,6 @@ def run_bones(bones_obj, trialnumber, params):
         trial_name = "Searching_" + str(i)
         current_suggestion = None
         suggestions = bones_obj.suggest().suggestion
-        # print("TRYING THESE SUGGESTIONS")
-        # print(suggestions)
         observed_value = optimize_bones(params, suggestions, trial_name)
         # print(observed_value)
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
@@ -146,10 +143,10 @@ class SimpleTimerObj():
 
     def end_timer(self):
         self.end = float(int(time.time() * 1000))  # milliseconds are fine
-        return self.end - self.start
+        return float(int(self.end - self.start))
 
     def elapsed(self):
-        return float(int(time.time() * 1000)) - self.start
+        return float(int(time.time() * 1000 - self.start))
 
 
 all_observations = collections.deque()
@@ -166,9 +163,7 @@ def single_bones_trial(bones_obj, params, lock, i):
         suggest_timer = SimpleTimerObj()
         suggestions = bones_obj.suggest().suggestion
         print("Suggest timer: " + str(suggest_timer.end_timer()))
-    print("TRYING THESE SUGGESTIONS")
-
-    print(suggestions)
+    print("TRYING THESE SUGGESTIONS " + str(suggestions))
     print_cpu_usage()
     obtimize_timer = SimpleTimerObj()
     observed_value = optimize_bones(params, suggestions, trial_name)
@@ -195,36 +190,38 @@ def single_bones_trial(bones_obj, params, lock, i):
     # print(all_times_np)
     avg_time = total_timer.elapsed() / all_obs_len
     # print((all_times_np.mean()), (all_times_np.max()), int(all_times_np.min()))
-    wandb.log({"runtime'": elapsed_time, "avgtime": avg_time, "totaltime": total_timer.elapsed()})
+    wandb.log({"runtime": trial_timer.elapsed(), "avgtime": avg_time, "totaltime": total_timer.elapsed()}) # TODO Is this right? Is it incrementing badly? Use i
     print("Average elapsed timer: " + str(avg_time))
-    print("Full timer: " + trial_timer.end_timer())
-
-
-finish_observing = False # TODO THIS DOESN'T WORK PLS FIX WITH COND VAR TRACKING NUM RUNNING
+    print("Full timer: " + str(trial_timer.end_timer()))
 
 
 # TODO This isn't working
 def observer(bones_obj, lock):
-    global finish_observing
+    global all_observations
     global observations_queue
     while True:
+        # print("OBSERVER QUEUE " + str(observations_queue))
         while observations_queue:
             obs = observations_queue.pop()
+            print("OBSERVER OBS: " + str(obs))
             with lock:
                 bones_obj.observe(obs)
-        os.sleep(1)
-        if finish_observing:
-            break
+        # os.sleep(1)
+        # print("OBSERVER DONE SLEEPING")
+        if len(all_observations) >= optimization.NUM_TRIALS:
+            # All done.
+            return
 
 
-def run_bones_parallel(bones_obj, trialnumber, params):
+def run_bones_parallel(bones_obj, params):
     global finish_observing
     locky = threading.Lock()
     global total_timer
     total_timer.start_timer()
     with concurrent.futures.ThreadPoolExecutor(max_workers=optimization.NUM_PARALLEL) as executor:
+        # TODO This will fail if NUM_PARALLEL is 1
         executor.submit(observer, bones_obj, locky)
-        for i in range(trialnumber):
+        for i in range(optimization.NUM_TRIALS):
             print("Starting to execute: " + str(i))
             executor.submit(single_bones_trial, bones_obj, params, locky, i)
 
@@ -245,18 +242,16 @@ def main():
     initial_params = prep_params_dict["initial_params"]
     params_space_by_name = prep_params_dict["paramspace_conditions"]
 
-    better_direction_sign = -1 if optimization.MINIMIZE else 1
     bone_params = BONESParams(
-        better_direction_sign=better_direction_sign, is_wandb_logging_enabled=optimization.WANDLOGGING, initial_search_radius=0.5, resample_frequency=-1
+        better_direction_sign=(-1 if optimization.MINIMIZE else 1), is_wandb_logging_enabled=optimization.WANDLOGGING, initial_search_radius=0.5, resample_frequency=-1
     )
 
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
-
     if optimization.WANDLOGGING:
         wandb.log({"numtrials": optimization.NUM_TRIALS, "numparallel": optimization.NUM_PARALLEL,
                    "numepochs": optimization.NUM_EPOCHS})
-    best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
+    best, best_score = run_bones_parallel(bones, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
     print("FINAL TIME", str(total_timer.end_timer()))
 
@@ -268,9 +263,7 @@ def load_key(config_path="bone_config.yaml"):
 
 
 if __name__ == '__main__':
-
-
-    configObj:configuration.ConfigOptimizer =  configuration.file_to_configobj("../configs/bone_config.yaml")
+    configObj: configuration.ConfigOptimizer = configuration.file_to_configobj("../configs/bone_config.yaml")
     configuration.assign_to_optimizer_constants(configObj)
 
     if configObj.use_onlinelogging:
