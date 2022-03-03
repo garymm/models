@@ -10,10 +10,10 @@ MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top 
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
 # TODO Add a metric to track LastZero, or the time when it is able to get 5 zeroes in a row
 VARIABLE_TO_OPTIMIZE = "|LastZero"
-NUM_EPOCHS = 150
+NUM_EPOCHS = 5
 NUM_RUNS = 1
-NUM_TRIALS = 1000
-NUM_PARALLEL = 8
+NUM_TRIALS = 10
+NUM_PARALLEL = 6  # 1 parallel run is used for running bones.
 
 
 def get_hypers():
