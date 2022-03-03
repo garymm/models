@@ -238,57 +238,6 @@ func (ss *Sim) ApplyInputs(env Environment) {
 	}
 }
 
-// TrainTrial runs one trial of training using TrainEnv
-func (ss *Sim) TrainTrial() {
-	if ss.CmdArgs.NeedsNewRun {
-		ss.NewRun()
-	}
-
-	TrainEnv := ss.TrainEnv
-
-	TrainEnv.Step() // the Env encapsulates and manages all counter state
-
-	// Key to query counters FIRST because current state is in NEXT epoch
-	// if epoch counter has changed
-	epc, _, chg := TrainEnv.Counter(env.Epoch)
-	if chg {
-		if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
-			ss.PCAStats()
-		}
-		ss.Log(elog.Train, elog.Epoch)
-		ss.LrateSched(epc)
-		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-			ss.GUI.UpdateNetView()
-		}
-		if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
-			ss.TestAll()
-		}
-		// TODO Early stopping logic should be on the environment
-		if epc == 0 || (ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop) {
-			// done with training..
-			ss.RunEnd()
-			if ss.Run.Incr() { // we are done!
-				ss.GUI.StopNow = true
-				return
-			} else {
-				ss.CmdArgs.NeedsNewRun = true
-				return
-			}
-		}
-	}
-
-	ss.ApplyInputs(TrainEnv)
-	if ss.UseHipTheta {
-		ss.HipThetaCyc(true)
-	} else {
-		ss.ThetaCyc(true) // !train
-	}
-	ss.Log(elog.Train, elog.Trial)
-	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) {
-		ss.Log(elog.Analyze, elog.Trial)
-	}
-}
-
 // RunEnd is called at the end of a run -- save weights, record final log, etc here
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
@@ -321,20 +270,6 @@ func (ss *Sim) NewRun() {
 	ss.CmdArgs.NeedsNewRun = false
 }
 
-// TrainEpoch runs training trials for remainder of this epoch
-func (ss *Sim) TrainEpoch() {
-	TrainEnv := ss.TrainEnv
-	ss.GUI.StopNow = false
-	curEpc := TrainEnv.Epoch().Cur
-	for {
-		ss.TrainTrial()
-		if ss.GUI.StopNow || TrainEnv.Epoch().Cur != curEpc {
-			break
-		}
-	}
-	ss.Stopped()
-}
-
 // TrainRun runs training trials for remainder of run
 func (ss *Sim) TrainRun() {
 	ss.GUI.StopNow = false
@@ -348,58 +283,7 @@ func (ss *Sim) TrainRun() {
 	ss.Stopped()
 }
 
-// TODO Replace Train and TrainTrial with this new version and rename back to Train
-func (ss *Sim) ForLoopTrain() {
-	if ss.TrainEnv.Trial().Cur == -1 {
-		// This is a hack, and it should be initialized at 0
-		ss.TrainEnv.Trial().Cur = 0
-	}
-	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
-		ss.NewRun()
-		if ss.TrainEnv.Trial().Cur == -1 {
-			// This is a hack, and it should be initialized at 0
-			ss.TrainEnv.Trial().Cur = 0
-		}
-		for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
-			for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Cur += 1 {
-				ss.SimpleTrainTrial()
-				if ss.GUI.StopNow == true {
-					ss.Stopped()
-					return
-				}
-			}
-			ss.TrainEnv.Trial().Cur = 0
-
-			epc := ss.TrainEnv.Epoch().Cur
-			if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
-				ss.PCAStats()
-			}
-			ss.Log(elog.Train, elog.Epoch)
-			ss.LrateSched(epc)
-			if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-				ss.GUI.UpdateNetView()
-			}
-			if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
-				ss.TestAll()
-			}
-			if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
-				// End this run early
-				break
-			}
-		}
-		ss.TrainEnv.Epoch().Cur = 0
-		ss.RunEnd()
-	}
-	ss.GUI.StopNow = true
-	ss.GUI.Stopped()
-}
-
-func (ss *Sim) TrueTrainEpoch() {
-	//Do the epoch logic, this should be in a separate function
-
-}
-
-func (ss *Sim) SimpleTrainTrial() {
+func (ss *Sim) TrainTrial() {
 	epc := ss.TrainEnv.Epoch().Cur
 
 	ss.ApplyInputs(ss.TrainEnv)
@@ -412,20 +296,55 @@ func (ss *Sim) SimpleTrainTrial() {
 	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) {
 		ss.Log(elog.Analyze, elog.Trial)
 	}
-
 }
 
-// Train runs the full training from this point onward
-// TODO This should loop through Runs, Epochs, and Trials with explicit nested for loops
-func (ss *Sim) Train() {
-	ss.GUI.StopNow = false
-	for {
+// TrainEpoch runs until the end of the Epoch, then updates logs.
+func (ss *Sim) TrainEpoch() {
+	for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Cur += 1 {
 		ss.TrainTrial()
-		if ss.GUI.StopNow {
-			break
+		if ss.GUI.StopNow == true {
+			ss.Stopped()
+			return
 		}
 	}
-	ss.Stopped()
+	ss.TrainEnv.Trial().Cur = 0
+
+	epc := ss.TrainEnv.Epoch().Cur
+	if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
+		ss.PCAStats()
+	}
+	ss.Log(elog.Train, elog.Epoch)
+	ss.LrateSched(epc)
+	if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
+		ss.GUI.UpdateNetView()
+	}
+	if (ss.TestInterval > 0) && (epc%ss.TestInterval == 0) {
+		ss.TestAll()
+	}
+	return
+}
+
+// Train trains until the end of runs, unless stopped early by the GUI.
+func (ss *Sim) Train() {
+	// Note that Run, Epoch, and Trial are not initialized at zero to allow Train to restart where it left off.
+	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
+		ss.NewRun()
+		if ss.TrainEnv.Trial().Cur == -1 {
+			// This is a hack, and it should be initialized at 0
+			ss.TrainEnv.Trial().Cur = 0
+		}
+		for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
+			ss.TrainEpoch()
+			if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
+				// End this run early
+				break
+			}
+		}
+		ss.TrainEnv.Epoch().Cur = 0
+		ss.RunEnd()
+	}
+	ss.GUI.StopNow = true
+	ss.GUI.Stopped()
 }
 
 // Stop tells the sim to stop running
