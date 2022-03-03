@@ -11,10 +11,10 @@ import (
 	"github.com/goki/mat32"
 )
 
-func GuiRun(TheSim *Sim, appname, title, about string) {
+func GuiRun(TheSim *Sim, window *gi.Window) {
 	TheSim.Init()
-	win := TheSim.ConfigGui(appname, title, about)
-	win.StartEventLoop()
+	//window  //:= TheSim.ConfigGui(appname, title, about)
+	window.StartEventLoop()
 }
 
 // ConfigGui configures the GoGi gui interface for this simulation,
@@ -89,6 +89,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
+				ss.GUI.StopNow = false
 				go ss.TrainEpoch()
 			}
 		},
