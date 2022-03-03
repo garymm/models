@@ -18,6 +18,10 @@ import threading
 
 import os
 import psutil
+import configuration
+
+
+
 
 # TODO REMOVE EXTRANEOUS PRINT STATEMENTS
 
@@ -237,15 +241,17 @@ def main():
     prep_params_dict = prepare_hyperparams_bones(params)
     initial_params = prep_params_dict["initial_params"]
     params_space_by_name = prep_params_dict["paramspace_conditions"]
+
     bone_params = BONESParams(
-        better_direction_sign=-1, is_wandb_logging_enabled=True, initial_search_radius=0.5, resample_frequency=-1
+        better_direction_sign=(-1 if optimization.MINIMIZE else 1), is_wandb_logging_enabled=optimization.WANDLOGGING, initial_search_radius=0.5, resample_frequency=-1
     )
 
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
-    wandb.log({"numtrials": optimization.NUM_TRIALS, "numparallel": optimization.NUM_PARALLEL,
-               "numepochs": optimization.NUM_EPOCHS})
-    best, best_score = run_bones_parallel(bones, params)
+    if optimization.WANDLOGGING:
+        wandb.log({"numtrials": optimization.NUM_TRIALS, "numparallel": optimization.NUM_PARALLEL,
+                   "numepochs": optimization.NUM_EPOCHS})
+    best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
     print("FINAL TIME", str(total_timer.end_timer()))
 
@@ -257,7 +263,11 @@ def load_key(config_path="bone_config.yaml"):
 
 
 if __name__ == '__main__':
-    wandb.login(key=load_key("../configs/bone_config.yaml"))
+    configObj:configuration.ConfigOptimizer =  configuration.file_to_configobj("../configs/bone_config.yaml")
+    configuration.assign_to_optimizer_constants(configObj)
+
+    if configObj.use_onlinelogging:
+        wandb.login(key=configObj.wandb_key)
 
     print("Starting optimization main func")
     main()
