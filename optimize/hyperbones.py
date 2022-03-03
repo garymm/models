@@ -263,7 +263,7 @@ def load_key(config_path="bone_config.yaml"):
 
 
 if __name__ == '__main__':
-    configObj:configuration.ConfigOptimizer =  configuration.file_to_configobj("../configs/bone_config.yaml")
+    configObj: configuration.ConfigOptimizer = configuration.file_to_configobj("../configs/bone_config.yaml")
     configuration.assign_to_optimizer_constants(configObj)
 
     if configObj.use_onlinelogging:

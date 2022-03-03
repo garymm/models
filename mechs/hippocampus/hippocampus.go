@@ -185,8 +185,9 @@ func ConfigEnv(ss *HipSim) {
 	// to simulate training items in order, uncomment this line:
 	// ss.TrainEnv.Sequential = true
 	TrainEnv.Validate()
-	TrainEnv.Run().Cur = ss.CmdArgs.StartRun
-	TrainEnv.Run().Max = ss.CmdArgs.MaxRuns
+	ss.Run.Max = ss.CmdArgs.MaxRuns
+	ss.Run.Cur = ss.CmdArgs.StartRun
+	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
 
 	// MaxEpcs is consulted for early stopping in TrainTrial and is split between AB and AC
 

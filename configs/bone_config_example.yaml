@@ -1,10 +1,10 @@
 wandb_key: "" #wandb log if you want to do online logging
 projectname: "RA25" #what is the project name
-projectpath: "mechs/ra25" #what is the path to the project
+projectpath: "ra25" #what is the path to the project
 variable_to_optimize: "|LastZero" #what metric are we trying to optimize
 num_epochs: 3
 num_runs: 1
 num_trials: 4
 num_parallel: 1
 minimize: true
-go_args: "-hyperFile=hyperparamsExample.json" #variables passed to go file
+go_args: "" #variables passed to go file

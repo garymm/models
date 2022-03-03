@@ -271,6 +271,7 @@ func (ss *Sim) NewRun() {
 }
 
 // TrainRun runs training trials for remainder of run
+// TODO THIS DOESNT'T WORK
 func (ss *Sim) TrainRun() {
 	ss.GUI.StopNow = false
 	curRun := ss.Run.Cur

@@ -8,7 +8,6 @@ import json
 # todo oneday wrap this in a clear object with comments
 MECHNAME = "RA25"  # "One2Many", "RA25", these are app names defined at the top of each mech file
 EXECUTABLE_PATH = "ra25"  # the directory the file comes from
-# TODO Add a metric to track LastZero, or the time when it is able to get 5 zeroes in a row
 VARIABLE_TO_OPTIMIZE = "|LastZero"
 NUM_EPOCHS = 150
 NUM_RUNS = 1
