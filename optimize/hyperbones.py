@@ -132,41 +132,45 @@ def run_bones(bones_obj, trialnumber, params):
     return best_suggest, best_score
 
 
-all_observations = collections.deque()
-start_time = -1
-all_times = []
-num_currently_parallel = 0
-
-
 class SimpleTimerObj():
     def __init__(self):
-        self.start = time.time()
+        self.start = time.time() * 1000
         self.end = -1
 
     def start_timer(self):
-        self.start = time.time()
+        self.start = time.time() * 1000
 
     def end_timer(self):
-        self.end = float(int(time.time() - self.start))  # seconds are fine
+        self.end = float(int(time.time() * 1000))  # milliseconds are fine
+        return self.end - self.start
+
+    def elapsed(self):
+        return float(int(time.time() * 1000)) - self.start
 
 
-def single_bones_trial(bones_obj, params, lock, i, timeobj: SimpleTimerObj):
-    global num_currently_parallel
-    num_currently_parallel += 1
+all_observations = collections.deque()
+total_timer = SimpleTimerObj()
+all_times = []
+
+
+def single_bones_trial(bones_obj, params, lock, i):
+    trial_timer = SimpleTimerObj()
     trial_name = "Searching_" + str(i)
-    print("Starting trial: " + trial_name + " with " + str(num_currently_parallel) + " in parallel")
+    print("Starting trial: " + trial_name)
     with lock:
+        suggest_timer = SimpleTimerObj()
         suggestions = bones_obj.suggest().suggestion
+        print("Suggest timer: " + str(suggest_timer.end_timer()))
     print("TRYING THESE SUGGESTIONS")
 
     print(suggestions)
     print_cpu_usage()
-    timeobj.start_timer()
+    obtimize_timer = SimpleTimerObj()
     observed_value = optimize_bones(params, suggestions, trial_name)
-    timeobj.end_timer()
-    print("GOT OBSERVED VALUE")
-    print(observed_value)
+    print("Optimization timer: " + str(obtimize_timer.end_timer()))
+    print("GOT OBSERVED VALUE " + str(observed_value))
     with lock:
+        observe_timer = SimpleTimerObj()
         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
         all_observations.append((observed_value, suggestions, trial_name))
         print("Finished this many observations: " + str(len(all_observations)))
@@ -175,26 +179,28 @@ def single_bones_trial(bones_obj, params, lock, i, timeobj: SimpleTimerObj):
         best = sorted(all_observations, key=lambda a: a[0])[0]
         print("BEST RESULT: " + str(best))
 
-        elapsed_time = timeobj.end
+        elapsed_time = trial_timer.end_timer()
+        print("Trial timer: " + str(elapsed_time))
         all_times.append(elapsed_time)
-        all_times_np = np.array(all_times)
-        print("All times: ", all_times_np)
-        avg_time = (time.time() - start_time) / len(all_observations)
-        print("All times stats: ", (all_times_np.mean()), (all_times_np.max()), int(all_times_np.min()))
-        wandb.log({"runtime'": elapsed_time, "avgtime": avg_time, "totaltime": time.time() - start_time})
-        print("Average elapsed time: " + ((time.time() - start_time) / len(all_observations)))
-    num_currently_parallel -= 1
+        # all_times_np = np.array(all_times)
+        all_obs_len = len(all_observations)
+        print("Observation timer: " + str(observe_timer.end_timer()))
+    # print(all_times_np)
+    avg_time = total_timer.elapsed() / all_obs_len
+    # print((all_times_np.mean()), (all_times_np.max()), int(all_times_np.min()))
+    wandb.log({"runtime'": elapsed_time, "avgtime": avg_time, "totaltime": total_timer.elapsed()})
+    print("Average elapsed timer: " + str(avg_time))
+    print("Full timer: " + trial_timer.end_timer())
 
 
 def run_bones_parallel(bones_obj, trialnumber, params):
     locky = threading.Lock()
-    global start_time
-    start_time = time.time()
+    global total_timer
+    total_timer.start_timer()
     with concurrent.futures.ThreadPoolExecutor(max_workers=optimization.NUM_PARALLEL) as executor:
         for i in range(trialnumber):
-            timeobj = SimpleTimerObj()
             print("Starting to execute: " + str(i))
-            executor.submit(single_bones_trial, bones_obj, params, locky, i, timeobj)
+            executor.submit(single_bones_trial, bones_obj, params, locky, i)
 
     best = sorted(all_observations, key=lambda a: a[0])[0]
     return best[1], best[0]
@@ -222,7 +228,7 @@ def main():
                "numepochs": optimization.NUM_EPOCHS})
     best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
-    print("FINAL TIME", str((time.time() - start_time)))
+    print("FINAL TIME", str(total_timer.end_timer()))
 
 
 def load_key(config_path="bone_config.yaml"):
@@ -236,4 +242,4 @@ if __name__ == '__main__':
 
     print("Starting optimization main func")
     main()
-    print("FINAL TIME", (time.time() - start_time))
+    print("FINAL TIME", str(total_timer.elapsed()))
