@@ -199,8 +199,10 @@ def single_bones_trial(bones_obj, params, lock, i):
 finish_observing = False # TODO THIS DOESN'T WORK PLS FIX WITH COND VAR TRACKING NUM RUNNING
 
 
+# TODO This isn't working
 def observer(bones_obj, lock):
     global finish_observing
+    global observations_queue
     while True:
         while observations_queue:
             obs = observations_queue.pop()
