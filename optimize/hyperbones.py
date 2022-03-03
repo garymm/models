@@ -19,6 +19,8 @@ import threading
 import os
 import psutil
 
+WANDLOGGING = False
+
 
 def print_cpu_usage():
     l1, l2, l3 = psutil.getloadavg()
