@@ -104,7 +104,7 @@ def optimize_bones(params, suggestions: dict, trial_name: str):
 
     # Run go program with -params arg
     optimization.run_model(
-        "-paramsFile={} -nogui=true -epclog=true -params={} -runs={} -epochs={}".format(
+        "-paramsFile={} -nogui=true -epclog=true -params={} -runs={} -epochs={} -randomize=true".format(
             hyperfile, trial_name, str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
 
     # Get valuation from logs
