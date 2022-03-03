@@ -151,6 +151,7 @@ class SimpleTimerObj():
 all_observations = collections.deque()
 total_timer = SimpleTimerObj()
 all_times = []
+observations_queue = collections.deque()
 
 
 def single_bones_trial(bones_obj, params, lock, i):
@@ -171,7 +172,9 @@ def single_bones_trial(bones_obj, params, lock, i):
     print("GOT OBSERVED VALUE " + str(observed_value))
     with lock:
         observe_timer = SimpleTimerObj()
-        bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
+        # bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
+        observations_queue.append(ObservationInParam(input=suggestions, output=observed_value))
+        print("Pure observe timer: " + str(observe_timer.elapsed()))
         all_observations.append((observed_value, suggestions, trial_name))
         print("Finished this many observations: " + str(len(all_observations)))
         # for so in all_observations:
@@ -193,11 +196,28 @@ def single_bones_trial(bones_obj, params, lock, i):
     print("Full timer: " + trial_timer.end_timer())
 
 
+finish_observing = False # TODO THIS DOESN'T WORK PLS FIX WITH COND VAR TRACKING NUM RUNNING
+
+
+def observer(bones_obj, lock):
+    global finish_observing
+    while True:
+        while observations_queue:
+            obs = observations_queue.pop()
+            with lock:
+                bones_obj.observe(obs)
+        os.sleep(1)
+        if finish_observing:
+            break
+
+
 def run_bones_parallel(bones_obj, trialnumber, params):
+    global finish_observing
     locky = threading.Lock()
     global total_timer
     total_timer.start_timer()
     with concurrent.futures.ThreadPoolExecutor(max_workers=optimization.NUM_PARALLEL) as executor:
+        executor.submit(observer, bones_obj, locky)
         for i in range(trialnumber):
             print("Starting to execute: " + str(i))
             executor.submit(single_bones_trial, bones_obj, params, locky, i)
