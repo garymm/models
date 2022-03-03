@@ -251,7 +251,7 @@ def main():
     if optimization.WANDLOGGING:
         wandb.log({"numtrials": optimization.NUM_TRIALS, "numparallel": optimization.NUM_PARALLEL,
                    "numepochs": optimization.NUM_EPOCHS})
-    best, best_score = run_bones_parallel(bones, optimization.NUM_TRIALS, params)
+    best, best_score = run_bones_parallel(bones, params)
     print("Best parameters at: " + str(best) + " with score: " + str(best_score))
     print("FINAL TIME", str(total_timer.end_timer()))
 
