@@ -55,7 +55,8 @@ func main() {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim, programName, programName, `This demonstrates a basic Axon model. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			window := TheSim.ConfigGui(programName, "RA25", "random mapping")
+			sim.GuiRun(&TheSim, window)
 		})
 	}
 }

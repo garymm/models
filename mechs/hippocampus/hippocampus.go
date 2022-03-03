@@ -84,18 +84,17 @@ func main() {
 
 	if TheSim.CmdArgs.NoGui {
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
-
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
-			sim.GuiRun(&TheSim.Sim, ProgramName, "Hippocampus AB-AC", `This demonstrates a basic Hippocampus model in Axon. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			window := TheSim.ConfigGui(ProgramName, "Hippocampus AB-AC", `This demonstrates a basic Hippocampus model in Axon. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
+			ConfigGui(&TheSim)
+			sim.GuiRun(&TheSim.Sim, window)
 		})
 	}
-
 }
 
 // Config configures all the elements using the standard functions
 func Config(ss *HipSim) {
-	ConfigGui(ss)
 	ConfigPats(ss)
 	//OpenPats(&ss.Sim)
 
@@ -119,7 +118,6 @@ func Config(ss *HipSim) {
 
 func ConfigGui(ss *HipSim) {
 	// TODO Add a separator to put this in its own section.
-
 	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "PreTrain",
 		Icon:    "fast-fwd",
 		Tooltip: "Does full pretraining.",
