@@ -268,6 +268,8 @@ func ConfigPats(ss *HipSim) {
 	TrainALL.AppendRows(TrainAC)
 	TrainALL.AppendRows(PreTrainLure)
 	trainEnv.EvalTables[TrainAll] = TrainALL
+
+	//trainEnv.EvalTables[HipTableTypes("TrainAB")].SaveCSV("TrainAB_Sample.csv", etable.Comma, true)
 }
 
 func (ss *HipSim) OpenPat(dt *etable.Table, fname, name, desc string) {
