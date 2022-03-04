@@ -311,7 +311,7 @@ func (ss *Sim) TrainEpoch() {
 	ss.TrainEnv.Trial().Cur = 0
 
 	epc := ss.TrainEnv.Epoch().Cur
-	if (ss.PCAInterval > 0) && ((epc-1)%ss.PCAInterval == 0) { // -1 so runs on first epc
+	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) { // should run on first epc
 		ss.PCAStats()
 	}
 	ss.Log(elog.Train, elog.Epoch)
