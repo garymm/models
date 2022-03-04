@@ -270,20 +270,6 @@ func (ss *Sim) NewRun() {
 	ss.CmdArgs.NeedsNewRun = false
 }
 
-// TrainRun runs training trials for remainder of run
-// TODO THIS DOESNT'T WORK
-func (ss *Sim) TrainRun() {
-	ss.GUI.StopNow = false
-	curRun := ss.Run.Cur
-	for {
-		ss.TrainTrial()
-		if ss.GUI.StopNow || ss.Run.Cur != curRun {
-			break
-		}
-	}
-	ss.Stopped()
-}
-
 func (ss *Sim) TrainTrial() {
 	epc := ss.TrainEnv.Epoch().Cur
 
@@ -325,28 +311,32 @@ func (ss *Sim) TrainEpoch() {
 	return
 }
 
+func (ss *Sim) TrainRun() {
+	ss.NewRun()
+	if ss.TrainEnv.Trial().Cur == -1 {
+		// This is a hack, and it should be initialized at 0
+		ss.TrainEnv.Trial().Cur = 0
+	}
+	for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
+		ss.TrainEpoch()
+		if ss.GUI.StopNow == true {
+			ss.GUI.StopNow = false
+			return
+		}
+		if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
+			// End this run early
+			break
+		}
+	}
+	ss.TrainEnv.Epoch().Cur = 0
+	ss.RunEnd()
+}
+
 // Train trains until the end of runs, unless stopped early by the GUI.
 func (ss *Sim) Train() {
 	// Note that Run, Epoch, and Trial are not initialized at zero to allow Train to restart where it left off.
 	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
-		ss.NewRun()
-		if ss.TrainEnv.Trial().Cur == -1 {
-			// This is a hack, and it should be initialized at 0
-			ss.TrainEnv.Trial().Cur = 0
-		}
-		for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
-			ss.TrainEpoch()
-			if ss.GUI.StopNow == true {
-				ss.GUI.StopNow = false
-				return
-			}
-			if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
-				// End this run early
-				break
-			}
-		}
-		ss.TrainEnv.Epoch().Cur = 0
-		ss.RunEnd()
+		ss.TrainRun()
 	}
 	ss.GUI.StopNow = true
 	ss.GUI.Stopped()

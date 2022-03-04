@@ -102,6 +102,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
+				ss.GUI.StopNow = false
 				go ss.TrainRun()
 			}
 		},
