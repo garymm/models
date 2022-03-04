@@ -195,7 +195,7 @@ def single_bones_trial(bones_obj, params, lock, i):
     print("Full timer: " + str(trial_timer.end_timer()))
 
 
-# TODO This isn't working
+# TODO Step isn't maintained correctly, so observations won't match up with other logged parameters
 def observer(bones_obj, lock):
     global all_observations
     global observations_queue
