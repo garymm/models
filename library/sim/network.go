@@ -271,7 +271,10 @@ func (ss *Sim) NewRun() {
 }
 
 func (ss *Sim) TrainTrial() {
-	epc := ss.TrainEnv.Epoch().Cur
+	if ss.TrainEnv.Trial().Cur == -1 {
+		// This is a hack, and it should be initialized at 0
+		ss.TrainEnv.Trial().Cur = 0
+	}
 
 	ss.ApplyInputs(ss.TrainEnv)
 	if ss.UseHipTheta {
@@ -280,7 +283,7 @@ func (ss *Sim) TrainTrial() {
 		ss.ThetaCyc(true) // !train
 	}
 	ss.Log(elog.Train, elog.Trial)
-	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) {
+	if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
 		ss.Log(elog.Analyze, elog.Trial)
 	}
 }
@@ -320,7 +323,6 @@ func (ss *Sim) TrainRun() {
 	for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
 		ss.TrainEpoch()
 		if ss.GUI.StopNow == true {
-			ss.GUI.StopNow = false
 			return
 		}
 		if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
@@ -337,6 +339,10 @@ func (ss *Sim) Train() {
 	// Note that Run, Epoch, and Trial are not initialized at zero to allow Train to restart where it left off.
 	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
 		ss.TrainRun()
+		if ss.GUI.StopNow == true {
+			ss.GUI.StopNow = false
+			return
+		}
 	}
 	ss.GUI.StopNow = true
 	ss.GUI.Stopped()
