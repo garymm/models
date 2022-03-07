@@ -83,12 +83,14 @@ func main() {
 	Config(&TheSim)
 
 	if TheSim.CmdArgs.NoGui {
+		PreTrain(&TheSim.Sim)
 		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
 			window := TheSim.ConfigGui(ProgramName, "Hippocampus AB-AC", `This demonstrates a basic Hippocampus model in Axon. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
 			ConfigGui(&TheSim)
 			sim.GuiRun(&TheSim.Sim, window)
+			PreTrain(&TheSim.Sim)
 		})
 	}
 }

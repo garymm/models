@@ -34,7 +34,6 @@ func InitHipStats(ss *sim.Sim) {
 }
 
 func ConfigHipItems(ss *sim.Sim) {
-	ss.ConfigLogItems()
 	ss.Logs.AddItem(&elog.Item{
 		Name:   "Mem",
 		Type:   etensor.FLOAT64,
