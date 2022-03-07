@@ -109,8 +109,6 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.Dend.GbarExp":  "0.5",  // 0.2 > 0.1 > 0   importance: 5
 						"Layer.Act.Dend.GbarR":    "6",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels importance: 5
 						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect importance: 1
-						"Layer.Act.Dend.VGCCCa":   "20",
-						"Layer.Act.Dend.CaMax":    "90",
 						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better importance: 1
 						"Layer.Act.Dt.GeTau":      "5",    // importance: 1
 						"Layer.Act.NMDA.Gbar":     "0.15", //  importance: 7
