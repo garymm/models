@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+
 	"github.com/emer/axon/axon"
 
 	"github.com/emer/emergent/elog"
@@ -48,7 +49,7 @@ func (ss *Sim) ConfigLogs() {
 	ss.Logs.NoPlot(elog.Test, elog.Run)
 	// note: Analyze not plotted by default
 	ss.Logs.SetMeta(elog.Train, elog.Run, "LegendCol", "Params")
-	ss.Stats.ConfigRasters(ss.Net, ss.Net.LayersByClass())
+	ss.Stats.ConfigRasters(ss.Net, 200, ss.Net.LayersByClass())
 	ss.ConfigLogsFromArgs() // This must occur after logs are configged.
 }
 
@@ -145,7 +146,7 @@ func (ss *Sim) PCAStats() {
 
 // RasterRec updates spike raster record for given cycle
 func (ss *Sim) RasterRec(cyc int) {
-	ss.Stats.RasterRec(ss.Net, cyc, "Spike", ss.Net.LayersByClass())
+	ss.Stats.RasterRec(ss.Net, cyc, "Spike")
 }
 
 // MemStats computes ActM vs. Target on ECout with binary counts

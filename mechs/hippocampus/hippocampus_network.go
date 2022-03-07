@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/elog"
@@ -87,7 +88,7 @@ func PreThetaCyc(ss *sim.Sim, train bool) {
 	// in which case, move it out to the TrainTrial method where the relevant
 	// counters are being dealt with.
 	if train {
-		ss.Net.WtFmDWt()
+		ss.Net.WtFmDWt(&ss.Time)
 	}
 
 	ca1 := ss.Net.LayerByName("CA1").(axon.AxonLayer).AsAxon()
@@ -114,7 +115,7 @@ func PreThetaCyc(ss *sim.Sim, train bool) {
 	cycPerQtr := []int{100, 50, 50, 50} // 100, 50, 50, 50 notably better
 
 	ss.Net.NewState()
-	ss.Time.NewState()
+	ss.Time.NewState(train)
 	for qtr := 0; qtr < 4; qtr++ {
 		maxCyc := cycPerQtr[qtr]
 		for cyc := 0; cyc < maxCyc; cyc++ {
@@ -145,7 +146,7 @@ func PreThetaCyc(ss *sim.Sim, train bool) {
 	}
 
 	if train {
-		ss.Net.DWt()
+		ss.Net.DWt(&ss.Time)
 	}
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
 		ss.UpdateView(train)

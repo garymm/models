@@ -3,13 +3,14 @@ package sim
 import (
 	"bytes"
 	"fmt"
+	"log"
+
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
 	_ "github.com/emer/etable/etable"
 	"github.com/goki/gi/gi"
-	"log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,14 +33,14 @@ func (ss *Sim) ThetaCyc(train bool) {
 	// in which case, move it out to the TrainTrial method where the relevant
 	// counters are being dealt with.
 	if train {
-		ss.Net.WtFmDWt()
+		ss.Net.WtFmDWt(&ss.Time)
 	}
 
 	minusCyc := 150 // 150
 	plusCyc := 50   // 50
 
 	ss.Net.NewState()
-	ss.Time.NewState()
+	ss.Time.NewState(train)
 	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
 		ss.StatCounters(train)
@@ -91,7 +92,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	ss.StatCounters(train)
 
 	if train {
-		ss.Net.DWt()
+		ss.Net.DWt(&ss.Time)
 	}
 
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
@@ -120,7 +121,7 @@ func (ss *Sim) HipThetaCyc(train bool) {
 	// in which case, move it out to the TrainTrial method where the relevant
 	// counters are being dealt with.
 	if train {
-		ss.Net.WtFmDWt()
+		ss.Net.WtFmDWt(&ss.Time)
 	}
 
 	ca1 := ss.Net.LayerByName("CA1").(axon.AxonLayer).AsAxon()
@@ -157,7 +158,7 @@ func (ss *Sim) HipThetaCyc(train bool) {
 	// cycPerQtr := []int{100, 1, 1, 50} // 150, 1, 1, 50 works for EcCa1Prjn, but 100, 1, 1, 50 does not
 
 	ss.Net.NewState()
-	ss.Time.NewState()
+	ss.Time.NewState(train)
 	for qtr := 0; qtr < 4; qtr++ {
 		maxCyc := cycPerQtr[qtr]
 		for cyc := 0; cyc < maxCyc; cyc++ {
@@ -208,7 +209,7 @@ func (ss *Sim) HipThetaCyc(train bool) {
 	ca1FmCa3.PrjnScale.Abs = absGain
 
 	if train {
-		ss.Net.DWt()
+		ss.Net.DWt(&ss.Time)
 	}
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
 		ss.GUI.UpdateNetView()
