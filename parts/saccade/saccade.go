@@ -597,7 +597,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	plusCyc := ss.PlusCycles
 
 	ss.Net.NewState()
-	ss.Time.NewState()
+	ss.Time.NewState(train)
 	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
 		// ss.LogTrnCyc(ss.TrnCycLog, ss.Time.Cycle)
@@ -650,7 +650,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 
 	if train {
 		ss.ErrLrMod.LrateMod(ss.Net.AsAxon(), float32(1-ss.TrlCosDiff))
-		ss.Net.DWt()
+		ss.Net.DWt(&ss.Time)
 	}
 
 	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
