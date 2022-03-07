@@ -557,7 +557,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 		ss.MiniBatchCtr++
 		if ss.MiniBatchCtr >= ss.MiniBatches {
 			ss.MiniBatchCtr = 0
-			ss.Net.WtFmDWt()
+			ss.Net.WtFmDWt(&ss.Time)
 		}
 	}
 
@@ -565,7 +565,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 	plusCyc := 50
 
 	ss.Net.NewState()
-	ss.Time.NewState()
+	ss.Time.NewState(train)
 	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
 		// if !train {
@@ -624,7 +624,7 @@ func (ss *Sim) ThetaCyc(train bool) {
 
 	if train {
 		// ss.ErrLrMod.LrateMod(ss.Net, float32(1-ss.TrlCosDiff))
-		ss.Net.DWt()
+		ss.Net.DWt(&ss.Time)
 	}
 	if ss.ViewOn && viewUpdt == axon.AlphaCycle {
 		ss.UpdateView(train)
