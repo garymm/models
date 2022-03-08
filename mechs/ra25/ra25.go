@@ -116,12 +116,12 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.NMDA.Voff":     "5",
 						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
-						//"Layer.Inhib.Layer.Gi":    {"StdDev": "0.15"},
-						//"Layer.Inhib.ActAvg.Init": {"StdDev": "0.02", "Min": "0.01"},
-						////"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
-						////"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
-						//"Layer.Act.NMDA.Gbar":  {"StdDev": "0.05"},
-						//"Layer.Act.GABAB.Gbar": {"StdDev": "0.05"},
+						"Layer.Inhib.Layer.Gi":    {"StdDev": "0.15"},
+						"Layer.Inhib.ActAvg.Init": {"StdDev": "0.02", "Min": "0.01"},
+						//"Layer.Act.Dend.GbarExp":  {"StdDev": "0.05"},
+						//"Layer.Act.Dend.GbarR":    {"StdDev": "1"},
+						"Layer.Act.NMDA.Gbar":  {"StdDev": "0.05"},
+						"Layer.Act.GABAB.Gbar": {"StdDev": "0.05"},
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
@@ -130,8 +130,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Inhib.ActAvg.Init": "0.15", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
-						//"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
-						//"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
+						"Layer.Inhib.Layer.Gi": {"StdDev": ".1", "Min": "0", "Priority": "2", "Scale": "LogLinear"},
+						"Layer.Act.Clamp.Ge":   {"StdDev": ".2"},
 					}},
 				{Sel: "#Output", Desc: "output definitely needs lower inhib -- true for smaller layers in general",
 					Params: params.Params{
@@ -149,8 +149,8 @@ func ConfigParams(ss *sim.Sim) {
 					},
 					Hypers: params.Hypers{
 						"Prjn.Learn.Lrate.Base": {"StdDev": "0.1"},
-						////"Prjn.SWt.Adapt.Lrate":  {"StdDev": "0.025"},
-						//"Prjn.SWt.Init.SPct": {"StdDev": "0.25", "Min": "0.1"},
+						//"Prjn.SWt.Adapt.Lrate":  {"StdDev": "0.025"},
+						"Prjn.SWt.Init.SPct": {"StdDev": "0.25", "Min": "0.1"},
 					}},
 				{Sel: ".Back", Desc: "top-down back-projections MUST have lower relative weight scale, otherwise network hallucinates",
 					Params: params.Params{
