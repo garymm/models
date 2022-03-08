@@ -179,6 +179,9 @@ func ConfigEnv(ss *HipSim) {
 	ss.CmdArgs.PreTrainEpcs = 10 //from hip sim
 	ss.TrialStatsFunc = TrialStats
 
+	// TODO PCA seems to hang in internal Dlatrd function for hippocampus.
+	ss.PCAInterval = -1
+
 	TrainEnv.Nm = "TrainEnv"
 	TrainEnv.Dsc = "training params and state"
 

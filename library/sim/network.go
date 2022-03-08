@@ -303,8 +303,7 @@ func (ss *Sim) TrainEpoch() {
 
 	epc := ss.TrainEnv.Epoch().Cur
 	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) { // should run on first epc
-		// TODO This seems to hang in internal Dlatrd function for hippocampus.
-		//ss.PCAStats()
+		ss.PCAStats()
 	}
 	ss.Log(elog.Train, elog.Epoch)
 	ss.LrateSched(epc)
