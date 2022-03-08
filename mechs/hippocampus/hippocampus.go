@@ -178,7 +178,6 @@ func ConfigEnv(ss *HipSim) {
 	ss.TrainEnv = &TrainEnv
 	ss.CmdArgs.PreTrainEpcs = 10 //from hip sim
 	ss.TrialStatsFunc = TrialStats
-	ss.Stop()
 
 	TrainEnv.Nm = "TrainEnv"
 	TrainEnv.Dsc = "training params and state"
@@ -200,7 +199,9 @@ func ConfigEnv(ss *HipSim) {
 	ss.TestEnv.Validate()
 
 	ss.TrainEnv.Init(ss.CmdArgs.StartRun)
+	ss.TrainEnv.Trial().Cur = 0
 	ss.TestEnv.Init(ss.CmdArgs.StartRun)
+	ss.TestEnv.Trial().Cur = 0
 }
 
 //ConfigPats used to configure patterns

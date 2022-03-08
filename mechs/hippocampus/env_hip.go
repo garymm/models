@@ -115,6 +115,7 @@ func (envhip *EnvHip) Init(run int) {
 		envhip.AssignTable("TrainAB")
 	}
 	envhip.FixedTable.Init(run)
+	envhip.Trial().Cur = 0
 	envhip.Pat.Defaults()
 }
 

@@ -23,7 +23,7 @@ func (ss *Sim) StatCounters(train bool) {
 	ss.Stats.SetInt("Trial", ev.Trial().Cur)
 	ss.Stats.SetString("TrialName", ev.CurTrialName())
 	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
-	ss.GUI.NetViewText = ss.Stats.Print([]string{"Run", "Epoch", "Trial", "TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
+	ss.GUI.NetViewText = fmt.Sprintf("Run:\t%d/%d\tEpoch:%d/%d\tTrial:\t%d/%d", ss.Run.Cur, ss.Run.Max, ev.Epoch().Cur, ev.Epoch().Max, ev.Trial().Cur, ev.Trial().Max) + "\t" + ss.Stats.Print([]string{"TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
 }
 
 func (ss *Sim) ConfigLogsFromArgs() {
@@ -140,7 +140,7 @@ func (ss *Sim) LogRunStats() {
 // PCAStats computes PCA statistics on recorded hidden activation patterns
 // from Analyze, Trial log data
 func (ss *Sim) PCAStats() {
-	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayersByClass("Hidden"))
+	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayersByClass("Hidden")) // DO NOT SUBMIT
 	ss.Logs.ResetLog(elog.Analyze, elog.Trial)
 }
 

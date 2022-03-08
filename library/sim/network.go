@@ -276,6 +276,7 @@ func (ss *Sim) TrainTrial() {
 		// This is a hack, and it should be initialized at 0
 		ss.TrainEnv.Trial().Cur = 0
 	}
+	ss.StatCounters(true)
 
 	ss.ApplyInputs(ss.TrainEnv)
 	if ss.UseHipTheta {
@@ -302,7 +303,8 @@ func (ss *Sim) TrainEpoch() {
 
 	epc := ss.TrainEnv.Epoch().Cur
 	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) { // should run on first epc
-		ss.PCAStats()
+		// TODO This seems to hang in internal Dlatrd function for hippocampus.
+		//ss.PCAStats()
 	}
 	ss.Log(elog.Train, elog.Epoch)
 	ss.LrateSched(epc)
