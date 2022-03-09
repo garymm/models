@@ -27,6 +27,7 @@ func (ss *Sim) StatCounters(train bool) {
 }
 
 func (ss *Sim) ConfigLogsFromArgs() {
+	elog.LogDir = "logs"
 	if ss.CmdArgs.saveEpcLog {
 		fnm := ss.LogFileName("epc")
 		ss.Logs.SetLogFile(elog.Train, elog.Epoch, fnm)
