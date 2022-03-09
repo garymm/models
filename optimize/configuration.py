@@ -21,7 +21,6 @@ class ConfigOptimizer():
     projectname: str  # names on app names defined explicitely in each mech file
     projectpath: str  # the exact path of each project file
     variable_to_optimize: str
-    use_average_value: bool
     num_epochs: int
     num_runs: int
     num_trials: int
@@ -30,6 +29,7 @@ class ConfigOptimizer():
     go_args: str = ""  # args to optionally pass into go
     wandb_key: str = ""  # if you decide to do wandb logging, specify an id
     use_onlinelogging: bool = field(init=False)
+    use_average_value: bool = field(init= False)
 
     def __post_init__(self):
         assert self.num_epochs > 0
@@ -38,11 +38,12 @@ class ConfigOptimizer():
         assert self.num_parallel > 0  # should also check if this goes beyond available cpuus
         # assert os.path.exists(self.projectpath) #todo discuss with andrew deciding on a consistent path, rather than changing path on run
         # todo confirming that the projectname variable exists in the GO file, we reference it
-
         if len(self.wandb_key) > 0:
             self.use_onlinelogging = True
         else:
             self.use_onlinelogging = False
+        if self.num_runs >1:
+            self.use_average_value = True
 
 
 def assign_to_optimizer_constants(configobj: ConfigOptimizer):
