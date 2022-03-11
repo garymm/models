@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Astera-org/models/library/common"
 	"log"
 	"strconv"
 
@@ -214,6 +215,7 @@ func Config(ss *One2Sim) {
 	ss.InitStats()
 	ss.ConfigLogItems()
 	ss.ConfigLogs()
+	common.AddDefaultTrainCallbacks(&ss.Sim)
 }
 
 // ConfigParams configure the parameters

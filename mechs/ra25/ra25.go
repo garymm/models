@@ -5,6 +5,7 @@
 package main
 
 import (
+	"github.com/Astera-org/models/library/common"
 	"log"
 
 	"github.com/Astera-org/models/library/sim"
@@ -73,6 +74,7 @@ func Config(ss *sim.Sim) {
 	ss.InitStats()
 	ss.ConfigLogItems()
 	ss.ConfigLogs()
+	common.AddDefaultTrainCallbacks(ss)
 }
 
 // ConfigParams configure the parameters
