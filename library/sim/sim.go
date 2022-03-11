@@ -35,10 +35,10 @@ type Sim struct {
 	PCAInterval  int     `desc:"how frequently (in epochs) to compute PCA on hidden representations to measure variance?"`
 	NZeroStop    int     `desc:"if a positive number, training will stop after this many epochs with zero UnitErr"`
 
-	TrainEnv  Environment         `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
-	TestEnv   Environment         `desc:"Testing environment -- manages iterating over testing"`
-	Callbacks []TrainingCallbacks `view:"-" desc:"Callbacks used during training, specified by model."`
-	Trainer   Trainer             `view:"-" desc:"Handles basic network logic."`
+	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
+	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
+	
+	Trainer Trainer `view:"-" desc:"Handles basic network logic."`
 
 	Time      axon.Time       `view:"-" desc:"axon timing parameters and state"`
 	ViewOn    bool            `desc:"whether to update the network view while running"`

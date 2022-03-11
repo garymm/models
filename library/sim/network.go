@@ -27,19 +27,8 @@ func (ss *Sim) ThetaCyc() {
 		ss.Trainer.ThetaCycleOverride(ss)
 		return
 	}
-	// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
-	viewUpdt := ss.TrainUpdt
-	if !train {
-		viewUpdt = ss.TestUpdt
-	}
 
-	// update prior weight changes at start, so any DWt values remain visible at end
-	// you might want to do this less frequently to achieve a mini-batch update
-	// in which case, move it out to the TrainTrial method where the relevant
-	// counters are being dealt with.
-	if train {
-		ss.Net.WtFmDWt(&ss.Time)
-	}
+	ss.Trainer.OnThetaCycleStart()
 
 	minusCyc := 150 // 150
 	plusCyc := 50   // 50
@@ -66,15 +55,14 @@ func (ss *Sim) ThetaCyc() {
 		if cyc == minusCyc-1 { // do before view update
 			ss.Net.MinusPhase(&ss.Time)
 		}
-		if ss.ViewOn {
-			ss.UpdateViewTime(viewUpdt)
-		}
+
+		ss.Trainer.OnMillisecondEnd()
 	}
 	ss.Time.NewPhase()
 	ss.StatCounters(train)
-	if viewUpdt == axon.Phase {
-		ss.GUI.UpdateNetView()
-	}
+	//if viewUpdt == axon.Phase { //todo remove this
+	//	ss.GUI.UpdateNetView()
+	//}
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
 		ss.StatCounters(train)
@@ -89,23 +77,16 @@ func (ss *Sim) ThetaCyc() {
 		if cyc == plusCyc-1 { // do before view update
 			ss.Net.PlusPhase(&ss.Time)
 		}
-		if ss.ViewOn {
-			ss.UpdateViewTime(viewUpdt)
-		}
+
+		ss.Trainer.OnMillisecondEnd()
 	}
 	ss.TrialStatsFunc(ss, train)
 	ss.StatCounters(train)
 
-	if train {
-		ss.Net.DWt(&ss.Time)
-	}
-
-	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
-		ss.GUI.UpdateNetView()
-	}
 	if !train {
 		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
 	}
+	ss.Trainer.OnThetaCycleEnd()
 }
 
 // ApplyInputs applies input patterns from given envirbonment.
@@ -132,7 +113,7 @@ func (ss *Sim) ApplyInputs(env Environment) {
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
 
-	for _, c := range ss.Callbacks {
+	for _, c := range ss.Trainer.Callbacks {
 		if c.OnRunEnd != nil {
 			c.OnRunEnd()
 		}
