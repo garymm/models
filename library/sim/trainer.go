@@ -16,7 +16,8 @@ type TrainingCallbacks struct {
 type Trainer struct {
 	EvalMode elog.EvalModes `desc:"The current training mode."`
 	//Callbacks []TrainingCallbacks // TODO Move from Sim
-
+	TrainRunOverride   func()
+	TrainEpochOverride func()
 	TrainTrialOverride func()
-	ThetaCycleOverride func()
+	ThetaCycleOverride func(sim *Sim)
 }
