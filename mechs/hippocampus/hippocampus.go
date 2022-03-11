@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Astera-org/models/library/common"
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/hip"
@@ -116,6 +117,7 @@ func Config(ss *HipSim) {
 	ConfigHipItems(&ss.Sim)
 	ss.ConfigLogItems()
 	ss.ConfigLogs()
+	common.AddDefaultTrainCallbacks(&ss.Sim)
 }
 
 func ConfigGui(ss *HipSim) {

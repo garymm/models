@@ -243,10 +243,10 @@ func (ss *Sim) ApplyInputs(env Environment) {
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
 
-	if ss.CmdArgs.SaveWts {
-		fnm := ss.WeightsFileName()
-		fmt.Printf("Saving Weights to: %s\n", fnm)
-		ss.Net.SaveWtsJSON(gi.FileName(fnm))
+	for _, c := range ss.Callbacks {
+		if c.OnRunEnd != nil {
+			c.OnRunEnd()
+		}
 	}
 }
 
