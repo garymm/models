@@ -37,7 +37,7 @@ type Sim struct {
 
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
-	
+
 	Trainer Trainer `view:"-" desc:"Handles basic network logic."`
 
 	Time      axon.Time       `view:"-" desc:"axon timing parameters and state"`
@@ -100,5 +100,13 @@ func (ss *Sim) NewRndSeed() {
 	rs := time.Now().UnixNano()
 	for i := 0; i < len(ss.CmdArgs.RndSeeds); i++ {
 		ss.CmdArgs.RndSeeds[i] = (rs + int64(i)) % 10000
+	}
+}
+
+func (ss *Sim) CurrentEnvironment() Environment {
+	if ss.Trainer.EvalMode == elog.Train {
+		return ss.TrainEnv
+	} else {
+		return ss.TestEnv
 	}
 }

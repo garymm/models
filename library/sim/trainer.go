@@ -3,12 +3,15 @@ package sim
 import "github.com/emer/emergent/elog"
 
 type TrainingCallbacks struct {
-	OnRunStart        func()
-	OnRunEnd          func()
-	OnEpochStart      func()
-	OnEpochEnd        func()
-	OnTrialStart      func()
-	OnTrialEnd        func()
+	OnRunStart   func()
+	OnRunEnd     func()
+	OnEpochStart func()
+	OnEpochEnd   func()
+
+	// TODO Trial only does ThetaCyc, maybe don't need?
+	OnTrialStart func()
+	OnTrialEnd   func()
+
 	OnThetaCycleStart func()
 	OnThetaCycleEnd   func()
 	OnMillisecondEnd  func()
@@ -24,6 +27,8 @@ type Trainer struct {
 	TrainTrialOverride func()
 	ThetaCycleOverride func(sim *Sim)
 }
+
+// Boiler-plate functions to prevent copy-pasting a for-loop.
 
 func (trainer *Trainer) OnRunStart() {
 	for _, callback := range trainer.Callbacks {

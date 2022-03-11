@@ -21,15 +21,16 @@ import (
 // If train is true, then learning DWt or WtFmDWt calls are made.
 // Handles netview updating within scope, and calls TrainStats()
 func (ss *Sim) ThetaCyc() {
-	train := ss.Trainer.EvalMode == elog.Train
-
 	if ss.Trainer.ThetaCycleOverride != nil {
 		ss.Trainer.ThetaCycleOverride(ss)
 		return
 	}
 
+	train := ss.Trainer.EvalMode == elog.Train
+
 	ss.Trainer.OnThetaCycleStart()
 
+	// TODO Parameterize these.
 	minusCyc := 150 // 150
 	plusCyc := 50   // 50
 
@@ -60,9 +61,7 @@ func (ss *Sim) ThetaCyc() {
 	}
 	ss.Time.NewPhase()
 	ss.StatCounters(train)
-	//if viewUpdt == axon.Phase { //todo remove this
-	//	ss.GUI.UpdateNetView()
-	//}
+	ss.Trainer.OnPlusPhaseStart()
 	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
 		ss.StatCounters(train)
@@ -113,14 +112,10 @@ func (ss *Sim) ApplyInputs(env Environment) {
 func (ss *Sim) RunEnd() {
 	ss.Log(elog.Train, elog.Run)
 
-	for _, c := range ss.Trainer.Callbacks {
-		if c.OnRunEnd != nil {
-			c.OnRunEnd()
-		}
-	}
+	ss.Trainer.OnRunEnd()
 }
 
-// NewRun intializes a new run of the model, using the TrainEnv.Run counter
+// NewRun intializes a new run of the model, using the ss.Run counter
 // for the new run value
 func (ss *Sim) NewRun() {
 	ss.InitRndSeed()
@@ -160,6 +155,7 @@ func (ss *Sim) TrainTrial() {
 // TrainEpoch runs until the end of the Epoch, then updates logs.
 func (ss *Sim) TrainEpoch() {
 	ss.Trainer.EvalMode = elog.Train
+	ss.Trainer.OnEpochStart()
 	for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Cur += 1 {
 		ss.TrainTrial()
 		if ss.GUI.StopNow == true {
@@ -169,19 +165,12 @@ func (ss *Sim) TrainEpoch() {
 	}
 	ss.TrainEnv.Trial().Cur = 0
 
-	epc := ss.TrainEnv.Epoch().Cur
-	if (ss.PCAInterval > 0) && (epc%ss.PCAInterval == 0) { // should run on first epc
+	// Should run on first epoch, needs to run before Log.
+	if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
 		ss.PCAStats()
 	}
 	ss.Log(elog.Train, elog.Epoch)
-	ss.LrateSched(epc)
-	if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-		ss.GUI.UpdateNetView()
-	}
-	if (ss.TestInterval > 0) && ((epc+1)%ss.TestInterval == 0) {
-		ss.TestAll()
-	}
-	return
+	ss.Trainer.OnEpochEnd()
 }
 
 func (ss *Sim) TrainRun() {

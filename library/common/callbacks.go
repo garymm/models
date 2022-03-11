@@ -9,7 +9,8 @@ import (
 )
 
 func AddDefaultTrainCallbacks(ss *sim.Sim) {
-	saveWeights := sim.TrainingCallbacks{
+	// Save Weights
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnRunEnd: func() {
 			if ss.CmdArgs.SaveWts {
 				fnm := ss.WeightsFileName()
@@ -17,9 +18,10 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 				ss.Net.SaveWtsJSON(gi.FileName(fnm))
 			}
 		},
-	}
+	})
 
-	weightVisiblity := sim.TrainingCallbacks{
+	// Weight Visibility
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnThetaCycleStart: func() {
 			// update prior weight changes at start, so any DWt values remain visible at end
 			if ss.Trainer.EvalMode == elog.Train {
@@ -31,52 +33,64 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 				ss.Net.WtFmDWt(&ss.Time)
 			}
 		},
-	}
+	})
 
-	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, saveWeights, weightVisiblity)
+	// Learning Rate Schedule
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		OnEpochEnd: func() {
+			if ss.Trainer.EvalMode == elog.Train {
+				ss.LrateSched(ss.TrainEnv.Epoch().Cur)
+			}
+		},
+	})
+
+	// Testing
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		OnEpochEnd: func() {
+			if ss.Trainer.EvalMode == elog.Train {
+				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
+					ss.TestAll()
+				}
+			}
+		},
+	})
 
 	AddDefaultGUICallbacks(ss)
 }
 
 func AddDefaultGUICallbacks(ss *sim.Sim) {
-	guiview := InitGUIViewHandler(ss)
-	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, guiview.TrainingCallbacks)
-}
-
-type GUIViewHandler struct {
-	sim.TrainingCallbacks
-	viewUpdt axon.TimeScales
-	ss       *sim.Sim
-}
-
-func InitGUIViewHandler(ss *sim.Sim) *GUIViewHandler {
-	gui := &GUIViewHandler{ss: ss}
-	gui.TrainingCallbacks.OnThetaCycleStart = gui.OnThetaCycleStart
-	gui.TrainingCallbacks.OnMillisecondEnd = gui.OnMillisecondEnd
-	gui.TrainingCallbacks.OnThetaCycleEnd = gui.OnThetaCycleEnd
-	return gui
-}
-
-func (guiview *GUIViewHandler) OnThetaCycleStart() {
-	// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
-	viewUpdt := guiview.ss.TrainUpdt
-	if !(guiview.ss.Trainer.EvalMode == elog.Train) {
-		viewUpdt = guiview.ss.TestUpdt
+	var viewUpdt axon.TimeScales // Reset at the top of theta cycle.
+	viewUpdtCallbacks := sim.TrainingCallbacks{
+		OnThetaCycleStart: func() {
+			// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
+			viewUpdt = ss.TrainUpdt
+			if ss.Trainer.EvalMode == elog.Test {
+				viewUpdt = ss.TestUpdt
+			}
+			if viewUpdt == axon.Phase {
+				ss.GUI.UpdateNetView()
+			}
+		},
+		OnMillisecondEnd: func() {
+			if ss.ViewOn {
+				ss.UpdateViewTime(viewUpdt)
+			}
+		},
+		OnThetaCycleEnd: func() {
+			if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
+				ss.GUI.UpdateNetView()
+			}
+		},
+		OnPlusPhaseStart: func() {
+			if viewUpdt == axon.Phase {
+				ss.GUI.UpdateNetView()
+			}
+		},
+		OnEpochEnd: func() {
+			if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
+				ss.GUI.UpdateNetView()
+			}
+		},
 	}
-	if viewUpdt == axon.Phase {
-		guiview.ss.GUI.UpdateNetView()
-	}
-	guiview.viewUpdt = viewUpdt
-}
-
-func (guiview *GUIViewHandler) OnMillisecondEnd() {
-	if guiview.ss.ViewOn {
-		guiview.ss.UpdateViewTime(guiview.viewUpdt)
-	}
-}
-
-func (guiview *GUIViewHandler) OnThetaCycleEnd() {
-	if guiview.viewUpdt == axon.Phase || guiview.viewUpdt == axon.AlphaCycle || guiview.viewUpdt == axon.ThetaCycle {
-		guiview.ss.GUI.UpdateNetView()
-	}
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, viewUpdtCallbacks)
 }
