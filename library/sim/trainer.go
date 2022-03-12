@@ -17,6 +17,7 @@ type TrainingCallbacks struct {
 	OnMillisecondEnd  func()
 	OnPlusPhaseStart  func()
 	OnMinusPhaseStart func()
+	EarlyStopping     func() bool
 }
 
 type Trainer struct {
@@ -116,4 +117,15 @@ func (trainer *Trainer) OnMinusPhaseStart() {
 			callback.OnMinusPhaseStart()
 		}
 	}
+}
+
+func (trainer *Trainer) EarlyStopping() bool {
+	for _, callback := range trainer.Callbacks {
+		if callback.EarlyStopping != nil {
+			if callback.EarlyStopping() {
+				return true
+			}
+		}
+	}
+	return false
 }

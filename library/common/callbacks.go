@@ -39,7 +39,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnEpochEnd: func() {
 			if ss.Trainer.EvalMode == elog.Train {
-				ss.LrateSched(ss.TrainEnv.Epoch().Cur)
+				LrateSched(ss, ss.TrainEnv.Epoch().Cur)
 			}
 		},
 	})
@@ -52,6 +52,32 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 					ss.TestAll()
 				}
 			}
+		},
+	})
+
+	// PCA Stats
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		OnEpochEnd: func() {
+			if ss.Trainer.EvalMode == elog.Train {
+				// Should run on first epoch, needs to run before Log.
+				if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
+					ss.PCAStats()
+				}
+			}
+		},
+		OnTrialEnd: func() {
+			if ss.Trainer.EvalMode == elog.Train {
+				if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
+					ss.Log(elog.Analyze, elog.Trial)
+				}
+			}
+		},
+	})
+
+	// First Zero Early Stopping
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		EarlyStopping: func() bool {
+			return ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop
 		},
 	})
 
@@ -93,4 +119,13 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 		},
 	}
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, viewUpdtCallbacks)
+}
+
+// LrateSched implements the learning rate schedule
+func LrateSched(ss *sim.Sim, epc int) {
+	switch epc {
+	case 40:
+		ss.Net.LrateMod(0.5)
+		fmt.Printf("dropped lrate 0.5 at epoch: %d\n", epc)
+	}
 }

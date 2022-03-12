@@ -143,13 +143,12 @@ func (ss *Sim) TrainTrial() {
 		ss.TrainEnv.Trial().Cur = 0
 	}
 	ss.StatCounters(true)
-
 	ss.ApplyInputs(ss.TrainEnv)
+
 	ss.ThetaCyc()
+
 	ss.Log(elog.Train, elog.Trial)
-	if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
-		ss.Log(elog.Analyze, elog.Trial)
-	}
+	ss.Trainer.OnTrialEnd()
 }
 
 // TrainEpoch runs until the end of the Epoch, then updates logs.
@@ -165,12 +164,9 @@ func (ss *Sim) TrainEpoch() {
 	}
 	ss.TrainEnv.Trial().Cur = 0
 
-	// Should run on first epoch, needs to run before Log.
-	if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
-		ss.PCAStats()
-	}
-	ss.Log(elog.Train, elog.Epoch)
 	ss.Trainer.OnEpochEnd()
+	// Log after OnEpochEnd.
+	ss.Log(elog.Train, elog.Epoch)
 }
 
 func (ss *Sim) TrainRun() {
@@ -185,7 +181,7 @@ func (ss *Sim) TrainRun() {
 		if ss.GUI.StopNow == true {
 			return
 		}
-		if ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop {
+		if ss.Trainer.EarlyStopping() {
 			// End this run early
 			break
 		}
@@ -225,21 +221,12 @@ func (ss *Sim) SaveWeights(filename gi.FileName) {
 	ss.Net.SaveWtsJSON(filename)
 }
 
-// LrateSched implements the learning rate schedule
-func (ss *Sim) LrateSched(epc int) {
-	switch epc {
-	case 40:
-		ss.Net.LrateMod(0.5)
-		fmt.Printf("dropped lrate 0.5 at epoch: %d\n", epc)
-	}
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Testing
 
 // TestTrial runs one trial of testing -- always sequentially presented inputs
+// TODO Rewrite this the same as TrainTrial, or merge them
 func (ss *Sim) TestTrial(returnOnChg bool) {
-
 	TestEnv := ss.TestEnv
 	TestEnv.Step()
 
