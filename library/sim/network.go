@@ -15,11 +15,96 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 // 	    Running the Network, starting bottom-up..
 
+// ThetaCycTheLameWay is the OLD and UNCOOL way of doing the theta cycle. We need to replace it with NEW and COOLER way of doing it but unfortunately that new way DOESN'T WORK :(. So please slowly replace parts of this function like the SHIP OF THESIUS and see what doesn't work.
+// DO NOT SUBMIT
+func (ss *Sim) ThetaCycTheLameWay(train bool) {
+	// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
+	viewUpdt := ss.TrainUpdt
+	if !train {
+		viewUpdt = ss.TestUpdt
+	}
+
+	// update prior weight changes at start, so any DWt values remain visible at end
+	// you might want to do this less frequently to achieve a mini-batch update
+	// in which case, move it out to the TrainTrial method where the relevant
+	// counters are being dealt with.
+	if train {
+		ss.Net.WtFmDWt(&ss.Time)
+	}
+
+	minusCyc := 150 // 150
+	plusCyc := 50   // 50
+
+	ss.Net.NewState()
+	ss.Time.NewState(train)
+	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
+		ss.Net.Cycle(&ss.Time)
+		ss.StatCounters(train)
+		if !train {
+			ss.Log(elog.Test, elog.Cycle)
+		}
+		if ss.GUI.Active {
+			ss.RasterRec(ss.Time.Cycle)
+		}
+		ss.Time.CycleInc()
+		switch ss.Time.Cycle { // save states at beta-frequency -- not used computationally
+		case 75:
+			ss.Net.ActSt1(&ss.Time)
+		case 100:
+			ss.Net.ActSt2(&ss.Time)
+		}
+
+		if cyc == minusCyc-1 { // do before view update
+			ss.Net.MinusPhase(&ss.Time)
+		}
+		if ss.ViewOn {
+			ss.UpdateViewTime(viewUpdt)
+		}
+	}
+	ss.Time.NewPhase()
+	ss.StatCounters(train)
+	if viewUpdt == axon.Phase {
+		ss.GUI.UpdateNetView()
+	}
+	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
+		ss.Net.Cycle(&ss.Time)
+		ss.StatCounters(train)
+		if !train {
+			ss.Log(elog.Test, elog.Cycle)
+		}
+		if ss.GUI.Active {
+			ss.RasterRec(ss.Time.Cycle)
+		}
+		ss.Time.CycleInc()
+
+		if cyc == plusCyc-1 { // do before view update
+			ss.Net.PlusPhase(&ss.Time)
+		}
+		if ss.ViewOn {
+			ss.UpdateViewTime(viewUpdt)
+		}
+	}
+	ss.TrialStatsFunc(ss, train)
+	ss.StatCounters(train)
+
+	if train {
+		ss.Net.DWt(&ss.Time)
+	}
+
+	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
+		ss.GUI.UpdateNetView()
+	}
+	if !train {
+		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
+	}
+}
+
 // ThetaCyc runs one theta cycle (200 msec) of processing.
 // External inputs must have already been applied prior to calling,
 // using ApplyExt method on relevant layers (see TrainTrial, TestTrial).
 // If train is true, then learning DWt or WtFmDWt calls are made.
 // Handles netview updating within scope, and calls TrainStats()
+// TODO Using this it doesn't learn
 func (ss *Sim) ThetaCyc() {
 	if ss.Trainer.ThetaCycleOverride != nil {
 		ss.Trainer.ThetaCycleOverride(ss)
@@ -145,6 +230,7 @@ func (ss *Sim) TrainTrial() {
 	ss.StatCounters(true)
 	ss.ApplyInputs(ss.TrainEnv)
 
+	//ss.ThetaCycTheLameWay(true) // DO NOT SUBMIT
 	ss.ThetaCyc()
 
 	ss.Log(elog.Train, elog.Trial)
@@ -243,7 +329,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	}
 
 	ss.ApplyInputs(ss.TestEnv)
-	ss.ThetaCyc()
+	ss.ThetaCycTheLameWay(false)
 	ss.Log(elog.Test, elog.Trial)
 	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
 		ss.CmdArgs.NetData.Record(ss.GUI.NetViewText)
@@ -257,7 +343,7 @@ func (ss *Sim) TestItem(idx int) {
 	cur := TestEnv.Trial().Cur
 	TestEnv.Trial().Cur = idx
 	ss.ApplyInputs(ss.TestEnv)
-	ss.ThetaCyc()
+	ss.ThetaCycTheLameWay(false)
 	TestEnv.Trial().Cur = cur
 }
 

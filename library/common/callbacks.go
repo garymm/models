@@ -20,7 +20,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 		},
 	})
 
-	// Weight Visibility
+	// Weight Visibility. TODO Describe the computational purpose of this.
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnThetaCycleStart: func() {
 			// update prior weight changes at start, so any DWt values remain visible at end
