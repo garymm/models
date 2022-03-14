@@ -30,7 +30,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 		},
 		OnThetaCycleEnd: func() {
 			if ss.Trainer.EvalMode == elog.Train {
-				ss.Net.WtFmDWt(&ss.Time)
+				ss.Net.DWt(&ss.Time)
 			}
 		},
 	})
