@@ -51,7 +51,6 @@ type Sim struct {
 
 	// Used by Hippocampus model
 	PreTrainWts []byte `view:"-" desc:"pretrained weights file"`
-	UseHipTheta bool   `view:"-" desc:"If true, use the hippocampus theta cycle. This is a hack."` // TODO Find a more graceful solution.
 }
 
 // New creates new blank elements and initializes defaults

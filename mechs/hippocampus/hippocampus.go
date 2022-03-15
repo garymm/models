@@ -108,7 +108,6 @@ func Config(ss *HipSim) {
 	}
 
 	ConfigParams(&ss.Sim)
-	ss.UseHipTheta = true
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
 	ConfigEnv(ss)
@@ -501,6 +500,7 @@ func ReconfigPatsAndNet(ss *HipSim) {
 	ss.Update()
 	ConfigPats(ss)
 	ss.Net = &axon.Network{} // start over with new network
+	ConfigParams(&ss.Sim)    // Make sure we've got the right params. // TODO This will clobber any param changes made in GUI
 	ConfigNet(ss, ss.Net)
 	if ss.GUI.NetView != nil {
 		ss.GUI.NetView.SetNet(ss.Net)
