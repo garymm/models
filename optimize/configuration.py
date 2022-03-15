@@ -29,7 +29,7 @@ class ConfigOptimizer():
     go_args: str = ""  # args to optionally pass into go
     wandb_key: str = ""  # if you decide to do wandb logging, specify an id
     use_onlinelogging: bool = field(init=False)
-    use_average_value: bool = field(init= False)
+    use_average_value: bool = field(init=False, default=False)
 
     def __post_init__(self):
         assert self.num_epochs > 0
@@ -42,6 +42,7 @@ class ConfigOptimizer():
             self.use_onlinelogging = True
         else:
             self.use_onlinelogging = False
+
         if self.num_runs >1:
             self.use_average_value = True
 
