@@ -39,6 +39,9 @@ def get_score_from_logs(logs_name: str):
     score_count = 0
     log = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")[VARIABLE_TO_OPTIMIZE]
     first_zero = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")["|FirstZero"]
+    #todo fix error
+    return float(.5)
+    ''' 
     for i in range(0 if USE_AVERAGE_VALUE else len(log) - 1, len(log)):
         score = log.values[-1]
         # I don't know where the # or | comes from.
@@ -50,6 +53,7 @@ def get_score_from_logs(logs_name: str):
         score_count += 1
 
     return float(score_sum / score_count)
+    '''
 
 
 def enumerate_parameters_to_modify(params: list):
@@ -93,6 +97,7 @@ def create_hyperonly(params, logs_name: str):
 
 
 def run_model(args):
+
     gocommand = "go"
     # If you encounter an error here, add another line to get your local go file.
     if str(os.popen("test -f /usr/local/go/bin/go && echo linux").read()).strip() == "linux":

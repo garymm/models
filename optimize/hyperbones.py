@@ -105,12 +105,14 @@ def optimize_bones(params, suggestions: dict, trial_name: str):
     with open(hyperfile, "w") as outfile:
         json.dump(updated_parameters, outfile)
 
+    print("THIS SHOULD BE CALLED ONCE?")
     # Run go program with -params arg
     optimization.run_model(
         "-paramsFile={} -nogui=true -epclog=true -params={} -runs={} -epochs={} -randomize=true".format(
             hyperfile, trial_name, str(optimization.NUM_RUNS), str(optimization.NUM_EPOCHS)))
 
     # Get valuation from logs
+
     return optimization.get_score_from_logs(trial_name)
 
 
