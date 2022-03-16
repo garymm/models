@@ -199,8 +199,8 @@ def single_bones_trial(bones_obj, params, lock, i):
 
 # TODO Step isn't maintained correctly, so observations won't match up with other logged parameters
 def observer(bones_obj, lock):
-    global all_observations
     global observations_queue
+    num_observed = 0
     while True:
         # print("OBSERVER QUEUE " + str(observations_queue))
         while observations_queue:
@@ -208,9 +208,10 @@ def observer(bones_obj, lock):
             print("OBSERVER OBS: " + str(obs))
             with lock:
                 bones_obj.observe(obs)
+            num_observed += 1
         # os.sleep(1)
         # print("OBSERVER DONE SLEEPING")
-        if len(all_observations) >= optimization.NUM_TRIALS:
+        if num_observed >= optimization.NUM_TRIALS:
             # All done.
             return
 

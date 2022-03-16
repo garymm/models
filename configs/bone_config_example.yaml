@@ -6,6 +6,6 @@ use_average_value: true
 num_epochs: 3
 num_runs: 1
 num_trials: 4
-num_parallel: 5
+num_parallel: 5 # This must be at least 2
 minimize: true
 go_args: "" #variables passed to go file
