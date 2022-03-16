@@ -490,7 +490,7 @@ func TwoFactorRun(ss *HipSim) {
 			ss.GUI.StopNow = false
 			PreTrain(&ss.Sim) // zycyc
 			ss.NewRun()
-			ss.Train()
+			ss.Train(axon.TimeScalesN)
 		}
 	}
 	ss.Tag = tag
