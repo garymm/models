@@ -137,7 +137,7 @@ func (ss *Sim) NewRun() {
 	ss.CmdArgs.NeedsNewRun = false
 }
 
-func (ss *Sim) TrainTrial() {
+func (ss *Sim) trainTrial(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
 	if ss.TrainEnv.Trial().Cur == -1 {
 		// This is a hack, and it should be initialized at 0
@@ -150,16 +150,27 @@ func (ss *Sim) TrainTrial() {
 
 	ss.Log(elog.Train, elog.Trial)
 	ss.Trainer.OnTrialEnd()
+	// TODO Remove this
+	//if stopScale == axon.Trial {
+	//	// Only do one trial.
+	//	ss.GUI.StopNow = true
+	//}
 }
 
 // TrainEpoch runs until the end of the Epoch, then updates logs.
-func (ss *Sim) TrainEpoch() {
+func (ss *Sim) trainEpoch(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
-	ss.Trainer.OnEpochStart()
+	if ss.TrainEnv.Trial().Cur == 0 {
+		ss.Trainer.OnEpochStart()
+	}
 	for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Cur += 1 {
-		ss.TrainTrial()
+		ss.trainTrial(stopScale)
+		if stopScale == axon.Trial {
+			ss.GUI.StopNow = true
+			ss.TrainEnv.Trial().Cur += 1
+		}
 		if ss.GUI.StopNow == true {
-			ss.Stopped()
+			ss.GUI.StopNow = true // If stopped by stopScale
 			return
 		}
 	}
@@ -168,51 +179,59 @@ func (ss *Sim) TrainEpoch() {
 	ss.Trainer.OnEpochEnd()
 	// Log after OnEpochEnd.
 	ss.Log(elog.Train, elog.Epoch)
+	if stopScale == axon.Epoch {
+		// Only do one epoch.
+		ss.GUI.StopNow = true
+	}
 }
 
-func (ss *Sim) TrainRun() {
+func (ss *Sim) trainRun(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
-	ss.NewRun()
+	if ss.TrainEnv.Epoch().Cur <= 0 && ss.TrainEnv.Trial().Cur <= 0 {
+		ss.NewRun()
+	}
 	if ss.TrainEnv.Trial().Cur == -1 {
 		// This is a hack, and it should be initialized at 0
 		ss.TrainEnv.Trial().Cur = 0
 	}
 	for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
-		ss.TrainEpoch()
-		if ss.GUI.StopNow == true {
-			return
+		ss.trainEpoch(stopScale)
+		ss.StatCounters(true)
+		if stopScale == axon.Epoch {
+			ss.GUI.StopNow = true
+			ss.TrainEnv.Epoch().Cur += 1
 		}
 		if ss.Trainer.EarlyStopping() {
 			// End this run early
 			break
+		}
+		if ss.GUI.StopNow == true {
+			ss.GUI.StopNow = true // If stopped by stopScale
+			return
 		}
 	}
 	ss.TrainEnv.Epoch().Cur = 0
 	ss.RunEnd()
 }
 
-// Train trains until the end of runs, unless stopped early by the GUI.
-func (ss *Sim) Train() {
+// Train trains until the end of runs, unless stopped early by the GUI. Will stop after the end of one unit of time if indicated by stopScale.
+func (ss *Sim) Train(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
 	// Note that Run, Epoch, and Trial are not initialized at zero to allow Train to restart where it left off.
 	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
-		ss.TrainRun()
+		ss.trainRun(stopScale) // This might set StopNow to true
+		if stopScale == axon.Run {
+			ss.GUI.StopNow = true
+			ss.Run.Cur += 1
+		}
 		if ss.GUI.StopNow == true {
+			ss.GUI.Stopped()
+			// Reset the Stop flag as we leave training.
 			ss.GUI.StopNow = false
 			return
 		}
 	}
-	ss.GUI.StopNow = true
-	ss.GUI.Stopped()
-}
-
-// Stop tells the sim to stop running
-func (ss *Sim) Stop() {
-	ss.GUI.StopNow = true
-}
-
-// Stopped is called when a run method stops running -- updates the IsRunning flag and toolbar
-func (ss *Sim) Stopped() {
+	// Run.Cur will remain at Run.Max
 	ss.GUI.Stopped()
 }
 
@@ -280,7 +299,7 @@ func (ss *Sim) TestAll() {
 func (ss *Sim) RunTestAll() {
 	ss.GUI.StopNow = false
 	ss.TestAll()
-	ss.Stopped()
+	ss.GUI.Stopped()
 }
 
 func (ss *Sim) LoadPretrainedWts() bool {

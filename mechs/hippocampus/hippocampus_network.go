@@ -41,7 +41,7 @@ func PreTrain(ss *sim.Sim) {
 		ss.TrainEnv.Init(0)
 		SetDgCa3Off(ss, ss.Net, false)
 	}
-	ss.Stopped()
+	ss.GUI.Stopped()
 }
 
 // PreTrainTrial runs one trial of pretraining using TrainEnv

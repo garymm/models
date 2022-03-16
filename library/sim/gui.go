@@ -50,7 +50,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
-				go ss.Train()
+				go ss.Train(axon.TimeScalesN) // Train until end of all Runs
 			}
 		},
 	})
@@ -59,7 +59,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Tooltip: "Interrupts running.  Hitting Train again will pick back up where it left off.",
 		Active:  egui.ActiveRunning,
 		Func: func() {
-			ss.Stop()
+			ss.GUI.StopNow = true
 		},
 	})
 	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Step Trial",
@@ -69,7 +69,8 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Func: func() {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
-				ss.TrainTrial()
+				ss.Train(axon.Trial)
+				ss.StatCounters(true)
 				ss.GUI.IsRunning = false
 				ss.GUI.UpdateWindow()
 			}
@@ -84,7 +85,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
 				ss.GUI.StopNow = false
-				go ss.TrainEpoch()
+				go ss.Train(axon.Epoch)
 			}
 		},
 	})
@@ -97,7 +98,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
 				ss.GUI.StopNow = false
-				go ss.TrainRun()
+				go ss.Train(axon.Run)
 			}
 		},
 	})

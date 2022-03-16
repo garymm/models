@@ -23,7 +23,8 @@ func (ss *Sim) StatCounters(train bool) {
 	ss.Stats.SetInt("Trial", ev.Trial().Cur)
 	ss.Stats.SetString("TrialName", ev.CurTrialName())
 	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
-	ss.GUI.NetViewText = fmt.Sprintf("Run:\t%d/%d\tEpoch:%d/%d\tTrial:\t%d/%d", ss.Run.Cur, ss.Run.Max, ev.Epoch().Cur, ev.Epoch().Max, ev.Trial().Cur, ev.Trial().Max) + "\t" + ss.Stats.Print([]string{"TrialName", "Cycle", "TrlErr", "TrlCosDiff"})
+	displayText := fmt.Sprintf("Run:\t%d/%d\tEpoch:%d/%d\tTrial:\t%d/%d\t", ss.Run.Cur, ss.Run.Max, ev.Epoch().Cur, ev.Epoch().Max, ev.Trial().Cur, ev.Trial().Max) + "\t" + ss.Stats.Print([]string{"Cycle", "TrlErr", "TrlCosDiff"})
+	ss.GUI.NetViewText = displayText
 }
 
 func (ss *Sim) ConfigLogsFromArgs() {
