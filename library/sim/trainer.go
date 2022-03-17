@@ -2,22 +2,35 @@ package sim
 
 import "github.com/emer/emergent/elog"
 
+// TODO Use these maybe
+type ThetaPhase struct {
+	Duration   int
+	PhaseStart func()
+	PhaseEnd   func()
+}
+
 type TrainingCallbacks struct {
-	OnRunStart   func()
-	OnRunEnd     func()
-	OnEpochStart func()
-	OnEpochEnd   func()
+	Name string
 
-	// TODO Trial only does ThetaCyc, maybe don't need?
-	OnTrialStart func()
-	OnTrialEnd   func()
-
-	OnThetaCycleStart func()
-	OnThetaCycleEnd   func()
+	OnRunStart        func()
+	OnRunEnd          func()
+	OnEpochStart      func()
+	OnEpochEnd        func()
+	OnTrialStart      func()
+	OnTrialEnd        func()
+	OnThetaStart      func()
+	OnThetaEnd        func()
 	OnMillisecondEnd  func()
 	OnPlusPhaseStart  func()
 	OnMinusPhaseStart func()
-	EarlyStopping     func() bool
+	RunStopEarly      func() bool
+	EpochStopEarly    func() bool
+	TrialStopEarly    func() bool
+	ThetaStopEarly    func() bool
+
+	Phases []ThetaPhase
+
+	// TODO Add theta phases, each of which is an object with duration, name, callbacks
 }
 
 type Trainer struct {
@@ -79,18 +92,18 @@ func (trainer *Trainer) OnTrialEnd() {
 	}
 }
 
-func (trainer *Trainer) OnThetaCycleStart() {
+func (trainer *Trainer) OnThetaStart() {
 	for _, callback := range trainer.Callbacks {
-		if callback.OnThetaCycleStart != nil {
-			callback.OnThetaCycleStart()
+		if callback.OnThetaStart != nil {
+			callback.OnThetaStart()
 		}
 	}
 }
 
-func (trainer *Trainer) OnThetaCycleEnd() {
+func (trainer *Trainer) OnThetaEnd() {
 	for _, callback := range trainer.Callbacks {
-		if callback.OnThetaCycleEnd != nil {
-			callback.OnThetaCycleEnd()
+		if callback.OnThetaEnd != nil {
+			callback.OnThetaEnd()
 		}
 	}
 }
@@ -119,10 +132,10 @@ func (trainer *Trainer) OnMinusPhaseStart() {
 	}
 }
 
-func (trainer *Trainer) EarlyStopping() bool {
+func (trainer *Trainer) RunStopEarly() bool {
 	for _, callback := range trainer.Callbacks {
-		if callback.EarlyStopping != nil {
-			if callback.EarlyStopping() {
+		if callback.RunStopEarly != nil {
+			if callback.RunStopEarly() {
 				return true
 			}
 		}

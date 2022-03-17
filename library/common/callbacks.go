@@ -20,16 +20,19 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 		},
 	})
 
-	// Weight Visibility. TODO Describe the computational purpose of this.
+	// Weight storage and update delta.
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
-		OnThetaCycleStart: func() {
+		Name: "DWt",
+		OnThetaStart: func() {
 			// update prior weight changes at start, so any DWt values remain visible at end
 			if ss.Trainer.EvalMode == elog.Train {
+				// Apply delta weight.
 				ss.Net.WtFmDWt(&ss.Time)
 			}
 		},
-		OnThetaCycleEnd: func() {
+		OnThetaEnd: func() {
 			if ss.Trainer.EvalMode == elog.Train {
+				// Compute delta weight.
 				ss.Net.DWt(&ss.Time)
 			}
 		},
@@ -76,7 +79,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 
 	// First Zero Early Stopping
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
-		EarlyStopping: func() bool {
+		RunStopEarly: func() bool {
 			return ss.NZeroStop > 0 && ss.Stats.Int("NZero") >= ss.NZeroStop
 		},
 	})
@@ -87,7 +90,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 func AddDefaultGUICallbacks(ss *sim.Sim) {
 	var viewUpdt axon.TimeScales // Reset at the top of theta cycle.
 	viewUpdtCallbacks := sim.TrainingCallbacks{
-		OnThetaCycleStart: func() {
+		OnThetaStart: func() {
 			// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
 			viewUpdt = ss.TrainUpdt
 			if ss.Trainer.EvalMode == elog.Test {
@@ -102,7 +105,7 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 				ss.UpdateViewTime(viewUpdt)
 			}
 		},
-		OnThetaCycleEnd: func() {
+		OnThetaEnd: func() {
 			if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
 				ss.GUI.UpdateNetView()
 			}

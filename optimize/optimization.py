@@ -23,7 +23,7 @@ GO_ARGS = ""
 def get_hypers():
     hyper_file = "hyperparamsExample.json" #this
     # Run go with -hyperFile cmd arg to save them to file
-    print("GETTING HYPERPARAMETERS")
+    #print("GETTING HYPERPARAMETERS")
     run_model("-hyperFile=" + hyper_file)
     # Load hypers from file
     f = open(hyper_file)
@@ -61,7 +61,7 @@ def enumerate_parameters_to_modify(params: list):
     for name in params[0]["Sheets"]:
         for idx in range(len(params[0]["Sheets"][name])):
             element = params[0]["Sheets"][name][idx]
-            if ("Hypers" in element) & (type(element["Hypers"]) != type(None)):
+            if ("Hypers" in element) and (type(element["Hypers"]) != type(None)) and len(element["Hypers"]) > 0:
                 for paramname in element["Hypers"]:
                     uniquename = "{}_{}".format(index, paramname)
                     index += 1
@@ -95,11 +95,13 @@ def create_hyperonly(params, logs_name: str):
 
 
 def run_model(args):
-
     gocommand = "go"
     # If you encounter an error here, add another line to get your local go file.
     if str(os.popen("test -f /usr/local/go/bin/go && echo linux").read()).strip() == "linux":
         gocommand = "/usr/local/go/bin/go"
     elif str(os.popen("test -f /usr/local/opt/go/libexec/bin/go && echo mac").read()).strip() == "mac":
         gocommand = "/usr/local/opt/go/libexec/bin/go"
-    os.system(gocommand + " run mechs/{}/*[^test].go ".format(EXECUTABLE_PATH) + args + " " + GO_ARGS)
+    commando = gocommand + " run mechs/{}/*[^test].go ".format(EXECUTABLE_PATH) + args + " " + GO_ARGS
+    print("Running this command: " + commando)
+    # -params=Searching_6 -paramsFile=hyperparamsSearching_6.json -nogui=true -epclog=true -runs=2 -epochs=150 -randomize=true
+    os.system(commando)

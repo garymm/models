@@ -29,7 +29,7 @@ func (ss *Sim) ThetaCyc() {
 
 	train := ss.Trainer.EvalMode == elog.Train
 
-	ss.Trainer.OnThetaCycleStart()
+	ss.Trainer.OnThetaStart()
 
 	// TODO Parameterize these.
 	minusCyc := 150 // 150
@@ -86,7 +86,7 @@ func (ss *Sim) ThetaCyc() {
 	if !train {
 		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
 	}
-	ss.Trainer.OnThetaCycleEnd()
+	ss.Trainer.OnThetaEnd()
 }
 
 // ApplyInputs applies input patterns from given envirbonment.
@@ -150,11 +150,6 @@ func (ss *Sim) trainTrial(stopScale axon.TimeScales) {
 
 	ss.Log(elog.Train, elog.Trial)
 	ss.Trainer.OnTrialEnd()
-	// TODO Remove this
-	//if stopScale == axon.Trial {
-	//	// Only do one trial.
-	//	ss.GUI.StopNow = true
-	//}
 }
 
 // TrainEpoch runs until the end of the Epoch, then updates logs.
@@ -170,7 +165,6 @@ func (ss *Sim) trainEpoch(stopScale axon.TimeScales) {
 			ss.TrainEnv.Trial().Cur += 1
 		}
 		if ss.GUI.StopNow == true {
-			ss.GUI.StopNow = true // If stopped by stopScale
 			return
 		}
 	}
@@ -179,10 +173,6 @@ func (ss *Sim) trainEpoch(stopScale axon.TimeScales) {
 	ss.Trainer.OnEpochEnd()
 	// Log after OnEpochEnd.
 	ss.Log(elog.Train, elog.Epoch)
-	if stopScale == axon.Epoch {
-		// Only do one epoch.
-		ss.GUI.StopNow = true
-	}
 }
 
 func (ss *Sim) trainRun(stopScale axon.TimeScales) {
@@ -194,6 +184,7 @@ func (ss *Sim) trainRun(stopScale axon.TimeScales) {
 		// This is a hack, and it should be initialized at 0
 		ss.TrainEnv.Trial().Cur = 0
 	}
+	// TODO Put "|| ss.Trainer.RunStopEarly()" in conditional, verify
 	for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
 		ss.trainEpoch(stopScale)
 		ss.StatCounters(true)
@@ -201,12 +192,11 @@ func (ss *Sim) trainRun(stopScale axon.TimeScales) {
 			ss.GUI.StopNow = true
 			ss.TrainEnv.Epoch().Cur += 1
 		}
-		if ss.Trainer.EarlyStopping() {
+		if ss.Trainer.RunStopEarly() {
 			// End this run early
 			break
 		}
 		if ss.GUI.StopNow == true {
-			ss.GUI.StopNow = true // If stopped by stopScale
 			return
 		}
 	}

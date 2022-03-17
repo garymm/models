@@ -105,7 +105,6 @@ def optimize_bones(params, suggestions: dict, trial_name: str):
     with open(hyperfile, "w") as outfile:
         json.dump(updated_parameters, outfile)
 
-    print("THIS SHOULD BE CALLED ONCE?")
     # Run go program with -params arg
     optimization.run_model(
         "-paramsFile={} -nogui=true -epclog=true -params={} -runs={} -epochs={} -randomize=true".format(
@@ -166,7 +165,7 @@ def single_bones_trial(bones_obj, params, lock, i):
         suggestions = bones_obj.suggest().suggestion
         print("Suggest timer: " + str(suggest_timer.end_timer()))
     print("TRYING THESE SUGGESTIONS " + str(suggestions))
-    print_cpu_usage()
+    # print_cpu_usage()
     obtimize_timer = SimpleTimerObj()
     observed_value = optimize_bones(params, suggestions, trial_name)
     print("Optimization timer: " + str(obtimize_timer.end_timer()))
