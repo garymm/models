@@ -23,11 +23,6 @@ import (
 // TODO Using this it doesn't learn
 
 func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
-	if ss.Trainer.ThetaCycleOverride != nil {
-		ss.Trainer.ThetaCycleOverride(ss)
-		return
-	}
-
 	train := ss.Trainer.EvalMode == elog.Train
 
 	if ss.Time.Cycle == 0 {
@@ -36,78 +31,36 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 		ss.Trainer.OnThetaStart()
 	}
 
-	// TODO Parameterize these.
-	minusCyc := 150 // 150
-	plusCyc := 50   // 50
-
-	for ; ss.Time.Cycle < minusCyc; ss.Time.CycleInc() { // do the minus phase
-		ss.Net.Cycle(&ss.Time)
-		ss.StatCounters(train)
-		if !train {
-			ss.Log(elog.Test, elog.Cycle)
+	for _, phase := range ss.Trainer.Phases {
+		if phase.PhaseStart != nil {
+			phase.PhaseStart()
 		}
-		if ss.GUI.Active {
-			ss.RasterRec(ss.Time.Cycle)
-		}
+		for ; ss.Time.PhaseCycle < phase.Duration; ss.Time.CycleInc() {
+			ss.Net.Cycle(&ss.Time)
 
-		switch ss.Time.Cycle { // save states at beta-frequency -- not used computationally
-		case 75:
-			ss.Net.ActSt1(&ss.Time)
-		case 100:
-			ss.Net.ActSt2(&ss.Time)
+			// TODO This block should be in Callbacks
+			ss.StatCounters(train)
+			if !train {
+				ss.Log(elog.Test, elog.Cycle)
+			}
+			if ss.GUI.Active {
+				ss.RasterRec(ss.Time.Cycle)
+			}
+			ss.Trainer.OnMillisecondEnd()
+			if stopScale == axon.Cycle {
+				ss.GUI.StopNow = true
+				ss.Time.CycleInc()
+			}
+			if ss.GUI.StopNow == true {
+				return
+			}
 		}
-
-		if ss.Time.Cycle == minusCyc-1 { // do before view update
-			ss.Net.MinusPhase(&ss.Time)
-		}
-
-		ss.Trainer.OnMillisecondEnd()
-
-		if stopScale == axon.Cycle {
-			ss.GUI.StopNow = true
-			ss.Time.CycleInc()
-		}
-		if ss.GUI.StopNow == true {
-			return
+		ss.Time.PhaseCycle = 0
+		if phase.PhaseEnd != nil {
+			phase.PhaseEnd()
 		}
 	}
-
-	ss.Time.NewPhase()
-	ss.StatCounters(train)
-
-	if ss.Time.PhaseCycle == 0 {
-		ss.Trainer.OnPlusPhaseStart()
-	}
-
-	for ; ss.Time.PhaseCycle < plusCyc; ss.Time.CycleInc() { // do the plus phase
-		ss.Net.Cycle(&ss.Time)
-		ss.StatCounters(train)
-		if !train {
-			ss.Log(elog.Test, elog.Cycle)
-		}
-		if ss.GUI.Active {
-			ss.RasterRec(ss.Time.Cycle)
-		}
-		ss.Time.CycleInc()
-
-		if ss.Time.PhaseCycle == plusCyc-1 { // do before view update
-			ss.Net.PlusPhase(&ss.Time)
-		}
-
-		ss.Trainer.OnMillisecondEnd()
-		if stopScale == axon.Cycle {
-			ss.GUI.StopNow = true
-			ss.Time.CycleInc()
-		}
-		if ss.GUI.StopNow == true {
-			return
-		}
-
-	}
-
-	//
 	ss.Time.Cycle = 0
-	ss.Time.PhaseCycle = 0
 
 	ss.TrialStatsFunc(ss, train)
 	ss.StatCounters(train)
@@ -116,7 +69,6 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
 	}
 	ss.Trainer.OnThetaEnd()
-
 }
 
 // ApplyInputs applies input patterns from given envirbonment.

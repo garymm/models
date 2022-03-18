@@ -93,6 +93,14 @@ func (ss *Sim) InitRndSeed() {
 	rand.Seed(ss.CmdArgs.RndSeeds[run])
 }
 
+func (ss *Sim) GetViewUpdate() axon.TimeScales {
+	viewUpdt := ss.TrainUpdt
+	if ss.Trainer.EvalMode != elog.Train {
+		viewUpdt = ss.TestUpdt
+	}
+	return viewUpdt
+}
+
 // NewRndSeed gets a new set of random seeds based on current time -- otherwise uses
 // the same random seeds for every run
 func (ss *Sim) NewRndSeed() {

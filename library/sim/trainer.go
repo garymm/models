@@ -4,9 +4,12 @@ import "github.com/emer/emergent/elog"
 
 // TODO Use these maybe
 type ThetaPhase struct {
-	Duration   int
-	PhaseStart func()
-	PhaseEnd   func()
+	Name             string // Might be plus or minus for example
+	Duration         int
+	IsPlusPhase      bool
+	OnMillisecondEnd func()
+	PhaseStart       func()
+	PhaseEnd         func()
 }
 
 type TrainingCallbacks struct {
@@ -23,23 +26,19 @@ type TrainingCallbacks struct {
 	OnMillisecondEnd  func()
 	OnPlusPhaseStart  func()
 	OnMinusPhaseStart func()
+	OnEveryPhaseEnd   func()
 	RunStopEarly      func() bool
 	EpochStopEarly    func() bool
 	TrialStopEarly    func() bool
 	ThetaStopEarly    func() bool
 
-	Phases []ThetaPhase
-
 	// TODO Add theta phases, each of which is an object with duration, name, callbacks
 }
 
 type Trainer struct {
-	EvalMode           elog.EvalModes `desc:"The current training mode."`
-	Callbacks          []TrainingCallbacks
-	TrainRunOverride   func()
-	TrainEpochOverride func()
-	TrainTrialOverride func()
-	ThetaCycleOverride func(sim *Sim)
+	EvalMode  elog.EvalModes `desc:"The current training mode."`
+	Callbacks []TrainingCallbacks
+	Phases    []ThetaPhase
 }
 
 // Boiler-plate functions to prevent copy-pasting a for-loop.

@@ -117,7 +117,7 @@ func Config(ss *HipSim) {
 	ss.ConfigLogItems()
 	ss.ConfigLogs()
 	common.AddDefaultTrainCallbacks(&ss.Sim)
-	ss.Trainer.ThetaCycleOverride = HipThetaCyc
+	common.AddHipCallbacks(&ss.Sim)
 }
 
 func ConfigGui(ss *HipSim) {
