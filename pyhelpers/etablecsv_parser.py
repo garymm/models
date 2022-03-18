@@ -41,7 +41,9 @@ def create_matrices(dataframe:pd.DataFrame):
         print(names[i])
         matrix = create_matrix(size, numeric_data, columns, name_ranges, i)
         dict_to_matrices[names[i]] = matrix
-    return dict_to_matrices
+
+    trial_names = dataframe[dataframe.columns[0]].values
+    return dict_to_matrices, trial_names
 
 def create_matrix(number_examples, numeric_data, columns, name_ranges:list, current_index:int):
     dims, shape = parse_shape_from_name(columns[name_ranges[current_index]])
@@ -65,14 +67,14 @@ if __name__ == '__main__':
 
     temporary = pd.read_csv("TrainAB_Sample.csv",sep=",")
 
-    complex_multidimensional_dict = create_matrices(temporary )
+    complex_multidimensional_dict, row_names = create_matrices(temporary )
 
     for key in complex_multidimensional_dict:
         print(complex_multidimensional_dict[key].shape)
 
     temporary = pd.read_csv("random_5x5_25_gen.tsv",sep="\t")
 
-    simple_multidimensional_dict = create_matrices(temporary )
+    simple_multidimensional_dict, row_names = create_matrices(temporary )
 
     for key in simple_multidimensional_dict:
         print(simple_multidimensional_dict[key].shape)

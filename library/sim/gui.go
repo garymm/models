@@ -76,6 +76,20 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 			}
 		},
 	})
+	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Step Cycle",
+		Icon:    "step-fwd",
+		Tooltip: "Advances one cycle at a time.",
+		Active:  egui.ActiveStopped,
+		Func: func() {
+			if !ss.GUI.IsRunning {
+				ss.GUI.IsRunning = true
+				ss.Train(axon.Cycle)
+				ss.StatCounters(true)
+				ss.GUI.IsRunning = false
+				ss.GUI.UpdateWindow()
+			}
+		},
+	})
 	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "Step Epoch",
 		Icon:    "fast-fwd",
 		Tooltip: "Advances one epoch (complete set of training patterns) at a time.",

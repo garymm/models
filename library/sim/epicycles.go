@@ -21,7 +21,8 @@ import (
 // If train is true, then learning DWt or WtFmDWt calls are made.
 // Handles netview updating within scope, and calls TrainStats()
 // TODO Using this it doesn't learn
-func (ss *Sim) ThetaCyc() {
+
+func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 	if ss.Trainer.ThetaCycleOverride != nil {
 		ss.Trainer.ThetaCycleOverride(ss)
 		return
@@ -29,15 +30,17 @@ func (ss *Sim) ThetaCyc() {
 
 	train := ss.Trainer.EvalMode == elog.Train
 
-	ss.Trainer.OnThetaStart()
+	if ss.Time.Cycle == 0 {
+		ss.Net.NewState()
+		ss.Time.NewState(train)
+		ss.Trainer.OnThetaStart()
+	}
 
 	// TODO Parameterize these.
 	minusCyc := 150 // 150
 	plusCyc := 50   // 50
 
-	ss.Net.NewState()
-	ss.Time.NewState(train)
-	for cyc := 0; cyc < minusCyc; cyc++ { // do the minus phase
+	for ; ss.Time.Cycle < minusCyc; ss.Time.CycleInc() { // do the minus phase
 		ss.Net.Cycle(&ss.Time)
 		ss.StatCounters(train)
 		if !train {
@@ -46,7 +49,7 @@ func (ss *Sim) ThetaCyc() {
 		if ss.GUI.Active {
 			ss.RasterRec(ss.Time.Cycle)
 		}
-		ss.Time.CycleInc()
+
 		switch ss.Time.Cycle { // save states at beta-frequency -- not used computationally
 		case 75:
 			ss.Net.ActSt1(&ss.Time)
@@ -54,16 +57,29 @@ func (ss *Sim) ThetaCyc() {
 			ss.Net.ActSt2(&ss.Time)
 		}
 
-		if cyc == minusCyc-1 { // do before view update
+		if ss.Time.Cycle == minusCyc-1 { // do before view update
 			ss.Net.MinusPhase(&ss.Time)
 		}
 
 		ss.Trainer.OnMillisecondEnd()
+
+		if stopScale == axon.Cycle {
+			ss.GUI.StopNow = true
+			ss.Time.CycleInc()
+		}
+		if ss.GUI.StopNow == true {
+			return
+		}
 	}
+
 	ss.Time.NewPhase()
 	ss.StatCounters(train)
-	ss.Trainer.OnPlusPhaseStart()
-	for cyc := 0; cyc < plusCyc; cyc++ { // do the plus phase
+
+	if ss.Time.PhaseCycle == 0 {
+		ss.Trainer.OnPlusPhaseStart()
+	}
+
+	for ; ss.Time.PhaseCycle < plusCyc; ss.Time.CycleInc() { // do the plus phase
 		ss.Net.Cycle(&ss.Time)
 		ss.StatCounters(train)
 		if !train {
@@ -74,12 +90,25 @@ func (ss *Sim) ThetaCyc() {
 		}
 		ss.Time.CycleInc()
 
-		if cyc == plusCyc-1 { // do before view update
+		if ss.Time.PhaseCycle == plusCyc-1 { // do before view update
 			ss.Net.PlusPhase(&ss.Time)
 		}
 
 		ss.Trainer.OnMillisecondEnd()
+		if stopScale == axon.Cycle {
+			ss.GUI.StopNow = true
+			ss.Time.CycleInc()
+		}
+		if ss.GUI.StopNow == true {
+			return
+		}
+
 	}
+
+	//
+	ss.Time.Cycle = 0
+	ss.Time.PhaseCycle = 0
+
 	ss.TrialStatsFunc(ss, train)
 	ss.StatCounters(train)
 
@@ -87,6 +116,7 @@ func (ss *Sim) ThetaCyc() {
 		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
 	}
 	ss.Trainer.OnThetaEnd()
+
 }
 
 // ApplyInputs applies input patterns from given envirbonment.
@@ -143,13 +173,19 @@ func (ss *Sim) trainTrial(stopScale axon.TimeScales) {
 		// This is a hack, and it should be initialized at 0
 		ss.TrainEnv.Trial().Cur = 0
 	}
+
 	ss.StatCounters(true)
 	ss.ApplyInputs(ss.TrainEnv)
 
-	ss.ThetaCyc()
+	ss.ThetaCyc(stopScale)
+
+	if ss.GUI.StopNow == true {
+		return
+	}
 
 	ss.Log(elog.Train, elog.Trial)
 	ss.Trainer.OnTrialEnd()
+
 }
 
 // TrainEpoch runs until the end of the Epoch, then updates logs.
@@ -177,7 +213,7 @@ func (ss *Sim) trainEpoch(stopScale axon.TimeScales) {
 
 func (ss *Sim) trainRun(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
-	if ss.TrainEnv.Epoch().Cur <= 0 && ss.TrainEnv.Trial().Cur <= 0 {
+	if ss.TrainEnv.Epoch().Cur <= 0 && ss.TrainEnv.Trial().Cur <= 0 && ss.Time.Cycle <= 0 {
 		ss.NewRun()
 	}
 	if ss.TrainEnv.Trial().Cur == -1 {
@@ -253,7 +289,7 @@ func (ss *Sim) TestTrial(returnOnChg bool) {
 	}
 
 	ss.ApplyInputs(ss.TestEnv)
-	ss.ThetaCyc()
+	ss.ThetaCyc(axon.TimeScalesN) //todo this should be ignored or specified with a unique timescale == ignore or something
 	ss.Log(elog.Test, elog.Trial)
 	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
 		ss.CmdArgs.NetData.Record(ss.GUI.NetViewText)
@@ -267,7 +303,7 @@ func (ss *Sim) TestItem(idx int) {
 	cur := TestEnv.Trial().Cur
 	TestEnv.Trial().Cur = idx
 	ss.ApplyInputs(ss.TestEnv)
-	ss.ThetaCyc()
+	ss.ThetaCyc(axon.TimeScalesN)
 	TestEnv.Trial().Cur = cur
 }
 
