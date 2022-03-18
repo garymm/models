@@ -39,11 +39,11 @@ def create_matrices(dataframe:pd.DataFrame):
     dict_to_matrices = {}
     for i in range(len(name_ranges)):
         print(names[i])
-        matrix = create_matrice(size,numeric_data,columns,name_ranges,i)
+        matrix = create_matrix(size, numeric_data, columns, name_ranges, i)
         dict_to_matrices[names[i]] = matrix
     return dict_to_matrices
 
-def create_matrice(number_examples, numeric_data, columns, name_ranges:list, current_index:int ):
+def create_matrix(number_examples, numeric_data, columns, name_ranges:list, current_index:int):
     dims, shape = parse_shape_from_name(columns[name_ranges[current_index]])
     shape.insert(0,number_examples) #add full size to the matrix
 
