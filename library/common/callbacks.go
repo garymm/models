@@ -99,11 +99,11 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 	var viewUpdt axon.TimeScales // Reset at the top of theta cycle.
 	viewUpdtCallbacks := sim.TrainingCallbacks{
 		OnThetaStart: func() {
-			// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
-			viewUpdt = ss.TrainUpdt
-			if ss.Trainer.EvalMode == elog.Test {
-				viewUpdt = ss.TestUpdt
-			}
+			// // ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
+			//viewUpdt = ss.TrainUpdt
+			//if ss.Trainer.EvalMode == elog.Test {
+			//	viewUpdt = ss.TestUpdt
+			//}
 			//if viewUpdt == axon.Phase {
 			//	ss.GUI.UpdateNetView() // DO NOT SUBMIT
 			//}
