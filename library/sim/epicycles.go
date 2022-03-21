@@ -61,13 +61,9 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			if ss.GUI.StopNow == true {
 				return
 			}
-			if ss.Time.Cycle == 99 {
-				println("Cat") // DO NOT SUBMIT
-			}
+
 			if ss.ViewOn { // DO NOT SUBMIT
 				ss.UpdateViewTime(ss.GetViewUpdate())
-				var t = 0
-				t += 1
 			}
 		}
 		ss.Time.PhaseCycle = 0

@@ -109,6 +109,13 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 			//}
 		},
 		OnMillisecondEnd: func() {
+			if ss.Time.Cycle == 49 {
+				fmt.Printf("")
+			}
+			if ss.Time.Cycle == 10 {
+				ss.GUI.UpdateNetView()
+			}
+
 			//if ss.ViewOn {
 			//	ss.UpdateViewTime(viewUpdt)
 			//}
@@ -189,7 +196,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 	// Override Default Phases
 	ss.Trainer.Phases = []sim.ThetaPhase{sim.ThetaPhase{
 		Name:     "Q1",
-		Duration: 30,
+		Duration: 50,
 		PhaseEnd: func() {
 			// Second, Third Quarters: CA1 is driven by CA3 recall
 			ss.Net.ActSt1(&ss.Time)
@@ -205,13 +212,13 @@ func AddHipCallbacks(ss *sim.Sim) {
 		},
 	}, sim.ThetaPhase{
 		Name:     "Q2",
-		Duration: 30,
+		Duration: 50,
 		PhaseEnd: func() {
 			ss.Net.ActSt2(&ss.Time)
 		},
 	}, sim.ThetaPhase{
 		Name:     "Q3",
-		Duration: 30,
+		Duration: 50,
 		PhaseEnd: func() { // Fourth Quarter: CA1 back to ECin drive only
 			train := ss.Trainer.EvalMode != elog.Train
 			if train { // clamp ECout from ECin
@@ -227,7 +234,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 		},
 	}, sim.ThetaPhase{
 		Name:     "Q4",
-		Duration: 110,
+		Duration: 50,
 		PhaseEnd: func() {
 			ss.Net.PlusPhase(&ss.Time)
 		},
