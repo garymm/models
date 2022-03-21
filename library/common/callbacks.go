@@ -96,7 +96,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 }
 
 func AddDefaultGUICallbacks(ss *sim.Sim) {
-	var viewUpdt axon.TimeScales // Reset at the top of theta cycle.
+	//var viewUpdt axon.TimeScales // Reset at the top of theta cycle.
 	viewUpdtCallbacks := sim.TrainingCallbacks{
 		OnThetaStart: func() {
 			// // ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
