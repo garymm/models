@@ -38,6 +38,11 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 		for ; ss.Time.PhaseCycle < phase.Duration; ss.Time.CycleInc() {
 			ss.Net.Cycle(&ss.Time)
 
+			if ss.Time.PhaseCycle == 25 { // DO NOT SUBMIT
+				var t = 0
+				t += 1
+			}
+
 			// TODO This block should be in Callbacks
 			ss.StatCounters(train)
 			if !train {
@@ -204,6 +209,7 @@ func (ss *Sim) Train(stopScale axon.TimeScales) {
 		}
 		if ss.GUI.StopNow == true {
 			ss.GUI.Stopped()
+			ss.GUI.UpdateNetView()
 			// Reset the Stop flag as we leave training.
 			ss.GUI.StopNow = false
 			return
@@ -211,6 +217,7 @@ func (ss *Sim) Train(stopScale axon.TimeScales) {
 	}
 	// Run.Cur will remain at Run.Max
 	ss.GUI.Stopped()
+	ss.GUI.UpdateNetView()
 }
 
 // SaveWeights saves the network weights -- when called with giv.CallMethod

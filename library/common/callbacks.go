@@ -189,7 +189,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 	// Override Default Phases
 	ss.Trainer.Phases = []sim.ThetaPhase{sim.ThetaPhase{
 		Name:     "Q1",
-		Duration: 50,
+		Duration: 30,
 		PhaseEnd: func() {
 			// Second, Third Quarters: CA1 is driven by CA3 recall
 			ss.Net.ActSt1(&ss.Time)
@@ -205,13 +205,13 @@ func AddHipCallbacks(ss *sim.Sim) {
 		},
 	}, sim.ThetaPhase{
 		Name:     "Q2",
-		Duration: 50,
+		Duration: 30,
 		PhaseEnd: func() {
 			ss.Net.ActSt2(&ss.Time)
 		},
 	}, sim.ThetaPhase{
 		Name:     "Q3",
-		Duration: 50,
+		Duration: 30,
 		PhaseEnd: func() { // Fourth Quarter: CA1 back to ECin drive only
 			train := ss.Trainer.EvalMode != elog.Train
 			if train { // clamp ECout from ECin
@@ -227,7 +227,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 		},
 	}, sim.ThetaPhase{
 		Name:     "Q4",
-		Duration: 50,
+		Duration: 110,
 		PhaseEnd: func() {
 			ss.Net.PlusPhase(&ss.Time)
 		},
@@ -259,14 +259,10 @@ func AddHipCallbacks(ss *sim.Sim) {
 		OnThetaEnd: func() {
 			ca3FmDg.PrjnScale.Rel = dgwtscale // restore
 			ca1FmCa3.PrjnScale.Abs = absGain
-
 		},
 		OnMillisecondEnd: func() {
 			if ss.Trainer.EvalMode != elog.Train {
 				ss.Log(elog.Test, elog.Cycle)
-			}
-			if ss.ViewOn {
-				ss.UpdateViewTime(ss.GetViewUpdate()) //TOdo in original version train is a variable with true, ask randy why this is removed
 			}
 		},
 		OnEveryPhaseEnd: func() {

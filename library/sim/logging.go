@@ -25,7 +25,7 @@ func (ss *Sim) StatCounters(train bool) {
 	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
 	displayText := fmt.Sprintf("Run:\t%d/%d\tEpoch:%d/%d\tTrial:\t%d/%d\tCycle:\t%d\t", ss.Run.Cur, ss.Run.Max, ev.Epoch().Cur, ev.Epoch().Max, ev.Trial().Cur, ev.Trial().Max, ss.Time.Cycle) + "\t" + ss.Stats.Print([]string{"TrlErr", "TrlCosDiff"})
 
-	println(displayText)
+	//println(displayText)
 	ss.GUI.NetViewText = displayText
 }
 
@@ -204,7 +204,7 @@ func (ss *Sim) MemStats(train bool) {
 		} else {
 			ss.Stats.SetFloat("Mem", 0)
 		}
-	} else {          // test
+	} else { // test
 		if cmpN > 0 { // should be
 			trgOnWasOffCmp /= cmpN
 			if trgOnWasOffCmp < ss.Stats.Float("MemThr") && trgOffWasOn < ss.Stats.Float("MemThr") {

@@ -40,7 +40,9 @@ type Sim struct {
 
 	Trainer Trainer `view:"-" desc:"Handles basic network logic."`
 
-	Time      axon.Time       `view:"-" desc:"axon timing parameters and state"`
+	Time axon.Time `view:"-" desc:"axon timing parameters and state"`
+
+	// TODO Move to GUI
 	ViewOn    bool            `desc:"whether to update the network view while running"`
 	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`

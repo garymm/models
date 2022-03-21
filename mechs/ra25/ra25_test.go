@@ -30,9 +30,11 @@ func TestConfigPats(t *testing.T) {
 }
 
 // In GoLand, right-click the play triangle by this method and select "Profile TestModelTraining with 'CPU Profiler'"s
+// TODO Modify this test to ensure that LastZero is achieved in under 100 epochs
 func TestModelTraining(t *testing.T) {
 	var TheSim sim.Sim
 	TheSim.New()
+	// TODO Add params
 	os.Args = append(os.Args, "-nogui=true")
 	os.Args = append(os.Args, "-runs=1")
 	os.Args = append(os.Args, "-epochs=2")
