@@ -20,8 +20,6 @@ import (
 // using ApplyExt method on relevant layers (see TrainTrial, TestTrial).
 // If train is true, then learning DWt or WtFmDWt calls are made.
 // Handles netview updating within scope, and calls TrainStats()
-// TODO Using this it doesn't learn
-
 func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 	train := ss.Trainer.EvalMode == elog.Train
 
@@ -36,9 +34,13 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			phase.PhaseStart()
 		}
 		for ; ss.Time.PhaseCycle < phase.Duration; ss.Time.CycleInc() {
+			//if ss.ViewOn { // DO NOT SUBMIT
+			//	ss.UpdateViewTime(ss.GetViewUpdate())
+			//}
 			ss.Net.Cycle(&ss.Time)
 
 			if ss.Time.PhaseCycle == 25 { // DO NOT SUBMIT
+				//ss.GUI.UpdateNetView()
 				var t = 0
 				t += 1
 			}
@@ -58,6 +60,14 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			}
 			if ss.GUI.StopNow == true {
 				return
+			}
+			if ss.Time.Cycle == 99 {
+				println("Cat") // DO NOT SUBMIT
+			}
+			if ss.ViewOn { // DO NOT SUBMIT
+				ss.UpdateViewTime(ss.GetViewUpdate())
+				var t = 0
+				t += 1
 			}
 		}
 		ss.Time.PhaseCycle = 0
@@ -209,7 +219,7 @@ func (ss *Sim) Train(stopScale axon.TimeScales) {
 		}
 		if ss.GUI.StopNow == true {
 			ss.GUI.Stopped()
-			ss.GUI.UpdateNetView()
+			//ss.GUI.UpdateNetView() // TODO is this necessary?
 			// Reset the Stop flag as we leave training.
 			ss.GUI.StopNow = false
 			return
@@ -217,7 +227,7 @@ func (ss *Sim) Train(stopScale axon.TimeScales) {
 	}
 	// Run.Cur will remain at Run.Max
 	ss.GUI.Stopped()
-	ss.GUI.UpdateNetView()
+	//ss.GUI.UpdateNetView() // DO NOT SUBMIT is this necessary?
 }
 
 // SaveWeights saves the network weights -- when called with giv.CallMethod
