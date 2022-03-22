@@ -40,7 +40,9 @@ type Sim struct {
 
 	Trainer Trainer `view:"-" desc:"Handles basic network logic."`
 
-	Time      axon.Time       `view:"-" desc:"axon timing parameters and state"`
+	Time axon.Time `view:"-" desc:"axon timing parameters and state"`
+
+	// TODO Move to GUI
 	ViewOn    bool            `desc:"whether to update the network view while running"`
 	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 	TestUpdt  axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
@@ -91,6 +93,14 @@ func (ss *Sim) Init() {
 func (ss *Sim) InitRndSeed() {
 	run := ss.Run.Cur
 	rand.Seed(ss.CmdArgs.RndSeeds[run])
+}
+
+func (ss *Sim) GetViewUpdate() axon.TimeScales {
+	viewUpdt := ss.TrainUpdt
+	if ss.Trainer.EvalMode != elog.Train {
+		viewUpdt = ss.TestUpdt
+	}
+	return viewUpdt
 }
 
 // NewRndSeed gets a new set of random seeds based on current time -- otherwise uses

@@ -25,6 +25,11 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 		Name: "DWt",
 		OnThetaStart: func() {
 			// update prior weight changes at start, so any DWt values remain visible at end
+			// you might want to do this less frequently to achieve a mini-batch update
+			// in which case, move it out to the TrainTrial method where the relevant
+			// counters are being dealt with.
+
+			// update prior weight changes at start, so any DWt values remain visible at end
 			if ss.Trainer.EvalMode == elog.Train {
 				// Apply delta weight.
 				ss.Net.WtFmDWt(&ss.Time)
@@ -84,6 +89,8 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 		},
 	})
 
+	AddPlusAndMinusPhases(ss)
+
 	AddDefaultGUICallbacks(ss)
 }
 
@@ -92,6 +99,7 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 	viewUpdtCallbacks := sim.TrainingCallbacks{
 		OnThetaStart: func() {
 			// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
+
 			viewUpdt = ss.TrainUpdt
 			if ss.Trainer.EvalMode == elog.Test {
 				viewUpdt = ss.TestUpdt
@@ -122,6 +130,40 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 		},
 	}
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, viewUpdtCallbacks)
+}
+
+func AddPlusAndMinusPhases(ss *sim.Sim) {
+	ss.Trainer.Phases = []sim.ThetaPhase{sim.ThetaPhase{
+		Name:     "Minus",
+		Duration: 150,
+		OnMillisecondEnd: func() {
+			switch ss.Time.Cycle { // save states at beta-frequency -- not used computationally
+			case 75:
+				ss.Net.ActSt1(&ss.Time)
+			case 100:
+				ss.Net.ActSt2(&ss.Time)
+			}
+		},
+		PhaseStart: func() {
+			ss.Time.PlusPhase = false
+		},
+		PhaseEnd: func() {
+			ss.Net.MinusPhase(&ss.Time)
+		},
+	}, sim.ThetaPhase{
+		Name:     "Plus",
+		Duration: 50,
+		PhaseStart: func() {
+			ss.Time.PlusPhase = true
+			//if ss.GetViewUpdate() == axon.Phase {
+			//	ss.GUI.UpdateNetView() // DO NOT SUBMIT
+			//}
+			ss.StatCounters(ss.Trainer.EvalMode == elog.Train)
+		},
+		PhaseEnd: func() {
+			ss.Net.PlusPhase(&ss.Time)
+		},
+	}}
 }
 
 // LrateSched implements the learning rate schedule
