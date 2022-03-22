@@ -108,8 +108,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Inhib.ActAvg.Init": "0.04", // 0.04 for 1.2, 0.08 for 1.1  importance: 10
 						"Layer.Inhib.Layer.Bg":    "0.3",  // 0.3 > 0.0   importance: 2
 						"Layer.Act.Decay.Glong":   "0.6",  // 0.6   importance: 2
-						"Layer.Act.Dend.GbarExp":  "0.5",  // 0.2 > 0.1 > 0   importance: 5
-						"Layer.Act.Dend.GbarR":    "6",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels importance: 5
+						"Layer.Act.Dend.GbarExp":  "0.2",  // 0.2 > 0.1 > 0   importance: 5
+						"Layer.Act.Dend.GbarR":    "3",    // 3 > 2 good for 0.2 -- too low rel to ExpGbar causes fast ini learning, but then unravels importance: 5
 						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect importance: 1
 						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better importance: 1
 						"Layer.Act.Dt.GeTau":      "5",    // importance: 1
@@ -145,9 +145,9 @@ func ConfigParams(ss *sim.Sim) {
 					}},
 				{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
 					Params: params.Params{
-						"Prjn.Learn.Lrate.Base": "0.2", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
-						"Prjn.SWt.Adapt.Lrate":  "0.0", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
-						"Prjn.SWt.Init.SPct":    "0.5", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
+						"Prjn.Learn.Lrate.Base": "0.1",  // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
+						"Prjn.SWt.Adapt.Lrate":  "0.08", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
+						"Prjn.SWt.Init.SPct":    "0.5",  // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
 					},
 					Hypers: params.Hypers{
 						"Prjn.Learn.Lrate.Base": {"StdDev": "0.1"},
