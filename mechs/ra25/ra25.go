@@ -113,10 +113,10 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.Dt.VmDendTau":  "5",    // 5 > 2.81 here but small effect importance: 1
 						"Layer.Act.Dt.VmSteps":    "2",    // 2 > 3 -- somehow works better importance: 1
 						"Layer.Act.Dt.GeTau":      "5",    // importance: 1
-						"Layer.Act.NMDA.Gbar":     "0.15", //  importance: 7
+						"Layer.Act.NMDA.Gbar":     "0.16", //  importance: 7
 						"Layer.Act.NMDA.MgC":      "1.4",
 						"Layer.Act.NMDA.Voff":     "5",
-						"Layer.Act.GABAB.Gbar":    "0.2", // 0.2 > 0.15  importance: 7
+						"Layer.Act.GABAB.Gbar":    "0.18", // 0.2 > 0.15  importance: 7
 					}, Hypers: params.Hypers{
 						// These shouldn't be set without also searching for the same value in specific layers like #Input, because it'll clobber them, since it's in a separate Params sheet.
 						//"Layer.Inhib.Layer.Gi":    {"StdDev": "0.15"},
@@ -129,8 +129,8 @@ func ConfigParams(ss *sim.Sim) {
 					}},
 				{Sel: "#Input", Desc: "critical now to specify the activity level",
 					Params: params.Params{
-						"Layer.Inhib.Layer.Gi":    "0.9",  // 0.9 > 1.0
-						"Layer.Act.Clamp.Ge":      "1.0",  // 1.0 > 0.6 >= 0.7 == 0.5
+						"Layer.Inhib.Layer.Gi":    "0.94", // 0.9 > 1.0
+						"Layer.Act.Clamp.Ge":      "1.08", // 1.0 > 0.6 >= 0.7 == 0.5
 						"Layer.Inhib.ActAvg.Init": "0.15", // .24 nominal, lower to give higher excitation
 					},
 					Hypers: params.Hypers{
@@ -147,9 +147,10 @@ func ConfigParams(ss *sim.Sim) {
 					}},
 				{Sel: "Prjn", Desc: "norm and momentum on works better, but wt bal is not better for smaller nets",
 					Params: params.Params{
-						"Prjn.Learn.Lrate.Base": "0.1",  // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
-						"Prjn.SWt.Adapt.Lrate":  "0.08", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
-						"Prjn.SWt.Init.SPct":    "0.5",  // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
+						"Prjn.Learn.Lrate.Base":    "0.08", // 0.04 no rlr, 0.2 rlr; .3, WtSig.Gain = 1 is pretty close  //importance: 10
+						"Prjn.SWt.Adapt.Lrate":     "0.08", // .1 >= .2, but .2 is fast enough for DreamVar .01..  .1 = more minconstraint //importance: 5
+						"Prjn.SWt.Init.SPct":       "0.65", // .5 >= 1 here -- 0.5 more reliable, 1.0 faster..  //importance: 7
+						"Prjn.Learn.KinaseCa.Rule": "SynSpkTheta",
 					},
 					Hypers: params.Hypers{
 						"Prjn.Learn.Lrate.Base": {"StdDev": "0.1"},
@@ -161,7 +162,7 @@ func ConfigParams(ss *sim.Sim) {
 						"Prjn.PrjnScale.Rel": "0.3", // 0.3 > 0.2 > 0.1 > 0.5 //importance: 9
 					},
 					Hypers: params.Hypers{
-						//"Prjn.PrjnScale.Rel": {"StdDev": ".2", "Min": "0.01"	},
+						"Prjn.PrjnScale.Rel": {"StdDev": ".2", "Min": "0.01"},
 					}},
 			},
 			"Sim": &params.Sheet{ // sim params apply to sim object

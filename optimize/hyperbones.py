@@ -115,23 +115,23 @@ def optimize_bones(params, suggestions: dict, trial_name: str):
     return optimization.get_score_from_logs(trial_name)
 
 
-def run_bones(bones_obj, trialnumber, params):
-    best_suggest = {}
-    best_score = sys.float_info.max
-    for i in range(trialnumber):
-        trial_name = "Searching_" + str(i)
-        current_suggestion = None
-        suggestions = bones_obj.suggest().suggestion
-        observed_value = optimize_bones(params, suggestions, trial_name)
-        # print(observed_value)
-        bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
-        if observed_value < best_score:
-            best_score = observed_value
-            best_suggest = suggestions
-        with open(OBSERVATIONS_FILE, "a") as file_object:
-            file_object.write("\n{}\t{}\t{}\t{}".
-                              format(str(suggestions), str(observed_value), str(best_suggest), str(best_score)))
-    return best_suggest, best_score
+# def run_bones(bones_obj, trialnumber, params):
+#     best_suggest = {}
+#     best_score = sys.float_info.max
+#     for i in range(trialnumber):
+#         trial_name = "Searching_" + str(i)
+#         current_suggestion = None
+#         suggestions = bones_obj.suggest().suggestion
+#         observed_value = optimize_bones(params, suggestions, trial_name)
+#         # print(observed_value)
+#         bones_obj.observe(ObservationInParam(input=suggestions, output=observed_value))
+#         if observed_value < best_score:
+#             best_score = observed_value
+#             best_suggest = suggestions
+#         with open(OBSERVATIONS_FILE, "a") as file_object:
+#             file_object.write("\n{}\t{}\t{}\t{}".
+#                               format(str(suggestions), str(observed_value), str(best_suggest), str(best_score)))
+#     return best_suggest, best_score
 
 
 class SimpleTimerObj():
@@ -191,7 +191,7 @@ def single_bones_trial(bones_obj, params, lock, i):
     # print(all_times_np)
     avg_time = total_timer.elapsed() / all_obs_len
     # print((all_times_np.mean()), (all_times_np.max()), int(all_times_np.min()))
-    wandb.log({"runtime": trial_timer.elapsed(), "avgtime": avg_time, "totaltime": total_timer.elapsed()}) # TODO Is this right? Is it incrementing badly? Use i
+    wandb.log({"runtime": trial_timer.elapsed(), "avgtime": avg_time, "totaltime": total_timer.elapsed()}, step=i)  # TODO Is this right? Is it incrementing badly? Use i
     print("Average elapsed timer: " + str(avg_time))
     print("Full timer: " + str(trial_timer.end_timer()))
 
@@ -216,7 +216,6 @@ def observer(bones_obj, lock):
 
 
 def run_bones_parallel(bones_obj, params):
-    global finish_observing
     locky = threading.Lock()
     global total_timer
     total_timer.start_timer()

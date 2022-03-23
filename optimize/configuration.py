@@ -40,11 +40,14 @@ class ConfigOptimizer():
         # todo confirming that the projectname variable exists in the GO file, we reference it
         if len(self.wandb_key) > 0:
             self.use_onlinelogging = True
+            # optimization.WANDLOGGING = True
         else:
             self.use_onlinelogging = False
+            # optimization.WANDLOGGING = False
 
-        if self.num_runs >1:
+        if self.num_runs > 1:
             self.use_average_value = True
+            # optimization.USE_AVERAGE_VALUE = True
 
 
 def assign_to_optimizer_constants(configobj: ConfigOptimizer):
