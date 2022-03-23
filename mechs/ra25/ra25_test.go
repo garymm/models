@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Astera-org/models/library/sim"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/etable/etable"
 	"os"
 	"testing"
@@ -34,10 +36,17 @@ func TestConfigPats(t *testing.T) {
 func TestModelTraining(t *testing.T) {
 	var TheSim sim.Sim
 	TheSim.New()
-	// TODO Add params
 	os.Args = append(os.Args, "-nogui=true")
 	os.Args = append(os.Args, "-runs=1")
-	os.Args = append(os.Args, "-epochs=2")
+	os.Args = append(os.Args, "-epochs=100")
 	Config(&TheSim)
 	TheSim.RunFromArgs()
+	runlog := TheSim.Logs.Table(elog.Train, elog.Run)
+	println(fmt.Sprintf("FirstZero: %.0f\tLastZero: %.0f", runlog.CellFloat("FirstZero", 0), runlog.CellFloat("LastZero", 0)))
+	if runlog.CellFloat("FirstZero", 0) < 0 {
+		t.Errorf("No FirstZero!")
+	}
+	if runlog.CellFloat("LastZero", 0) < 0 {
+		t.Errorf("No LastZero!")
+	}
 }
