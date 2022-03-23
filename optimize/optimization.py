@@ -41,13 +41,13 @@ def get_score_from_logs(logs_name: str):
     # TODO This is a bit of a kludge and it's not guaranteed to work. Use try/catch?
     first_zero = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")["|FirstZero"].values[-1]
     for i in range(0 if USE_AVERAGE_VALUE else len(log) - 1, len(log)):
-        score = log.values[-1]
+        score = log.values[i]
         # I don't know where the # or | comes from.
         if VARIABLE_TO_OPTIMIZE in ["#LastZero", "|LastZero"] and score == -1 and first_zero > 0:
             # TODO This is a bit of a hack and it would be nice if it were parameterized somehow.
-            score = first_zero * 2  # Fallback to FirstZero if LastZero isn't achieved.
+            score = first_zero * 4  # Fallback to FirstZero if LastZero isn't achieved.
         if VARIABLE_TO_OPTIMIZE in ["#FirstZero", "#LastZero", "|FirstZero", "|LastZero"] and score == -1:
-            score = NUM_EPOCHS * 2  # This is a kludge to address the default value. Not sure if inf would mess up search.
+            score = NUM_EPOCHS * 4  # This is a kludge to address the default value. Not sure if inf would mess up search.
         score_sum += score
         score_count += 1
 
