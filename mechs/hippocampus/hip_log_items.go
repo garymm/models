@@ -79,4 +79,33 @@ func ConfigHipItems(ss *sim.Sim) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
+
+	// TODO Add AB Mem and stuff
+	tstNms := []string{"AB", "AC", "Lure"}
+	tstStatNms := []string{"Mem", "TrgOnWasOff", "TrgOffWasOn"}
+
+	for _, tn := range tstNms {
+		for _, ts := range tstStatNms {
+			plot := elog.DFalse
+			if ts == "Mem" {
+				plot = elog.DTrue
+			}
+			ss.Logs.AddItem(&elog.Item{
+				Name:   tn + " " + ts,
+				Type:   etensor.FLOAT64,
+				Plot:   plot,
+				FixMax: elog.DTrue,
+				FixMin: elog.DTrue,
+				Range:  minmax.F64{Max: 1},
+				Write:  elog.WriteMap{
+					// TODO These are not right
+					//elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+					//	ctx.SetStatFloat("TrgOffWasOn")
+					//},
+					//elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
+					//	ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+					//},
+				}})
+		}
+	}
 }
