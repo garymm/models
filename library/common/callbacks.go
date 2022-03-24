@@ -112,9 +112,9 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 			if ss.Time.Cycle == 49 {
 				fmt.Printf("")
 			}
-			if ss.Time.Cycle == 10 {
-				ss.GUI.UpdateNetView()
-			}
+			//if ss.Time.Cycle == 10 {
+			//	ss.GUI.UpdateNetView()
+			//}
 
 			//if ss.ViewOn {
 			//	ss.UpdateViewTime(viewUpdt)

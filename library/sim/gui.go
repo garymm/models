@@ -225,6 +225,7 @@ func (ss *Sim) UpdateView(train bool) {
 
 // UpdateViewTime based on differetn time scales change the values accoridngly
 func (ss *Sim) UpdateViewTime(viewUpdt axon.TimeScales) {
+	// If the NetView is flickering and you don't like it, use ss.Time.Cycle+1 here.
 	switch viewUpdt {
 	case axon.Cycle:
 		ss.GUI.UpdateNetView()
