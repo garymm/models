@@ -106,6 +106,7 @@ func ConfigParams(ss *sim.Sim) {
 				{Sel: "Prjn", Desc: "keeping default params for generic prjns",
 					Params: params.Params{
 						"Prjn.SWt.Init.SPct": "0.5", // 0.5 == 1.0 > 0.0
+						//"Prjn.Learn.KinaseCa.Rule": "NeurSpkTheta",
 					}},
 				{Sel: ".EcCa1Prjn", Desc: "encoder projections",
 					Params: params.Params{

@@ -201,7 +201,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 		Name:     "Q3",
 		Duration: 50,
 		PhaseEnd: func() { // Fourth Quarter: CA1 back to ECin drive only
-			train := ss.Trainer.EvalMode != elog.Train
+			train := ss.Trainer.EvalMode == elog.Train
 			if train { // clamp ECout from ECin
 				ca1FmECin.PrjnScale.Abs = absGain
 				ca1FmCa3.PrjnScale.Abs = 0
