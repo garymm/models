@@ -39,12 +39,6 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			//}
 			ss.Net.Cycle(&ss.Time)
 
-			if ss.Time.PhaseCycle == 25 { // DO NOT SUBMIT
-				//ss.GUI.UpdateNetView()
-				var t = 0
-				t += 1
-			}
-
 			// TODO This block should be in Callbacks
 			ss.StatCounters(train)
 			if !train {
@@ -62,9 +56,6 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 				return
 			}
 
-			//if ss.ViewOn { // DO NOT SUBMIT
-			//	ss.UpdateViewTime(ss.GetViewUpdate())
-			//}
 		}
 		ss.Time.PhaseCycle = 0
 		if phase.PhaseEnd != nil {

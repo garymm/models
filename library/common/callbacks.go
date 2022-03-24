@@ -117,9 +117,9 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 			//	ss.GUI.UpdateNetView()
 			//}
 
-			//if ss.ViewOn {
-			//	ss.UpdateViewTime(viewUpdt)
-			//}
+			if ss.ViewOn {
+				ss.UpdateViewTime(viewUpdt)
+			}
 		},
 		OnThetaEnd: func() {
 			//if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {

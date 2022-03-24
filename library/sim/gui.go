@@ -225,7 +225,7 @@ func (ss *Sim) UpdateView(train bool) {
 
 // UpdateViewTime based on differetn time scales change the values accoridngly
 func (ss *Sim) UpdateViewTime(viewUpdt axon.TimeScales) {
-	// If the NetView is flickering and you don't like it, use ss.Time.Cycle+1 here.
+	// If the NetView is flickering and you don't like it, use ss.Time.Cycle+1 here. Network activity is actually reset at zero.
 	switch viewUpdt {
 	case axon.Cycle:
 		ss.GUI.UpdateNetView()
@@ -238,7 +238,7 @@ func (ss *Sim) UpdateViewTime(viewUpdt axon.TimeScales) {
 			ss.GUI.UpdateNetView()
 		}
 	case axon.AlphaCycle:
-		if ss.Time.Cycle%100 == 0 {
+		if (ss.Time.Cycle+1)%100 == 0 {
 			ss.GUI.UpdateNetView()
 		}
 	}
