@@ -29,8 +29,7 @@ func InitHipStats(ss *sim.Sim) {
 	ss.Stats.SetFloat("EpcCosDiff", 0)
 
 	// TODO These need to be initialized. Maybe all stats should initialize to 0?
-	ss.Stats.SetFloat("Mem", 0)
-	ss.Stats.SetFloat("MemThr", 0)
+	ss.Stats.SetFloat("MemThr", 0.34)
 }
 
 func ConfigHipItems(ss *sim.Sim) {

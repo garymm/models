@@ -201,7 +201,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 		Name:     "Q3",
 		Duration: 50,
 		PhaseEnd: func() { // Fourth Quarter: CA1 back to ECin drive only
-			train := ss.Trainer.EvalMode != elog.Train
+			train := ss.Trainer.EvalMode == elog.Train
 			if train { // clamp ECout from ECin
 				ca1FmECin.PrjnScale.Abs = absGain
 				ca1FmCa3.PrjnScale.Abs = 0
@@ -235,7 +235,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 			ca3FmDg.PrjnScale.Rel = dgwtscale - 3 // turn off DG input to CA3 in first quarter // TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
 
 			if ss.Trainer.EvalMode == elog.Train {
-				ecout.SetType(emer.Target) // clamp a plus phase during testing
+				ecout.SetType(emer.Target) // clamp a plus phase during testing todo: ask randy why this is the case
 			} else {
 				ecout.SetType(emer.Compare) // don't clamp
 			}
