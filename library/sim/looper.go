@@ -151,7 +151,7 @@ func (ss *Sim) trainTrial(stopScale axon.TimeScales) {
 
 }
 
-// TrainEpoch runs until the end of the Epoch, then updates logs.
+// TrainEpoch runs until the end of the Epoch, then updates logs.h
 func (ss *Sim) trainEpoch(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
 	if ss.TrainEnv.Trial().Cur == 0 {
