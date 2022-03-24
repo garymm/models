@@ -34,9 +34,7 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			phase.PhaseStart()
 		}
 		for ; ss.Time.PhaseCycle < phase.Duration; ss.Time.CycleInc() {
-			//if ss.ViewOn { // DO NOT SUBMIT
-			//	ss.UpdateViewTime(ss.GetViewUpdate())
-			//}
+
 			ss.Net.Cycle(&ss.Time)
 
 			// TODO This block should be in Callbacks
@@ -47,7 +45,9 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			if ss.GUI.Active {
 				ss.RasterRec(ss.Time.Cycle)
 			}
+			
 			ss.Trainer.OnMillisecondEnd()
+
 			if stopScale == axon.Cycle {
 				ss.GUI.StopNow = true
 				ss.Time.CycleInc()
@@ -61,6 +61,8 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 		if phase.PhaseEnd != nil {
 			phase.PhaseEnd()
 		}
+
+		ss.Trainer.OnEveryPhaseEnd()
 	}
 	ss.Time.Cycle = 0
 

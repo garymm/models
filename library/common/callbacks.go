@@ -110,26 +110,9 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 			}
 		},
 		OnMillisecondEnd: func() {
-			if ss.Time.Cycle == 49 {
-				fmt.Printf("")
-			}
-			//if ss.Time.Cycle == 10 {
-			//	ss.GUI.UpdateNetView()
-			//}
-
 			if ss.ViewOn {
 				ss.UpdateViewTime(viewUpdt)
 			}
-		},
-		OnThetaEnd: func() {
-			//if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
-			//	ss.GUI.UpdateNetView() // DO NOT SUBMIT
-			//}
-		},
-		OnEpochEnd: func() {
-			//if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
-			//	ss.GUI.UpdateNetView() // DO NOT SUBMIT
-			//}
 		},
 	}
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, viewUpdtCallbacks)
@@ -158,9 +141,6 @@ func AddPlusAndMinusPhases(ss *sim.Sim) {
 		Duration: 50,
 		PhaseStart: func() {
 			ss.Time.PlusPhase = true
-			//if ss.GetViewUpdate() == axon.Phase {
-			//	ss.GUI.UpdateNetView() // DO NOT SUBMIT
-			//}
 			ss.StatCounters(ss.Trainer.EvalMode == elog.Train)
 		},
 		PhaseEnd: func() {
@@ -274,9 +254,9 @@ func AddHipCallbacks(ss *sim.Sim) {
 			}
 		},
 		OnEveryPhaseEnd: func() {
-			//if ss.ViewOn {
-			//	ss.UpdateViewTime(ss.GetViewUpdate())
-			//}
+			if ss.GetViewUpdate() == axon.Phase {
+				ss.GUI.UpdateNetView()
+			}
 		},
 	})
 }

@@ -129,6 +129,14 @@ func (trainer *Trainer) OnMinusPhaseStart() {
 	}
 }
 
+func (trainer *Trainer) OnEveryPhaseEnd() {
+	for _, callback := range trainer.Callbacks {
+		if callback.OnEveryPhaseEnd != nil {
+			callback.OnEveryPhaseEnd()
+		}
+	}
+}
+
 func (trainer *Trainer) RunStopEarly() bool {
 	for _, callback := range trainer.Callbacks {
 		if callback.RunStopEarly != nil {
