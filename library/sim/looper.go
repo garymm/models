@@ -151,7 +151,7 @@ func (ss *Sim) trainTrial(stopScale axon.TimeScales) {
 
 }
 
-// TrainEpoch runs until the end of the Epoch, then updates logs.
+// TrainEpoch runs until the end of the Epoch, then updates logs.h
 func (ss *Sim) trainEpoch(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
 	if ss.TrainEnv.Trial().Cur == 0 {
@@ -215,6 +215,7 @@ func (ss *Sim) Train(stopScale axon.TimeScales) {
 		}
 		if ss.GUI.StopNow == true {
 			ss.GUI.Stopped()
+			//ss.GUI.UpdateNetView() // TODO is this necessary?
 			// Reset the Stop flag as we leave training.
 			ss.GUI.StopNow = false
 			return
@@ -222,6 +223,7 @@ func (ss *Sim) Train(stopScale axon.TimeScales) {
 	}
 	// Run.Cur will remain at Run.Max
 	ss.GUI.Stopped()
+	//ss.GUI.UpdateNetView() // DO NOT SUBMIT is this necessary?
 }
 
 // SaveWeights saves the network weights -- when called with giv.CallMethod

@@ -36,6 +36,7 @@ func TestConfigPats(t *testing.T) {
 func TestModelTraining(t *testing.T) {
 	var TheSim sim.Sim
 	TheSim.New()
+	// TODO Add params
 	os.Args = append(os.Args, "-nogui=true")
 	os.Args = append(os.Args, "-runs=1")
 	os.Args = append(os.Args, "-epochs=100")
