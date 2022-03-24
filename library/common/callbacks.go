@@ -235,7 +235,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 			ca3FmDg.PrjnScale.Rel = dgwtscale - 3 // turn off DG input to CA3 in first quarter // TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
 
 			if ss.Trainer.EvalMode == elog.Train {
-				ecout.SetType(emer.Target) // clamp a plus phase during testing
+				ecout.SetType(emer.Target) // clamp a plus phase during testing todo: ask randy why this is the case
 			} else {
 				ecout.SetType(emer.Compare) // don't clamp
 			}
