@@ -132,6 +132,7 @@ func ConfigGui(ss *HipSim) {
 		Func: func() {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
+				ss.GUI.StopNow = false
 				go PreTrain(&ss.Sim)
 			}
 		}})
