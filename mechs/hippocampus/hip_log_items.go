@@ -4,8 +4,10 @@ import (
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/emergent/elog"
 	"github.com/emer/etable/agg"
+	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 	"github.com/emer/etable/minmax"
+	"github.com/emer/etable/split"
 )
 
 // InitStats initializes all the statistics.
@@ -20,7 +22,7 @@ func InitHipStats(ss *sim.Sim) {
 	ss.Stats.SetInt("NZero", 0)
 	// clear rest just to make Sim look initialized
 	ss.Stats.SetFloat("Mem", 0)
-	ss.Stats.SetFloat("TrgOnWasOffAll", 0)
+	ss.Stats.SetFloat("TrgOnWasOff", 0)
 	ss.Stats.SetFloat("TrgOnWasOffCmp", 0)
 	ss.Stats.SetFloat("TrgOffWasOn", 0)
 	ss.Stats.SetFloat("TrlUnitErr", 0)
@@ -49,7 +51,7 @@ func ConfigHipItems(ss *sim.Sim) {
 			},
 		}})
 	ss.Logs.AddItem(&elog.Item{
-		Name:   "TrgOnWasOffAll",
+		Name:   "TrgOnWasOff",
 		Type:   etensor.FLOAT64,
 		Plot:   elog.DTrue,
 		FixMax: elog.DTrue,
@@ -57,7 +59,7 @@ func ConfigHipItems(ss *sim.Sim) {
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-				ctx.SetStatFloat("TrgOnWasOffAll")
+				ctx.SetStatFloat("TrgOnWasOff")
 			},
 			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
@@ -78,9 +80,19 @@ func ConfigHipItems(ss *sim.Sim) {
 				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
+	ss.Logs.AddItem(&elog.Item{
+		Name: "TestNm",
+		Type: etensor.STRING,
+		Plot: elog.DFalse,
+		Write: elog.WriteMap{
+			elog.Scope(elog.Test, elog.Trial): func(ctx *elog.Context) {
+				// TODO Actually get this
+				ctx.SetString("AB")
+			},
+		}})
 
 	// TODO Add AB Mem and stuff
-	tstNms := []string{"AB", "AC", "Lure"}
+	tstNms := []string{"AB", "AC"} // TODO Add in "Lure"
 	tstStatNms := []string{"Mem", "TrgOnWasOff", "TrgOffWasOn"}
 
 	for _, tn := range tstNms {
@@ -96,11 +108,29 @@ func ConfigHipItems(ss *sim.Sim) {
 				FixMax: elog.DTrue,
 				FixMin: elog.DTrue,
 				Range:  minmax.F64{Max: 1},
-				Write:  elog.WriteMap{
+				Write: elog.WriteMap{
 					// TODO These are not right
-					//elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-					//	ctx.SetStatFloat("TrgOffWasOn")
-					//},
+					elog.Scope(elog.Test, elog.Epoch): func(ctx *elog.Context) {
+						trl := ss.Logs.Log(elog.Test, elog.Trial)
+						trix := etable.NewIdxView(trl)
+						spl := split.GroupBy(trix, []string{"TestNm"})
+						for _, ts := range tstStatNms {
+							split.Agg(spl, ts, agg.AggMean)
+						}
+						tstStats := spl.AggsToTable(etable.ColNameOnly)
+
+						for ri := 0; ri < tstStats.Rows; ri++ {
+							tst := tstStats.CellString("TestNm", ri)
+							for _, tso := range tstStatNms {
+								if tst+" "+tso == tn+" "+ts {
+									ctx.SetFloat64(tstStats.CellFloat(ts, ri))
+								}
+								//epcLog.SetCellFloat(tst+" "+tso, row, ss.TstStats.CellFloat(ts, ri))
+							}
+						}
+
+						ctx.SetStatFloat("TrgOffWasOn")
+					},
 					//elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 					//	ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
 					//},

@@ -1661,9 +1661,9 @@ func (ss *Sim) SimMatStat(lnm string) (float64, float64) {
 	return win_sum, btn_sum
 }
 
-func (ss *Sim) LogTstEpc(dt *etable.Table) {
-	row := dt.Rows
-	dt.SetNumRows(row + 1)
+func (ss *Sim) LogTstEpc(epcLog *etable.Table) {
+	row := epcLog.Rows
+	epcLog.SetNumRows(row + 1)
 
 	ss.RepsAnalysis()
 
@@ -1689,20 +1689,20 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 
 	// note: this shows how to use agg methods to compute summary data from another
 	// data table, instead of incrementing on the Sim
-	dt.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
-	dt.SetCellString("Params", row, params)
-	dt.SetCellString("NetSize", row, netsz)
-	dt.SetCellString("ListSize", row, listsz)
-	dt.SetCellFloat("Epoch", row, float64(epc))
-	dt.SetCellFloat("PerTrlMSec", row, ss.EpcPerTrlMSec)
-	dt.SetCellFloat("UnitErr", row, agg.Sum(tix, "UnitErr")[0])
-	dt.SetCellFloat("PctErr", row, agg.PropIf(tix, "UnitErr", func(idx int, val float64) bool {
+	epcLog.SetCellFloat("Run", row, float64(ss.TrainEnv.Run.Cur))
+	epcLog.SetCellString("Params", row, params)
+	epcLog.SetCellString("NetSize", row, netsz)
+	epcLog.SetCellString("ListSize", row, listsz)
+	epcLog.SetCellFloat("Epoch", row, float64(epc))
+	epcLog.SetCellFloat("PerTrlMSec", row, ss.EpcPerTrlMSec)
+	epcLog.SetCellFloat("UnitErr", row, agg.Sum(tix, "UnitErr")[0])
+	epcLog.SetCellFloat("PctErr", row, agg.PropIf(tix, "UnitErr", func(idx int, val float64) bool {
 		return val > 0
 	})[0])
-	dt.SetCellFloat("PctCor", row, agg.PropIf(tix, "UnitErr", func(idx int, val float64) bool {
+	epcLog.SetCellFloat("PctCor", row, agg.PropIf(tix, "UnitErr", func(idx int, val float64) bool {
 		return val == 0
 	})[0])
-	dt.SetCellFloat("CosDiff", row, agg.Mean(tix, "CosDiff")[0])
+	epcLog.SetCellFloat("CosDiff", row, agg.Mean(tix, "CosDiff")[0])
 
 	trix := etable.NewIdxView(trl)
 	spl := split.GroupBy(trix, []string{"TestNm"})
@@ -1714,7 +1714,7 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	for ri := 0; ri < ss.TstStats.Rows; ri++ {
 		tst := ss.TstStats.CellString("TestNm", ri)
 		for _, ts := range ss.TstStatNms {
-			dt.SetCellFloat(tst+" "+ts, row, ss.TstStats.CellFloat(ts, ri))
+			epcLog.SetCellFloat(tst+" "+ts, row, ss.TstStats.CellFloat(ts, ri))
 		}
 	}
 
@@ -1722,23 +1722,23 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 		win, btn := ss.SimMatStat(lnm)
 		for _, ts := range ss.SimMatStats {
 			if ts == "Within" {
-				dt.SetCellFloat(lnm+" "+ts, row, win)
+				epcLog.SetCellFloat(lnm+" "+ts, row, win)
 			} else {
-				dt.SetCellFloat(lnm+" "+ts, row, btn)
+				epcLog.SetCellFloat(lnm+" "+ts, row, btn)
 			}
 		}
 		ly := ss.Net.LayerByName(lnm).(axon.AxonLayer).AsAxon()
-		dt.SetCellFloat(ly.Nm+"_MaxGeM", row, float64(ly.ActAvg.AvgMaxGeM))
-		dt.SetCellFloat(ly.Nm+"_ActAvg", row, float64(ly.ActAvg.ActMAvg))
+		epcLog.SetCellFloat(ly.Nm+"_MaxGeM", row, float64(ly.ActAvg.AvgMaxGeM))
+		epcLog.SetCellFloat(ly.Nm+"_ActAvg", row, float64(ly.ActAvg.ActMAvg))
 	}
 
 	// base zero on testing performance!
 	curAB := ss.TrainEnv.Table.Table == ss.TrainAB
 	var mem float64
 	if curAB {
-		mem = dt.CellFloat("AB Mem", row)
+		mem = epcLog.CellFloat("AB Mem", row)
 	} else {
-		mem = dt.CellFloat("AC Mem", row)
+		mem = epcLog.CellFloat("AC Mem", row)
 	}
 	if ss.FirstZero < 0 && mem == 1 {
 		ss.FirstZero = epc
@@ -1755,10 +1755,10 @@ func (ss *Sim) LogTstEpc(dt *etable.Table) {
 	}
 	if ss.TstEpcFile != nil {
 		if !ss.TstEpcHdrs {
-			dt.WriteCSVHeaders(ss.TstEpcFile, etable.Tab)
+			epcLog.WriteCSVHeaders(ss.TstEpcFile, etable.Tab)
 			ss.TstEpcHdrs = true
 		}
-		dt.WriteCSVRow(ss.TstEpcFile, row, etable.Tab)
+		epcLog.WriteCSVRow(ss.TstEpcFile, row, etable.Tab)
 	}
 }
 
@@ -1886,7 +1886,7 @@ func (ss *Sim) ConfigTstCycPlot(plt *eplot.Plot2D, dt *etable.Table) *eplot.Plot
 //  RunLog
 
 // LogRun adds data from current run to the RunLog table.
-func (ss *Sim) LogRun(dt *etable.Table) {
+func (ss *Sim) LogRun(runLog *etable.Table) {
 	epclog := ss.TstEpcLog
 	epcix := etable.NewIdxView(epclog)
 	if epcix.Len() == 0 {
@@ -1894,8 +1894,8 @@ func (ss *Sim) LogRun(dt *etable.Table) {
 	}
 
 	run := ss.TrainEnv.Run.Cur // this is NOT triggered by increment yet -- use Cur
-	row := dt.Rows
-	dt.SetNumRows(row + 1)
+	row := runLog.Rows
+	runLog.SetNumRows(row + 1)
 
 	// compute mean over last N epochs for run level
 	nlast := 1
@@ -1917,27 +1917,27 @@ func (ss *Sim) LogRun(dt *etable.Table) {
 		fzero = ss.MaxEpcs
 	}
 
-	dt.SetCellFloat("Run", row, float64(run))
-	dt.SetCellString("Params", row, params)
-	dt.SetCellString("NetSize", row, netsz)
-	dt.SetCellString("ListSize", row, listsz)
-	dt.SetCellFloat("NEpochs", row, float64(ss.TstEpcLog.Rows))
-	dt.SetCellFloat("FirstZero", row, float64(fzero))
-	dt.SetCellFloat("UnitErr", row, agg.Mean(epcix, "UnitErr")[0])
-	dt.SetCellFloat("PctErr", row, agg.Mean(epcix, "PctErr")[0])
-	dt.SetCellFloat("PctCor", row, agg.Mean(epcix, "PctCor")[0])
-	dt.SetCellFloat("CosDiff", row, agg.Mean(epcix, "CosDiff")[0])
+	runLog.SetCellFloat("Run", row, float64(run))
+	runLog.SetCellString("Params", row, params)
+	runLog.SetCellString("NetSize", row, netsz)
+	runLog.SetCellString("ListSize", row, listsz)
+	runLog.SetCellFloat("NEpochs", row, float64(ss.TstEpcLog.Rows))
+	runLog.SetCellFloat("FirstZero", row, float64(fzero))
+	runLog.SetCellFloat("UnitErr", row, agg.Mean(epcix, "UnitErr")[0])
+	runLog.SetCellFloat("PctErr", row, agg.Mean(epcix, "PctErr")[0])
+	runLog.SetCellFloat("PctCor", row, agg.Mean(epcix, "PctCor")[0])
+	runLog.SetCellFloat("CosDiff", row, agg.Mean(epcix, "CosDiff")[0])
 
 	for _, tn := range ss.TstNms {
 		for _, ts := range ss.TstStatNms {
 			nm := tn + " " + ts
-			dt.SetCellFloat(nm, row, agg.Mean(epcix, nm)[0])
+			runLog.SetCellFloat(nm, row, agg.Mean(epcix, nm)[0])
 		}
 	}
 	for _, lnm := range ss.LayStatNms {
 		for _, ts := range ss.SimMatStats {
 			nm := lnm + " " + ts
-			dt.SetCellFloat(nm, row, agg.Mean(epcix, nm)[0])
+			runLog.SetCellFloat(nm, row, agg.Mean(epcix, nm)[0])
 		}
 	}
 	ss.LogRunStats()
@@ -1948,10 +1948,10 @@ func (ss *Sim) LogRun(dt *etable.Table) {
 	}
 	if ss.RunFile != nil {
 		if !ss.RunHdrs {
-			dt.WriteCSVHeaders(ss.RunFile, etable.Tab)
+			runLog.WriteCSVHeaders(ss.RunFile, etable.Tab)
 			ss.RunHdrs = true
 		}
-		dt.WriteCSVRow(ss.RunFile, row, etable.Tab)
+		runLog.WriteCSVRow(ss.RunFile, row, etable.Tab)
 	}
 }
 

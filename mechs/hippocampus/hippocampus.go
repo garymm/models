@@ -79,8 +79,6 @@ func main() {
 	// TheSim is the overall state for this simulation
 	var TheSim HipSim
 	TheSim.New()
-	TrainEnv.InitTables(TrainAB, TrainAC, PretrainLure, TrainAll)
-	TestEnv.InitTables(TestAB, TestAC, TestLure)
 	Config(&TheSim)
 
 	if TheSim.CmdArgs.NoGui {
@@ -98,6 +96,10 @@ func main() {
 
 // Config configures all the elements using the standard functions
 func Config(ss *HipSim) {
+	// These need to be initialized before ConfigPats
+	TrainEnv.InitTables(TrainAB, TrainAC, PretrainLure, TrainAll)
+	TestEnv.InitTables(TestAB, TestAC, TestLure)
+
 	ConfigPats(ss)
 	//OpenPats(&ss.Sim)
 
@@ -111,6 +113,7 @@ func Config(ss *HipSim) {
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
 	ConfigEnv(ss)
+	ss.TestInterval = 1
 	ConfigNet(ss, ss.Net)
 	InitHipStats(&ss.Sim)
 	ConfigHipItems(&ss.Sim)
@@ -199,7 +202,7 @@ func ConfigEnv(ss *HipSim) {
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
-	TestEnv.Table = etable.NewIdxView(TrainEnv.EvalTables[TrainAB])
+	TestEnv.Table = etable.NewIdxView(TestEnv.EvalTables[TestAB]) // TODO TestAB
 	TestEnv.SetSequential(true)
 	ss.TestEnv.Validate()
 
@@ -242,40 +245,40 @@ func ConfigPats(ss *HipSim) {
 		//patgen.VocabDrift(ss.PoolVocab, ss.NFlipBits, "ctxt"+strconv.Itoa(i+1))
 	}
 
-	TrainAB, TestAB := trainEnv.EvalTables[TrainAB], testEnv.EvalTables[TestAB]
-	TrainAC, TestAC := trainEnv.EvalTables[TrainAC], testEnv.EvalTables[TestAC]
-	PreTrainLure, TestLure := trainEnv.EvalTables[PretrainLure], testEnv.EvalTables[TestLure]
-	TrainALL := trainEnv.EvalTables[TrainAll]
+	trainAB, testAB := trainEnv.EvalTables[TrainAB], testEnv.EvalTables[TestAB]
+	trainAC, testAC := trainEnv.EvalTables[TrainAC], testEnv.EvalTables[TestAC]
+	preTrainLure, testLure := trainEnv.EvalTables[PretrainLure], testEnv.EvalTables[TestLure]
+	trainAll := trainEnv.EvalTables[TrainAll]
 
-	patgen.InitPats(TrainAB, "TrainAB", "TrainAB Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
-	patgen.MixPats(TrainAB, ss.PoolVocab, "Input", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
-	patgen.MixPats(TrainAB, ss.PoolVocab, "ECout", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+	patgen.InitPats(trainAB, "TrainAB", "TrainAB Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(trainAB, ss.PoolVocab, "Input", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+	patgen.MixPats(trainAB, ss.PoolVocab, "ECout", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
 
-	patgen.InitPats(TestAB, "TestAB", "TestAB Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
-	patgen.MixPats(TestAB, ss.PoolVocab, "Input", []string{"A", "empty", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
-	patgen.MixPats(TestAB, ss.PoolVocab, "ECout", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+	patgen.InitPats(testAB, "TestAB", "TestAB Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(testAB, ss.PoolVocab, "Input", []string{"A", "empty", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
+	patgen.MixPats(testAB, ss.PoolVocab, "ECout", []string{"A", "B", "ctxt1", "ctxt2", "ctxt3", "ctxt4"})
 
-	patgen.InitPats(TrainAC, "TrainAC", "TrainAC Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
-	patgen.MixPats(TrainAC, ss.PoolVocab, "Input", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
-	patgen.MixPats(TrainAC, ss.PoolVocab, "ECout", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+	patgen.InitPats(trainAC, "TrainAC", "TrainAC Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(trainAC, ss.PoolVocab, "Input", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+	patgen.MixPats(trainAC, ss.PoolVocab, "ECout", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
 
-	patgen.InitPats(TestAC, "TestAC", "TestAC Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
-	patgen.MixPats(TestAC, ss.PoolVocab, "Input", []string{"A", "empty", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
-	patgen.MixPats(TestAC, ss.PoolVocab, "ECout", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+	patgen.InitPats(testAC, "TestAC", "TestAC Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(testAC, ss.PoolVocab, "Input", []string{"A", "empty", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
+	patgen.MixPats(testAC, ss.PoolVocab, "ECout", []string{"A", "C", "ctxt5", "ctxt6", "ctxt7", "ctxt8"})
 
-	patgen.InitPats(PreTrainLure, "PreTrainLure", "PreTrainLure Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
-	patgen.MixPats(PreTrainLure, ss.PoolVocab, "Input", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
-	patgen.MixPats(PreTrainLure, ss.PoolVocab, "ECout", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
+	patgen.InitPats(preTrainLure, "PreTrainLure", "PreTrainLure Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(preTrainLure, ss.PoolVocab, "Input", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
+	patgen.MixPats(preTrainLure, ss.PoolVocab, "ECout", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
 
-	patgen.InitPats(TestLure, "TestLure", "TestLure Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
-	patgen.MixPats(TestLure, ss.PoolVocab, "Input", []string{"lA", "empty", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
-	patgen.MixPats(TestLure, ss.PoolVocab, "ECout", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"})    // arbitrary ctxt here
+	patgen.InitPats(testLure, "TestLure", "TestLure Pats", "Input", "ECout", npats, ecY, ecX, plY, plX)
+	patgen.MixPats(testLure, ss.PoolVocab, "Input", []string{"lA", "empty", "ctxt9", "ctxt10", "ctxt11", "ctxt12"}) // arbitrary ctxt here
+	patgen.MixPats(testLure, ss.PoolVocab, "ECout", []string{"lA", "lB", "ctxt9", "ctxt10", "ctxt11", "ctxt12"})    // arbitrary ctxt here
 
 	//shuold potentially go in Environments
-	TrainALL = TrainAB.Clone()
-	TrainALL.AppendRows(TrainAC)
-	TrainALL.AppendRows(PreTrainLure)
-	trainEnv.EvalTables[TrainAll] = TrainALL
+	trainAll = trainAB.Clone()
+	trainAll.AppendRows(trainAC)
+	trainAll.AppendRows(preTrainLure)
+	trainEnv.EvalTables[TrainAll] = trainAll
 
 	//trainEnv.EvalTables[HipTableTypes("TrainAB")].SaveCSV("TrainAB_Sample.csv", etable.Comma, true)
 }

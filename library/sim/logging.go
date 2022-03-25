@@ -214,7 +214,7 @@ func (ss *Sim) MemStats(train bool) {
 			}
 		}
 	}
-	ss.Stats.SetFloat("TrgOnWasOffAll", trgOnWasOffAll)
+	ss.Stats.SetFloat("TrgOnWasOff", trgOnWasOffAll)
 	ss.Stats.SetFloat("TrgOnWasOffCmp", trgOnWasOffCmp)
 	ss.Stats.SetFloat("TrgOffWasOn", trgOffWasOn)
 }
