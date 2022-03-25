@@ -126,7 +126,8 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Func: func() {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
-				ss.TestTrial(false) // don't return on change -- wrap
+				ss.GUI.StopNow = false
+				ss.TestTrial()
 				ss.GUI.IsRunning = false
 				ss.GUI.UpdateWindow()
 			}
