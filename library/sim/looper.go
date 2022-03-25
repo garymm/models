@@ -38,7 +38,7 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			ss.Net.Cycle(&ss.Time)
 
 			// TODO This block should be in Callbacks
-			ss.StatCounters(train)
+			ss.UpdateNetViewText(train)
 
 			// Configuring Train/Cycle log items might be slow.
 			ss.Log(ss.Trainer.EvalMode, elog.Cycle)
@@ -68,7 +68,7 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 	ss.Time.Cycle = 0
 
 	ss.TrialStatsFunc(ss, train)
-	ss.StatCounters(train)
+	ss.UpdateNetViewText(train)
 
 	if !train {
 		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
@@ -102,7 +102,7 @@ func (ss *Sim) loopTrial(stopScale axon.TimeScales) {
 		(*ss.Trainer.CurEnv).Trial().Cur = 0
 	}
 
-	ss.StatCounters(true)
+	ss.UpdateNetViewText(true)
 	ss.ApplyInputs(*ss.Trainer.CurEnv)
 
 	ss.ThetaCyc(stopScale)
@@ -158,7 +158,7 @@ func (ss *Sim) NewRun() {
 	ss.Net.InitWts()
 	ss.LoadPretrainedWts()
 	ss.InitStats()
-	ss.StatCounters(true)
+	ss.UpdateNetViewText(true)
 
 	ss.Logs.ResetLog(elog.Train, elog.Epoch)
 	ss.Logs.ResetLog(elog.Test, elog.Epoch)
@@ -185,7 +185,7 @@ func (ss *Sim) loopRun(stopScale axon.TimeScales) {
 	// TODO Put "|| ss.Trainer.RunStopEarly()" in conditional, verify
 	for ; (*ss.Trainer.CurEnv).Epoch().Cur < (*ss.Trainer.CurEnv).Epoch().Max; (*ss.Trainer.CurEnv).Epoch().Cur += 1 {
 		ss.loopEpoch(stopScale)
-		ss.StatCounters(true)
+		ss.UpdateNetViewText(true)
 		if stopScale == axon.Epoch {
 			ss.GUI.StopNow = true
 			(*ss.Trainer.CurEnv).Epoch().Cur += 1

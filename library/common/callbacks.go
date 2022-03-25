@@ -141,7 +141,7 @@ func AddPlusAndMinusPhases(ss *sim.Sim) {
 		Duration: 50,
 		PhaseStart: func() {
 			ss.Time.PlusPhase = true
-			ss.StatCounters(ss.Trainer.EvalMode == elog.Train)
+			ss.UpdateNetViewText(ss.Trainer.EvalMode == elog.Train)
 		},
 		PhaseEnd: func() {
 			ss.Net.PlusPhase(&ss.Time)

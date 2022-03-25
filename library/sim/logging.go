@@ -11,23 +11,6 @@ import (
 	"github.com/emer/etable/split"
 )
 
-// StatCounters saves current counters to Stats, so they are available for logging etc
-// Also saves a string rep of them to the GUI, if the GUI is active
-func (ss *Sim) StatCounters(train bool) {
-	ev := ss.TrainEnv
-	if !train {
-		ev = ss.TestEnv
-	}
-	ss.Stats.SetInt("Run", ss.Run.Cur)
-	ss.Stats.SetInt("Epoch", ss.TrainEnv.Epoch().Cur)
-	ss.Stats.SetInt("Trial", ev.Trial().Cur)
-	ss.Stats.SetString("TrialName", ev.CurTrialName())
-	ss.Stats.SetInt("Cycle", ss.Time.Cycle)
-	displayText := fmt.Sprintf("%s\tRun:\t%d/%d\tEpoch:%d/%d\tTrial:\t%d/%d\tCycle:\t%d\t", ss.Trainer.EvalMode, ss.Run.Cur, ss.Run.Max, ev.Epoch().Cur, ev.Epoch().Max, ev.Trial().Cur, ev.Trial().Max, ss.Time.Cycle) + "\t" + ss.Stats.Print([]string{"TrlErr", "TrlCosDiff"})
-	//println(displayText)
-	ss.GUI.NetViewText = displayText
-}
-
 func (ss *Sim) ConfigLogsFromArgs() {
 	elog.LogDir = "logs"
 	if ss.CmdArgs.saveEpcLog {
@@ -94,9 +77,9 @@ func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
 	case mode == elog.Test && time == elog.Epoch:
 		ss.LogTestErrors()
 	case time == elog.Cycle:
-		row = ss.Stats.Int("Cycle")
+		row = ss.Time.Cycle
 	case time == elog.Trial:
-		row = ss.Stats.Int("Trial")
+		row = (*ss.Trainer.CurEnv).Trial().Cur
 	}
 
 	ss.Logs.LogRow(mode, time, row) // also logs to file, etc
