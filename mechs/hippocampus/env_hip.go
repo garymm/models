@@ -136,3 +136,35 @@ func (envhip *EnvHip) Counter(scale env.TimeScales) (cur, prv int, chg bool) {
 func (envhip *EnvHip) InputAndOutputLayers() []string {
 	return []string{"Input", "ECout"}
 }
+
+func (envhip *EnvHip) AddTaskSwitching(table1, table2 string, ss *sim.Sim) *sim.TrainingCallbacks {
+
+	taskSwitching := sim.TrainingCallbacks{}
+	taskSwitching.OnEpochEnd = func() {
+		numberZero := ss.Stats.Int("NZero")
+		nzeroStop := ss.Stats.Int("NZeroStop")
+		learned := (numberZero > 0 && nzeroStop >= numberZero)
+		max := TrainEnv.Epoch().Max
+		cur := TrainEnv.Epoch().Cur
+
+		if TrainEnv.EvalTables[HipTableTypes(table1)] == TrainEnv.Table.Table {
+			if learned || cur == max/2 {
+				TrainEnv.AssignTable(string(table2))
+				ss.Stats.SetInt("NZero", 0)
+			}
+		}
+	}
+	taskSwitching.RunStopEarly = func() bool {
+		numberZero := ss.Stats.Int("NZero")
+		nzeroStop := ss.Stats.Int("NZeroStop")
+		learned := (numberZero > 0 && nzeroStop >= numberZero)
+		max := TrainEnv.Epoch().Max
+		cur := TrainEnv.Epoch().Cur
+		if learned || cur > max {
+			return true
+		}
+		return false
+	}
+
+	return &taskSwitching
+}

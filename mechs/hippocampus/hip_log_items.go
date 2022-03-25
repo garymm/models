@@ -137,4 +137,6 @@ func ConfigHipItems(ss *sim.Sim) {
 				}})
 		}
 	}
+
+	//ss.Logs.Log(elog.Test,elog.Epoch).CellFloat("AB Mem")
 }
