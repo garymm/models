@@ -35,6 +35,7 @@ type TrainingCallbacks struct {
 
 type Trainer struct {
 	EvalMode  elog.EvalModes `desc:"The current training mode."`
+	CurEnv    *Environment   `desc:"The current training environment. This should be synced with EvalMode."`
 	Callbacks []TrainingCallbacks
 	Phases    []ThetaPhase
 }

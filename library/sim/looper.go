@@ -7,13 +7,13 @@ import (
 
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/elog"
-	"github.com/emer/emergent/env"
 	_ "github.com/emer/etable/etable"
 	"github.com/goki/gi/gi"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
-// 	    Running the Network, starting bottom-up..
+// 	    Cycles related to running the Network at different timescales.
+// 		File organized from fastest timescales to slowest, train then test.
 
 // ThetaCyc runs one theta cycle (200 msec) of processing.
 // External inputs must have already been applied prior to calling,
@@ -38,14 +38,15 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 			ss.Net.Cycle(&ss.Time)
 
 			// TODO This block should be in Callbacks
-			ss.StatCounters(train)
-			if !train {
-				ss.Log(elog.Test, elog.Cycle)
-			}
+			ss.UpdateNetViewText(train)
+
+			// Configuring Train/Cycle log items might be slow.
+			ss.Log(ss.Trainer.EvalMode, elog.Cycle)
+
 			if ss.GUI.Active {
 				ss.RasterRec(ss.Time.Cycle)
 			}
-			
+
 			ss.Trainer.OnMillisecondEnd()
 
 			if stopScale == axon.Cycle {
@@ -67,7 +68,7 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 	ss.Time.Cycle = 0
 
 	ss.TrialStatsFunc(ss, train)
-	ss.StatCounters(train)
+	ss.UpdateNetViewText(train)
 
 	if !train {
 		ss.GUI.UpdatePlot(elog.Test, elog.Cycle) // make sure always updated at end
@@ -95,11 +96,52 @@ func (ss *Sim) ApplyInputs(env Environment) {
 	}
 }
 
-// RunEnd is called at the end of a run -- save weights, record final log, etc here
-func (ss *Sim) RunEnd() {
-	ss.Log(elog.Train, elog.Run)
+func (ss *Sim) loopTrial(stopScale axon.TimeScales) {
+	if (*ss.Trainer.CurEnv).Trial().Cur == -1 {
+		// This is a hack, and it should be initialized at 0
+		(*ss.Trainer.CurEnv).Trial().Cur = 0
+	}
 
-	ss.Trainer.OnRunEnd()
+	ss.UpdateNetViewText(true)
+	ss.ApplyInputs(*ss.Trainer.CurEnv)
+
+	ss.ThetaCyc(stopScale)
+
+	if ss.GUI.StopNow == true {
+		return
+	}
+
+	ss.Log(ss.Trainer.EvalMode, elog.Trial)
+
+	ss.Trainer.OnTrialEnd()
+
+	if ss.Trainer.EvalMode == elog.Test {
+		if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
+			ss.CmdArgs.NetData.Record(ss.GUI.NetViewText)
+		}
+	}
+}
+
+// TrainEpoch runs until the end of the Epoch, then updates logs.h
+func (ss *Sim) loopEpoch(stopScale axon.TimeScales) {
+	if (*ss.Trainer.CurEnv).Trial().Cur == 0 {
+		ss.Trainer.OnEpochStart()
+	}
+	for ; (*ss.Trainer.CurEnv).Trial().Cur < (*ss.Trainer.CurEnv).Trial().Max; (*ss.Trainer.CurEnv).Trial().Cur += 1 {
+		ss.loopTrial(stopScale)
+		if stopScale == axon.Trial {
+			ss.GUI.StopNow = true
+			(*ss.Trainer.CurEnv).Trial().Cur += 1
+		}
+		if ss.GUI.StopNow == true {
+			return
+		}
+	}
+	(*ss.Trainer.CurEnv).Trial().Cur = 0
+
+	ss.Trainer.OnEpochEnd()
+	// Log after OnEpochEnd.
+	ss.Log(ss.Trainer.EvalMode, elog.Epoch)
 }
 
 // NewRun intializes a new run of the model, using the ss.Run counter
@@ -116,73 +158,37 @@ func (ss *Sim) NewRun() {
 	ss.Net.InitWts()
 	ss.LoadPretrainedWts()
 	ss.InitStats()
-	ss.StatCounters(true)
+	ss.UpdateNetViewText(true)
 
 	ss.Logs.ResetLog(elog.Train, elog.Epoch)
 	ss.Logs.ResetLog(elog.Test, elog.Epoch)
 	ss.CmdArgs.NeedsNewRun = false
 }
 
-func (ss *Sim) trainTrial(stopScale axon.TimeScales) {
-	ss.Trainer.EvalMode = elog.Train
-	if ss.TrainEnv.Trial().Cur == -1 {
-		// This is a hack, and it should be initialized at 0
-		ss.TrainEnv.Trial().Cur = 0
-	}
+// RunEnd is called at the end of a run -- save weights, record final log, etc here
+func (ss *Sim) RunEnd() {
+	ss.Log(ss.Trainer.EvalMode, elog.Run)
 
-	ss.StatCounters(true)
-	ss.ApplyInputs(ss.TrainEnv)
-
-	ss.ThetaCyc(stopScale)
-
-	if ss.GUI.StopNow == true {
-		return
-	}
-
-	ss.Log(elog.Train, elog.Trial)
-	ss.Trainer.OnTrialEnd()
-
+	ss.Trainer.OnRunEnd()
 }
 
-// TrainEpoch runs until the end of the Epoch, then updates logs.h
-func (ss *Sim) trainEpoch(stopScale axon.TimeScales) {
-	ss.Trainer.EvalMode = elog.Train
-	if ss.TrainEnv.Trial().Cur == 0 {
-		ss.Trainer.OnEpochStart()
-	}
-	for ; ss.TrainEnv.Trial().Cur < ss.TrainEnv.Trial().Max; ss.TrainEnv.Trial().Cur += 1 {
-		ss.trainTrial(stopScale)
-		if stopScale == axon.Trial {
-			ss.GUI.StopNow = true
-			ss.TrainEnv.Trial().Cur += 1
-		}
-		if ss.GUI.StopNow == true {
-			return
+func (ss *Sim) loopRun(stopScale axon.TimeScales) {
+	if (*ss.Trainer.CurEnv).Epoch().Cur <= 0 && (*ss.Trainer.CurEnv).Trial().Cur <= 0 && ss.Time.Cycle <= 0 {
+		if ss.Trainer.EvalMode == elog.Train {
+			ss.NewRun()
 		}
 	}
-	ss.TrainEnv.Trial().Cur = 0
-
-	ss.Trainer.OnEpochEnd()
-	// Log after OnEpochEnd.
-	ss.Log(elog.Train, elog.Epoch)
-}
-
-func (ss *Sim) trainRun(stopScale axon.TimeScales) {
-	ss.Trainer.EvalMode = elog.Train
-	if ss.TrainEnv.Epoch().Cur <= 0 && ss.TrainEnv.Trial().Cur <= 0 && ss.Time.Cycle <= 0 {
-		ss.NewRun()
-	}
-	if ss.TrainEnv.Trial().Cur == -1 {
+	if (*ss.Trainer.CurEnv).Trial().Cur == -1 {
 		// This is a hack, and it should be initialized at 0
-		ss.TrainEnv.Trial().Cur = 0
+		(*ss.Trainer.CurEnv).Trial().Cur = 0
 	}
 	// TODO Put "|| ss.Trainer.RunStopEarly()" in conditional, verify
-	for ; ss.TrainEnv.Epoch().Cur < ss.TrainEnv.Epoch().Max; ss.TrainEnv.Epoch().Cur += 1 {
-		ss.trainEpoch(stopScale)
-		ss.StatCounters(true)
+	for ; (*ss.Trainer.CurEnv).Epoch().Cur < (*ss.Trainer.CurEnv).Epoch().Max; (*ss.Trainer.CurEnv).Epoch().Cur += 1 {
+		ss.loopEpoch(stopScale)
+		ss.UpdateNetViewText(true)
 		if stopScale == axon.Epoch {
 			ss.GUI.StopNow = true
-			ss.TrainEnv.Epoch().Cur += 1
+			(*ss.Trainer.CurEnv).Epoch().Cur += 1
 		}
 		if ss.Trainer.RunStopEarly() {
 			// End this run early
@@ -192,16 +198,20 @@ func (ss *Sim) trainRun(stopScale axon.TimeScales) {
 			return
 		}
 	}
-	ss.TrainEnv.Epoch().Cur = 0
-	ss.RunEnd()
+	(*ss.Trainer.CurEnv).Epoch().Cur = 0
+	if ss.Trainer.EvalMode == elog.Train {
+		ss.RunEnd()
+	}
 }
 
 // Train trains until the end of runs, unless stopped early by the GUI. Will stop after the end of one unit of time if indicated by stopScale.
+// TODO Create a TimeScales for never stop.
 func (ss *Sim) Train(stopScale axon.TimeScales) {
 	ss.Trainer.EvalMode = elog.Train
+	ss.Trainer.CurEnv = &ss.TrainEnv
 	// Note that Run, Epoch, and Trial are not initialized at zero to allow Train to restart where it left off.
 	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
-		ss.trainRun(stopScale) // This might set StopNow to true
+		ss.loopRun(stopScale) // This might set StopNow to true
 		if stopScale == axon.Run {
 			ss.GUI.StopNow = true
 			ss.Run.Cur += 1
@@ -216,7 +226,7 @@ func (ss *Sim) Train(stopScale axon.TimeScales) {
 	}
 	// Run.Cur will remain at Run.Max
 	ss.GUI.Stopped()
-	//ss.GUI.UpdateNetView() // DO NOT SUBMIT is this necessary?
+	ss.GUI.UpdateNetView()
 }
 
 // SaveWeights saves the network weights -- when called with giv.CallMethod
@@ -228,35 +238,10 @@ func (ss *Sim) SaveWeights(filename gi.FileName) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Testing
 
-// TestTrial runs one trial of testing -- always sequentially presented inputs
-// TODO Rewrite this the same as TrainTrial, or merge them
-func (ss *Sim) TestTrial(returnOnChg bool) {
-	TestEnv := ss.TestEnv
-	TestEnv.Step()
-
-	// Query counters FIRST
-	_, _, chg := TestEnv.Counter(env.Epoch)
-	if chg {
-		if ss.ViewOn && ss.TestUpdt > axon.AlphaCycle {
-			ss.GUI.UpdateNetView()
-		}
-		ss.Log(elog.Test, elog.Epoch)
-		if returnOnChg {
-			return
-		}
-	}
-
-	ss.ApplyInputs(ss.TestEnv)
-	ss.ThetaCyc(axon.TimeScalesN) //todo this should be ignored or specified with a unique timescale == ignore or something
-	ss.Log(elog.Test, elog.Trial)
-	if ss.CmdArgs.NetData != nil { // offline record net data from testing, just final state
-		ss.CmdArgs.NetData.Record(ss.GUI.NetViewText)
-	}
-}
-
 // TestItem tests given item which is at given index in test item list
 func (ss *Sim) TestItem(idx int) {
 	ss.Trainer.EvalMode = elog.Test
+	ss.Trainer.CurEnv = &ss.TrainEnv
 	TestEnv := ss.TestEnv
 	cur := TestEnv.Trial().Cur
 	TestEnv.Trial().Cur = idx
@@ -265,18 +250,22 @@ func (ss *Sim) TestItem(idx int) {
 	TestEnv.Trial().Cur = cur
 }
 
-// TestAll runs through the full set of testing items
+// TestTrial runs one trial of testing -- always sequentially presented inputs
+func (ss *Sim) TestTrial() {
+	ss.Trainer.EvalMode = elog.Test
+	ss.Trainer.CurEnv = &ss.TestEnv
+	// ss.TestEnv.Init(ss.Run.Cur) // TODO Should this happen?
+	ss.loopTrial(axon.TimeScalesN) // Do one trial. No need to advance Epoch or Run.
+}
+
+// TestAll runs through the full set of testing items for the current run.
+// If you stop testing in the middle, it will restart from the beginning.
+// This runs across trials and epochs, but not runs.
 func (ss *Sim) TestAll() {
 	ss.Trainer.EvalMode = elog.Test
-	TestEnv := ss.TestEnv
-	TestEnv.Init(ss.Run.Cur)
-	for {
-		ss.TestTrial(true) // return on change -- don't wrap
-		_, _, chg := TestEnv.Counter(env.Epoch)
-		if chg || ss.GUI.StopNow {
-			break
-		}
-	}
+	ss.Trainer.CurEnv = &ss.TestEnv
+	ss.TestEnv.Init(ss.Run.Cur)
+	ss.loopEpoch(axon.TimeScalesN) // Do one epoch.
 }
 
 // RunTestAll runs through the full set of testing items, has stop running = false at end -- for gui

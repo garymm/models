@@ -22,7 +22,6 @@ func PreTrain(ss *sim.Sim) {
 	SetDgCa3Off(ss, ss.Net, true)
 
 	ss.TrainEnv.AssignTable("TrainAll")
-	ss.GUI.StopNow = false
 
 	curRun := ss.TrainEnv.Run().Cur
 	ss.TrainEnv.Init(curRun) // need this after changing num of rows in tables
