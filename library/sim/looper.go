@@ -255,7 +255,7 @@ func (ss *Sim) TestTrial() {
 	ss.Trainer.EvalMode = elog.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	// ss.TestEnv.Init(ss.Run.Cur) // TODO Should this happen?
-	ss.loopRun(axon.Trial) // Do one trial, advancing Epoch as necessary.
+	ss.loopTrial(axon.TimeScalesN) // Do one trial. No need to advance Epoch or Run.
 }
 
 // TestAll runs through the full set of testing items for the current run.
@@ -265,7 +265,7 @@ func (ss *Sim) TestAll() {
 	ss.Trainer.EvalMode = elog.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	ss.TestEnv.Init(ss.Run.Cur)
-	ss.loopRun(axon.TimeScalesN) // Do all epochs.
+	ss.loopEpoch(axon.TimeScalesN) // Do one epoch.
 }
 
 // RunTestAll runs through the full set of testing items, has stop running = false at end -- for gui
