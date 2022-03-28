@@ -184,6 +184,7 @@ func ConfigGui(ss *HipSim) {
 func ConfigEnv(ss *HipSim) {
 	ss.TestEnv = &TestEnv
 	ss.TrainEnv = &TrainEnv
+	TestEnv.TrainEnv = &TrainEnv
 	ss.CmdArgs.PreTrainEpcs = 10    //from hip sim
 	ss.Stats.SetInt("NZeroStop", 1) //TODO move this, should be a command line args
 	ss.TrialStatsFunc = TrialStats
