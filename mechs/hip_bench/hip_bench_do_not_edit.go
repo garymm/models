@@ -308,7 +308,7 @@ func (ss *Sim) ConfigEnv() {
 	ss.TrainEnv.Dsc = "training params and state"
 	ss.TrainEnv.Table = etable.NewIdxView(ss.TrainAB)
 	// to simulate training items in order, uncomment this line:
-	// ss.TrainEnv.Sequential = true
+	ss.TrainEnv.Sequential = true
 	ss.TrainEnv.Validate()
 	ss.TrainEnv.Run.Max = ss.MaxRuns // note: we are not setting epoch max -- do that manually
 
@@ -915,7 +915,7 @@ func (ss *Sim) MemStats(train bool) {
 			ss.Mem = 0
 		}
 	} else { // test
-		if cmpN > 0 { // should be
+		if cmpN > 0 { // to ensure no accidental infinity numbers
 			trgOnWasOffCmp /= cmpN
 			if trgOnWasOffCmp < ss.MemThr && trgOffWasOn < ss.MemThr {
 				ss.Mem = 1
