@@ -84,7 +84,7 @@ func (envhip *EnvHip) Run() *env.Ctr {
 }
 func (envhip *EnvHip) Epoch() *env.Ctr {
 	if envhip.IsTest {
-		return TrainEnv.Epoch()
+		return envhip.TrainEnv.Epoch()
 	}
 	return &envhip.FixedTable.Epoch
 }
