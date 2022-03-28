@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Astera-org/models/library/sim"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/env"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -137,34 +138,70 @@ func (envhip *EnvHip) InputAndOutputLayers() []string {
 	return []string{"Input", "ECout"}
 }
 
-func (envhip *EnvHip) AddTaskSwitching(table1, table2 string, ss *sim.Sim) *sim.TrainingCallbacks {
+func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 
 	taskSwitching := sim.TrainingCallbacks{}
+	//This occurs after testall on a different onepochend
 	taskSwitching.OnEpochEnd = func() {
+		if ss.Trainer.EvalMode == elog.Train {
+			//For clarity, this is calculating Nzero and First zero in regards to testing AC and testing AB,
+			//the reason is that at end of training epoch we at least one epoch of testing
+			updateNZeroAndFirstZero(ss)
+		}
+
 		numberZero := ss.Stats.Int("NZero")
 		nzeroStop := ss.Stats.Int("NZeroStop")
 		learned := (numberZero > 0 && nzeroStop >= numberZero)
 		max := TrainEnv.Epoch().Max
 		cur := TrainEnv.Epoch().Cur
 
-		if TrainEnv.EvalTables[HipTableTypes(table1)] == TrainEnv.Table.Table {
+		if TrainEnv.EvalTables[HipTableTypes(TrainAB)] == TrainEnv.Table.Table {
 			if learned || cur == max/2 {
-				TrainEnv.AssignTable(string(table2))
+				TrainEnv.AssignTable(string(TrainAC))
 				ss.Stats.SetInt("NZero", 0)
 			}
 		}
 	}
+
 	taskSwitching.RunStopEarly = func() bool {
 		numberZero := ss.Stats.Int("NZero")
 		nzeroStop := ss.Stats.Int("NZeroStop")
 		learned := (numberZero > 0 && nzeroStop >= numberZero)
-		max := TrainEnv.Epoch().Max
-		cur := TrainEnv.Epoch().Cur
-		if learned || cur > max {
-			return true
+
+		if TrainEnv.EvalTables[HipTableTypes(TrainAC)] == TrainEnv.Table.Table {
+			if learned {
+				return true
+			}
 		}
 		return false
+
 	}
 
 	return &taskSwitching
+}
+
+func calcMem(ss *sim.Sim) float64 {
+	// base zero on testing performance! -
+	//this should be in trainenv, or used when adding log items,
+	isAB := TrainEnv.Table.Table == TrainEnv.EvalTables[TrainAB]
+	var mem float64
+	if isAB {
+		mem = ss.Logs.Context.ItemFloat(elog.Test, elog.Epoch, "AB Mem")
+	} else {
+		mem = ss.Logs.Context.ItemFloat(elog.Test, elog.Epoch, "AC Mem")
+	}
+	return mem
+}
+
+//Move this to log items
+func updateNZeroAndFirstZero(ss *sim.Sim) {
+	mem := calcMem(ss)
+	if ss.Stats.Int("FirstZero") < 0 && mem == 1 {
+		ss.Stats.SetInt("FirstZero", ss.TrainEnv.Epoch().Cur)
+	}
+	if mem == 1 {
+		ss.Stats.SetInt("NZero", ss.Stats.Int("NZero")+1)
+	} else {
+		ss.Stats.SetInt("NZero", 0)
+	}
 }

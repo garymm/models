@@ -16,7 +16,6 @@ import (
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/hip"
 	"github.com/emer/emergent/egui"
-	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/patgen"
 	"github.com/emer/emergent/prjn"
@@ -123,38 +122,8 @@ func Config(ss *HipSim) {
 	common.AddDefaultTrainCallbacks(&ss.Sim)
 	common.AddHipCallbacks(&ss.Sim)
 
-	conditionEnvs := TrainEnv.AddTaskSwitching(string(TrainAB), string(TrainAC), &ss.Sim)
+	conditionEnvs := TrainEnv.AddTaskSwitching(&ss.Sim)
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, *conditionEnvs)
-}
-
-func calcMem(ss *sim.Sim) float64 {
-	// base zero on testing performance! -
-	//this should be in trainenv, or used when adding log items,
-	isAB := TrainEnv.Table.Table == TrainEnv.EvalTables[TrainAB]
-	var mem float64
-
-	if isAB {
-		log := ss.Logs.Log(elog.Train, elog.Epoch)
-		mem = log.CellFloat("AB Mem", log.Rows) //TODO don't understand, is it the last most?
-	} else {
-		log := ss.Logs.Log(elog.Train, elog.Epoch)
-		mem = log.CellFloat("AC Mem", log.Rows) //TODO don't understand, is it the last most?
-	}
-	return mem
-}
-
-//Move this to log items
-func updateNZeroAndFirstZero(ss *sim.Sim) {
-	mem := calcMem(ss)
-	if ss.Stats.Int("FirstZero") < 0 && mem == 1 {
-		ss.Stats.SetInt("FirstZero", ss.TrainEnv.Epoch().Cur)
-	}
-	if mem == 1 {
-		ss.Stats.SetInt("NZero", ss.Stats.Int("NZero")+1)
-	} else {
-		ss.Stats.SetInt("NZero", 0)
-	}
-
 }
 
 func ConfigGui(ss *HipSim) {
