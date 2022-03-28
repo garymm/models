@@ -153,26 +153,26 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 			updateNZeroAndFirstZero(ss)
 		}
 
-		numberZero := ss.Stats.Int("NZero")
+		numberZero := ss.Stats.Int("HipNZero")
 		nzeroStop := ss.Stats.Int("NZeroStop")
 		learned := (numberZero > 0 && nzeroStop >= numberZero)
 		max := TrainEnv.Epoch().Max
 		cur := TrainEnv.Epoch().Cur
 
-		if TrainEnv.EvalTables[HipTableTypes(TrainAB)] == TrainEnv.Table.Table {
+		if TrainEnv.EvalTables[TrainAB] == TrainEnv.Table.Table {
 			if learned || cur == max/2 {
 				TrainEnv.AssignTable(string(TrainAC))
-				ss.Stats.SetInt("NZero", 0)
+				ss.Stats.SetInt("HipNZero", 0)
 			}
 		}
 	}
 
 	taskSwitching.RunStopEarly = func() bool {
-		numberZero := ss.Stats.Int("NZero")
+		numberZero := ss.Stats.Int("HipNZero")
 		nzeroStop := ss.Stats.Int("NZeroStop")
-		learned := (numberZero > 0 && nzeroStop >= numberZero)
+		learned := (numberZero > 0 && numberZero >= nzeroStop)
 
-		if TrainEnv.EvalTables[HipTableTypes(TrainAC)] == TrainEnv.Table.Table {
+		if TrainEnv.EvalTables[TrainAC] == TrainEnv.Table.Table {
 			if learned {
 				return true
 			}
@@ -200,12 +200,12 @@ func calcMem(ss *sim.Sim) float64 {
 //Move this to log items
 func updateNZeroAndFirstZero(ss *sim.Sim) {
 	mem := calcMem(ss)
-	if ss.Stats.Int("FirstZero") < 0 && mem == 1 {
-		ss.Stats.SetInt("FirstZero", ss.TrainEnv.Epoch().Cur)
+	if ss.Stats.Int("HipHipFirst") < 0 && mem == 1 {
+		ss.Stats.SetInt("HipHipFirst", ss.TrainEnv.Epoch().Cur)
 	}
 	if mem == 1 {
-		ss.Stats.SetInt("NZero", ss.Stats.Int("NZero")+1)
+		ss.Stats.SetInt("HipNZero", ss.Stats.Int("HipNZero")+1)
 	} else {
-		ss.Stats.SetInt("NZero", 0)
+		ss.Stats.SetInt("HipNZero", 0)
 	}
 }

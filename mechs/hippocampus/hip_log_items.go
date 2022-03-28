@@ -18,8 +18,8 @@ func InitHipStats(ss *sim.Sim) {
 	ss.Stats.SetFloat("SumUnitErr", 0)
 	ss.Stats.SetFloat("SumCosDiff", 0)
 	ss.Stats.SetInt("CntErr", 0)
-	ss.Stats.SetInt("FirstZero", -1)
-	ss.Stats.SetInt("NZero", 0)
+	ss.Stats.SetInt("HipFirstZero", -1)
+	ss.Stats.SetInt("HipNZero", 0)
 	// clear rest just to make Sim look initialized
 	ss.Stats.SetFloat("Mem", 0)
 	ss.Stats.SetFloat("TrgOnWasOff", 0)
@@ -32,6 +32,7 @@ func InitHipStats(ss *sim.Sim) {
 
 	// TODO These need to be initialized. Maybe all stats should initialize to 0?
 	ss.Stats.SetFloat("MemThr", 0.34)
+	ss.Stats.SetInt("NZeroStop", 1)
 }
 
 func ConfigHipItems(ss *sim.Sim) {
