@@ -155,7 +155,7 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 		max := TrainEnv.Epoch().Max
 		cur := TrainEnv.Epoch().Cur
 
-		if TrainEnv.EvalTables[HipTableTypes(TrainAB)] == TrainEnv.Table.Table {
+		if TrainEnv.EvalTables[TrainAB] == TrainEnv.Table.Table {
 			if learned || cur == max/2 {
 				TrainEnv.AssignTable(string(TrainAC))
 				ss.Stats.SetInt("NZero", 0)
@@ -168,7 +168,7 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 		nzeroStop := ss.Stats.Int("NZeroStop")
 		learned := (numberZero > 0 && nzeroStop >= numberZero)
 
-		if TrainEnv.EvalTables[HipTableTypes(TrainAC)] == TrainEnv.Table.Table {
+		if TrainEnv.EvalTables[TrainAC] == TrainEnv.Table.Table {
 			if learned {
 				return true
 			}
