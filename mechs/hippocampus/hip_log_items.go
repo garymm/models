@@ -110,9 +110,8 @@ func ConfigHipItems(ss *sim.Sim) {
 				FixMin: elog.DTrue,
 				Range:  minmax.F64{Max: 1},
 				Write: elog.WriteMap{
-					// TODO These are not right
 					elog.Scope(elog.Test, elog.Epoch): func(ctx *elog.Context) {
-						trl := ss.Logs.Log(elog.Test, elog.Trial)
+						trl := ss.Logs.Table(elog.Test, elog.Trial)
 						trix := etable.NewIdxView(trl)
 						spl := split.GroupBy(trix, []string{"TestNm"})
 						for _, ts := range tstStatNms {
@@ -126,7 +125,6 @@ func ConfigHipItems(ss *sim.Sim) {
 								if tst+" "+tso == tn+" "+ts {
 									ctx.SetFloat64(tstStats.CellFloat(ts, ri))
 								}
-								//epcLog.SetCellFloat(tst+" "+tso, row, ss.TstStats.CellFloat(ts, ri))
 							}
 						}
 

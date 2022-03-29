@@ -265,6 +265,14 @@ func (ss *Sim) TestAll() {
 	ss.Trainer.EvalMode = elog.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	ss.TestEnv.Init(ss.Run.Cur)
+	ss.loopRun(axon.TimeScalesN) // Do a full run of epochs.
+}
+
+// TestEpoch does a single epoch of testing.
+func (ss *Sim) TestEpoch() {
+	ss.Trainer.EvalMode = elog.Test
+	ss.Trainer.CurEnv = &ss.TestEnv
+	ss.TestEnv.Init(ss.Run.Cur)
 	ss.loopEpoch(axon.TimeScalesN) // Do one epoch.
 }
 

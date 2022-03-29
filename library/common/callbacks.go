@@ -58,7 +58,9 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 		OnEpochEnd: func() {
 			if ss.Trainer.EvalMode == elog.Train {
 				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
-					ss.TestAll()
+					ss.TestEpoch()                   // DO NOT SUBMIT This should be TestAll for RA25
+					ss.Trainer.EvalMode = elog.Train // Set these back
+					ss.Trainer.CurEnv = &ss.TrainEnv
 				}
 			}
 		},
@@ -158,7 +160,37 @@ func LrateSched(ss *sim.Sim, epc int) {
 	}
 }
 
+// AddSimpleCallbacks is used by RA25 and one2many.
+func AddSimpleCallbacks(ss *sim.Sim) {
+	// Testing
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		OnEpochEnd: func() {
+			if ss.Trainer.EvalMode == elog.Train {
+				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
+					ss.TestAll()
+					ss.Trainer.EvalMode = elog.Train // Important to set these back because TestAll sets them to Test.
+					ss.Trainer.CurEnv = &ss.TrainEnv
+				}
+			}
+		},
+	})
+}
+
 func AddHipCallbacks(ss *sim.Sim) {
+	// Testing
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		OnEpochEnd: func() {
+			if ss.Trainer.EvalMode == elog.Train {
+				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
+					// Unlike some testing setups, we only do one epoch of test instead of a whole run.
+					ss.TestEpoch()
+					ss.Trainer.EvalMode = elog.Train // Important to set these back because TestEpoch sets them to Test.
+					ss.Trainer.CurEnv = &ss.TrainEnv
+				}
+			}
+		},
+	})
+
 	// TODO Make sure these are gotten at the correct time.
 	ca1 := ss.Net.LayerByName("CA1").(axon.AxonLayer).AsAxon()
 	ca3 := ss.Net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
