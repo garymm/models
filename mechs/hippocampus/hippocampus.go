@@ -94,6 +94,27 @@ func main() {
 	}
 }
 
+func OpenPat(dt *etable.Table, fname, name, desc string) {
+	err := dt.OpenCSV(gi.FileName(fname), etable.Tab)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	dt.SetMetaData("name", name)
+	dt.SetMetaData("desc", desc)
+}
+
+func OpenFixedPatterns(ss *HipSim) {
+	OpenPat(TrainEnv.EvalTables[TrainAB], "hippoinputs/trainab.tsv", "TrainAB", "")
+	OpenPat(TrainEnv.EvalTables[TrainAC], "hippoinputs/trainac.tsv", "TrainAC", "")
+	OpenPat(TrainEnv.EvalTables[TrainAll], "hippoinputs/trainall.tsv", "TrainAll", "")
+
+	OpenPat(TestEnv.EvalTables[TestAB], "hippoinputs/testab.tsv", "TestAB", "")
+	OpenPat(TestEnv.EvalTables[TestAC], "hippoinputs/testac.tsv", "TestAC", "")
+	OpenPat(TestEnv.EvalTables[TestLure], "hippoinputs/testlure.tsv", "TestLure", "")
+
+}
+
 // Config configures all the elements using the standard functions
 func Config(ss *HipSim) {
 	// These need to be initialized before ConfigPats
@@ -101,18 +122,20 @@ func Config(ss *HipSim) {
 	TestEnv.InitTables(TestAB, TestAC, TestLure)
 
 	ConfigPats(ss)
-	//OpenPats(&ss.Sim)
+	OpenFixedPatterns(ss) //todo ths is for debugging, shoudl be removed later
 
 	ss.Initialization = func() {
 		ReconfigPatsAndNet(ss)
 		ConfigEnv(ss) // re-config env just in case a different set of patterns was
 		// selected or patterns have been modified etc
+		OpenFixedPatterns(ss) //todo should be removed, htis is for debugging purposes
 	}
 
 	ConfigParams(&ss.Sim)
 	// Parse arguments before configuring the network and env, in case parameters are set.
 	ss.ParseArgs()
 	ConfigEnv(ss)
+
 	ss.TestInterval = 1
 	ConfigNet(ss, ss.Net)
 	InitHipStats(&ss.Sim)
@@ -199,6 +222,7 @@ func ConfigEnv(ss *HipSim) {
 	TrainEnv.Table = etable.NewIdxView(TrainEnv.EvalTables[TrainAB])
 	// to simulate training items in order, uncomment this line:
 	// ss.TrainEnv.Sequential = true
+	TrainEnv.SetSequential(true) //todo this should be removed, this is done to compare between original and old
 	TrainEnv.Validate()
 	ss.Run.Max = ss.CmdArgs.MaxRuns
 	ss.Run.Cur = ss.CmdArgs.StartRun
@@ -208,7 +232,7 @@ func ConfigEnv(ss *HipSim) {
 
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
-	TestEnv.Table = etable.NewIdxView(TestEnv.EvalTables[TestAB]) // TODO TestAB
+	TestEnv.Table = etable.NewIdxView(TestEnv.EvalTables[TestAB])
 	TestEnv.SetSequential(true)
 	ss.TestEnv.Validate()
 
