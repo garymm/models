@@ -191,14 +191,15 @@ func AddHipCallbacks(ss *sim.Sim) {
 		},
 	})
 
-	// TODO Make sure these are gotten at the correct time.
-	ca1 := ss.Net.LayerByName("CA1").(axon.AxonLayer).AsAxon()
-	ca3 := ss.Net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
-	// ecin := ss.Net.LayerByName("ECin").(axon.AxonLayer).AsAxon()
-	ecout := ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
-	ca1FmECin := ca1.RcvPrjns.SendName("ECin").(axon.AxonPrjn).AsAxon()
-	ca1FmCa3 := ca1.RcvPrjns.SendName("CA3").(axon.AxonPrjn).AsAxon()
-	ca3FmDg := ca3.RcvPrjns.SendName("DG").(axon.AxonPrjn).AsAxon()
+	// These are assigned to actual values at the top of the theta cycle, below.
+	var ca1 *axon.Layer
+	var ca3 *axon.Layer
+	//var ecin *axon.Layer
+	var ecout *axon.Layer
+	var ca1FmECin *axon.Prjn
+	var ca1FmCa3 *axon.Prjn
+	var ca3FmDg *axon.Prjn
+
 	absGain := float32(2)
 
 	// Notes on durations: / 100, 25, 25, 50 best so far, vs 75,50 at start, 50,50 instead of 25..
@@ -256,6 +257,15 @@ func AddHipCallbacks(ss *sim.Sim) {
 	// Hip Theta Cycle
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnThetaStart: func() {
+			// These are captured at the top of theta cycle, and then referred to in quarters. If you assign them outside these callbacks, then you risk the network being reinitialized, and these pointing to old versions.
+			ca1 = ss.Net.LayerByName("CA1").(axon.AxonLayer).AsAxon()
+			ca3 = ss.Net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
+			// ecin := ss.Net.LayerByName("ECin").(axon.AxonLayer).AsAxon()
+			ecout = ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
+			ca1FmECin = ca1.RcvPrjns.SendName("ECin").(axon.AxonPrjn).AsAxon()
+			ca1FmCa3 = ca1.RcvPrjns.SendName("CA3").(axon.AxonPrjn).AsAxon()
+			ca3FmDg = ca3.RcvPrjns.SendName("DG").(axon.AxonPrjn).AsAxon()
+
 			// First Quarter: CA1 is driven by ECin, not by CA3 recall
 			// (which is not really active yet anyway)
 			ca1FmECin.PrjnScale.Abs = absGain
