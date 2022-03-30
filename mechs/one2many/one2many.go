@@ -216,6 +216,7 @@ func Config(ss *One2Sim) {
 	ss.ConfigLogItems()
 	ss.ConfigLogs()
 	common.AddDefaultTrainCallbacks(&ss.Sim)
+	common.AddSimpleCallbacks(&ss.Sim)
 }
 
 // ConfigParams configure the parameters

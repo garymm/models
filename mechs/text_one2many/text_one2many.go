@@ -85,6 +85,7 @@ func Config(ss *sim.Sim) {
 	ss.ConfigLogItems()
 	ss.ConfigLogs()
 	common.AddDefaultTrainCallbacks(ss)
+	common.AddSimpleCallbacks(ss)
 }
 
 func ConfigParams(ss *sim.Sim) {

@@ -70,7 +70,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
 				ss.Train(axon.Trial)
-				ss.StatCounters(true)
+				ss.UpdateNetViewText(true)
 				ss.GUI.IsRunning = false
 				ss.GUI.UpdateWindow()
 			}
@@ -84,7 +84,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
 				ss.Train(axon.Cycle)
-				ss.StatCounters(true)
+				ss.UpdateNetViewText(true)
 				ss.GUI.IsRunning = false
 				ss.GUI.UpdateWindow()
 			}
@@ -126,7 +126,8 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Func: func() {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
-				ss.TestTrial(false) // don't return on change -- wrap
+				ss.GUI.StopNow = false
+				ss.TestTrial()
 				ss.GUI.IsRunning = false
 				ss.GUI.UpdateWindow()
 			}
@@ -213,6 +214,17 @@ func (ss *Sim) Counters(train bool) string {
 	} else {
 		return fmt.Sprintf("Run:\t%d\tEpoch:\t%d\tTrial:\t%d\tCycle:\t%d\tName:\t%v\t\t\t", ss.Run.Cur, ss.TrainEnv.Epoch().Cur, ss.TestEnv.Trial().Cur, ss.Time.Cycle, ss.TestEnv.TrialName().Cur)
 	}
+}
+
+// UpdateNetViewText saves a string rep of them to the GUI, if the GUI is active
+func (ss *Sim) UpdateNetViewText(train bool) {
+	ev := ss.TrainEnv
+	if !train {
+		ev = ss.TestEnv
+	}
+	displayText := fmt.Sprintf("%s\tRun:\t%d/%d\tEpoch:%d/%d\tTrial:\t%d/%d\tCycle:\t%d\t", ss.Trainer.EvalMode, ss.Run.Cur, ss.Run.Max, ev.Epoch().Cur, ev.Epoch().Max, ev.Trial().Cur, ev.Trial().Max, ss.Time.Cycle) + "\t" + ss.Stats.Print([]string{"TrlErr", "TrlCosDiff"})
+	//println(displayText)
+	ss.GUI.NetViewText = displayText
 }
 
 func (ss *Sim) UpdateView(train bool) {

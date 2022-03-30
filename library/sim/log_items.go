@@ -32,7 +32,7 @@ func (ss *Sim) ConfigLogItems() {
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.AllTimes): func(ctx *elog.Context) {
-				ctx.SetStatInt("Run")
+				ctx.SetInt(ss.Run.Cur)
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Params",
@@ -48,28 +48,28 @@ func (ss *Sim) ConfigLogItems() {
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
 			elog.Scopes([]elog.EvalModes{elog.AllModes}, []elog.Times{elog.Epoch, elog.Trial}): func(ctx *elog.Context) {
-				ctx.SetStatInt("Epoch")
+				ctx.SetInt(ss.CurrentEnvironment().Epoch().Cur)
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Trial",
 		Type: etensor.INT64,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-				ctx.SetStatInt("Trial")
+				ctx.SetInt(ss.CurrentEnvironment().Trial().Cur)
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "TrialName",
 		Type: etensor.STRING,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
-				ctx.SetStatString("TrialName")
+				ctx.SetString(ss.CurrentEnvironment().TrialName().Cur)
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name: "Cycle",
 		Type: etensor.INT64,
 		Write: elog.WriteMap{
 			elog.Scope(elog.AllModes, elog.Cycle): func(ctx *elog.Context) {
-				ctx.SetStatInt("Cycle")
+				ctx.SetInt(ss.Time.Cycle)
 			}}})
 	ss.Logs.AddItem(&elog.Item{
 		Name:  "FirstZero",

@@ -35,7 +35,8 @@ type EnvHip struct {
 	env.FixedTable
 	EvalTables TableMaps `desc:"a map of tables used for handling stuff"`
 	Pat        PatParams
-	IsTest     bool `desc:"Whether this is the Test environment or the Train"`
+	IsTest     bool    `desc:"Whether this is the Test environment or the Train"`
+	TrainEnv   *EnvHip `desc:"The Test Environment needs to know about the Train Environment."`
 }
 
 func (pp *PatParams) Defaults() {
@@ -82,6 +83,9 @@ func (envhip *EnvHip) Run() *env.Ctr {
 	return &envhip.FixedTable.Run
 }
 func (envhip *EnvHip) Epoch() *env.Ctr {
+	if envhip.IsTest {
+		return envhip.TrainEnv.Epoch()
+	}
 	return &envhip.FixedTable.Epoch
 }
 func (envhip *EnvHip) Trial() *env.Ctr {
