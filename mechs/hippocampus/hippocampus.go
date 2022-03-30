@@ -221,6 +221,7 @@ func ConfigEnv(ss *HipSim) {
 	TrainEnv.Dsc = "training params and state"
 
 	TrainEnv.Table = etable.NewIdxView(TrainEnv.EvalTables[TrainAB])
+	TrainEnv.CurrentTableName = string(TrainAB)
 	// to simulate training items in order, uncomment this line:
 	// ss.TrainEnv.Sequential = true
 	TrainEnv.SetSequential(true) //todo this should be removed, this is done to compare between original and old
@@ -234,6 +235,7 @@ func ConfigEnv(ss *HipSim) {
 	TestEnv.Nm = "TestEnv"
 	TestEnv.Dsc = "testing params and state"
 	TestEnv.Table = etable.NewIdxView(TestEnv.EvalTables[TestAB])
+	TestEnv.CurrentTableName = string(TestAB)
 	TestEnv.SetSequential(true)
 	ss.TestEnv.Validate()
 

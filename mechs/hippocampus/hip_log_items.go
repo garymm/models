@@ -36,6 +36,11 @@ func InitHipStats(ss *sim.Sim) {
 }
 
 func ConfigHipItems(ss *sim.Sim) {
+	// Don't plot other things.
+	for _, lg := range ss.Logs.Items {
+		lg.Plot = elog.DFalse
+	}
+
 	ss.Logs.AddItem(&elog.Item{
 		Name:   "Mem",
 		Type:   etensor.FLOAT64,
@@ -87,12 +92,16 @@ func ConfigHipItems(ss *sim.Sim) {
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
 			elog.Scope(elog.Test, elog.Trial): func(ctx *elog.Context) {
-				// TODO Actually get this
-				ctx.SetString("AB")
+				testName := "AB"
+				if ss.TestEnv.Desc() == "TestAC" {
+					testName = "AC"
+				}
+				// Handle other cases here.
+				ctx.SetString(testName)
 			},
 		}})
 
-	// TODO Add AB Mem and stuff
+	// Add AB Mem and stuff
 	tstNms := []string{"AB", "AC"} // TODO Add in "Lure"
 	tstStatNms := []string{"Mem", "TrgOnWasOff", "TrgOffWasOn"}
 
