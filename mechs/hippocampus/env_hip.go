@@ -33,10 +33,11 @@ type PatParams struct {
 type EnvHip struct {
 	sim.Environment
 	env.FixedTable
-	EvalTables TableMaps `desc:"a map of tables used for handling stuff"`
-	Pat        PatParams
-	IsTest     bool    `desc:"Whether this is the Test environment or the Train"`
-	TrainEnv   *EnvHip `desc:"The Test Environment needs to know about the Train Environment."`
+	EvalTables       TableMaps `desc:"a map of tables used for handling stuff"`
+	Pat              PatParams
+	IsTest           bool    `desc:"Whether this is the Test environment or the Train"`
+	TrainEnv         *EnvHip `desc:"The Test Environment needs to know about the Train Environment."`
+	CurrentTableName string
 }
 
 func (pp *PatParams) Defaults() {
@@ -54,6 +55,7 @@ func (envhip *EnvHip) InitTables(tableNames ...HipTableTypes) {
 
 func (envhip *EnvHip) AssignTable(name string) {
 	envhip.Table = etable.NewIdxView(envhip.EvalTables[HipTableTypes(name)])
+	TrainEnv.CurrentTableName = name
 }
 
 func (envhip *EnvHip) SetName(name string) {
@@ -63,10 +65,12 @@ func (envhip *EnvHip) Name() string {
 	return envhip.FixedTable.Nm
 }
 func (envhip *EnvHip) SetDesc(desc string) {
-	envhip.FixedTable.Dsc = desc
+	// This does nothing! Don't call this method please!
 }
+
+// Desc is used as TestN in hip_log_items
 func (envhip *EnvHip) Desc() string {
-	return envhip.FixedTable.Dsc
+	return envhip.CurrentTableName
 }
 
 func (envhip *EnvHip) Order() []int {
