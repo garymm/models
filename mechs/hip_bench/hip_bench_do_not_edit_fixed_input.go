@@ -443,6 +443,7 @@ func (ss *Sim) ConfigNet(net *axon.Network) {
 		log.Println(err)
 		return
 	}
+	ss.InitRndSeed()
 	net.InitWts()
 }
 
@@ -836,6 +837,7 @@ func (ss *Sim) NewRun() {
 	ss.TrainEnv.Init(run)
 	ss.TestEnv.Init(run)
 	ss.Time.Reset()
+	ss.InitRndSeed()
 	ss.Net.InitWts()
 	ss.LoadPretrainedWts()
 	ss.InitStats()

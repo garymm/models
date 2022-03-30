@@ -155,6 +155,7 @@ func (ss *Sim) NewRun() {
 	TrainEnv.Init(run)
 	TestEnv.Init(run)
 	ss.Time.Reset()
+	ss.InitRndSeed() //todo should be removed, for debuggin pruposes
 	ss.Net.InitWts()
 	ss.LoadPretrainedWts()
 	ss.InitStats()

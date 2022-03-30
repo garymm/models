@@ -125,6 +125,7 @@ func Config(ss *HipSim) {
 	OpenFixedPatterns(ss) //todo ths is for debugging, shoudl be removed later
 
 	ss.Initialization = func() {
+		ss.InitRndSeed()
 		ReconfigPatsAndNet(ss)
 		ConfigEnv(ss) // re-config env just in case a different set of patterns was
 		// selected or patterns have been modified etc
