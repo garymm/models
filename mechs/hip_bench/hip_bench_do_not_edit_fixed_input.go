@@ -476,7 +476,8 @@ func (ss *Sim) Init() {
 
 // NewRndSeed gets a n// InitRndSeed initializes the random seed based on current training run number
 func (ss *Sim) InitRndSeed() {
-	run := ss.StartRun + ss.TrainEnv.Run.Cur
+	//run := ss.StartRun + ss.TrainEnv.Run.Cur
+	run := ss.TrainEnv.Run.Cur //todo change back to keep original logic, doing this to match currnetl ogic
 	rand.Seed(ss.RndSeeds[run])
 }
 
