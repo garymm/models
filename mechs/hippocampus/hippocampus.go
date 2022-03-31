@@ -16,6 +16,7 @@ import (
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/hip"
 	"github.com/emer/emergent/egui"
+	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/patgen"
 	"github.com/emer/emergent/prjn"
@@ -140,11 +141,11 @@ func Config(ss *HipSim) {
 	ss.TestInterval = 1
 	ConfigNet(ss, ss.Net)
 	InitHipStats(&ss.Sim)
-	ConfigHipItems(&ss.Sim)
 	ss.ConfigLogItems()
+	ConfigHipItems(&ss.Sim)
 	ss.ConfigLogs()
 	common.AddDefaultTrainCallbacks(&ss.Sim)
-	common.AddHipCallbacks(&ss.Sim)
+	AddHipCallbacks(&ss.Sim)
 
 	conditionEnvs := TrainEnv.AddTaskSwitching(&ss.Sim)
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, *conditionEnvs)
@@ -542,4 +543,151 @@ func ReconfigPatsAndNet(ss *HipSim) {
 		ss.GUI.NetView.SetNet(ss.Net)
 		ss.GUI.NetView.Update() // issue #41 closed
 	}
+}
+
+// Callbacks related
+
+// TestAllConditions does a single epoch of testing.
+func TestAllConditions(ss *sim.Sim) {
+	ss.Trainer.EvalMode = elog.Test
+	ss.Trainer.CurEnv = &ss.TestEnv
+
+	ss.TestEnv.AssignTable(string(TestAB))
+	ss.TestEnv.Init(ss.Run.Cur)
+	ss.LoopEpoch(axon.TimeScalesN) // Do one epoch.
+
+	ss.TestEnv.AssignTable(string(TestAC))
+	ss.TestEnv.Init(ss.Run.Cur)
+	ss.LoopEpoch(axon.TimeScalesN) // Do one epoch.
+
+	ss.TestEnv.AssignTable(string(TestLure))
+	ss.TestEnv.Init(ss.Run.Cur)
+	ss.LoopEpoch(axon.TimeScalesN) // Do one epoch.
+}
+
+func AddHipCallbacks(ss *sim.Sim) {
+	// Testing
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		OnEpochEnd: func() {
+			if ss.Trainer.EvalMode == elog.Train {
+				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
+					// Unlike some testing setups, we only do one epoch of test instead of a whole run.
+					TestAllConditions(ss)
+					ss.Trainer.EvalMode = elog.Train // Important to set these back because TestEpoch sets them to Test.
+					ss.Trainer.CurEnv = &ss.TrainEnv
+				}
+			}
+		},
+	})
+
+	// These are assigned to actual values at the top of the theta cycle, below.
+	var ca1 *axon.Layer
+	var ca3 *axon.Layer
+	//var ecin *axon.Layer
+	var ecout *axon.Layer
+	var ca1FmECin *axon.Prjn
+	var ca1FmCa3 *axon.Prjn
+	var ca3FmDg *axon.Prjn
+
+	absGain := float32(2)
+
+	// Notes on durations: / 100, 25, 25, 50 best so far, vs 75,50 at start, 50,50 instead of 25..
+	//	// cycPerQtr := []int{100, 1, 1, 50} // 150, 1, 1, 50 works for EcCa1Prjn, but 100, 1, 1, 50 does not
+
+	var dgwtscale float32
+
+	// Override Default Phases
+	ss.Trainer.Phases = []sim.ThetaPhase{sim.ThetaPhase{
+		Name:     "Q1",
+		Duration: 50,
+		PhaseEnd: func() {
+			// Second, Third Quarters: CA1 is driven by CA3 recall
+			ss.Net.ActSt1(&ss.Time)
+			ca1FmECin.PrjnScale.Abs = 0
+			ca1FmCa3.PrjnScale.Abs = absGain
+			if ss.Trainer.EvalMode == elog.Train {
+				ca3FmDg.PrjnScale.Rel = dgwtscale // restore after 1st quarter
+			} else {
+				ca3FmDg.PrjnScale.Rel = dgwtscale - 0 //TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
+				//ca3FmDg.PrjnScale.Rel = dgwtscale - ss.Hip.MossyDelTest // testing
+			}
+			ss.Net.InitGScale() // update computed scaling factors
+		},
+	}, sim.ThetaPhase{
+		Name:     "Q2",
+		Duration: 50,
+		PhaseEnd: func() {
+			ss.Net.ActSt2(&ss.Time)
+		},
+	}, sim.ThetaPhase{
+		Name:     "Q3",
+		Duration: 50,
+		PhaseEnd: func() { // Fourth Quarter: CA1 back to ECin drive only
+			train := ss.Trainer.EvalMode == elog.Train
+			if train { // clamp ECout from ECin
+				ca1FmECin.PrjnScale.Abs = absGain
+				ca1FmCa3.PrjnScale.Abs = 0
+				ss.Net.InitGScale() // update computed scaling factors
+				// ecin.UnitVals(&ss.TmpVals, "Act")
+				// ecout.ApplyExt1D32(ss.TmpVals)
+			}
+			ss.Net.MinusPhase(&ss.Time)
+
+			ss.MemStats(train) // must come after QuarterFinal
+		},
+	}, sim.ThetaPhase{
+		Name:     "Q4",
+		Duration: 50,
+		PhaseEnd: func() {
+			ss.Net.PlusPhase(&ss.Time)
+		},
+	}}
+
+	// Hip Theta Cycle
+	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
+		OnThetaStart: func() {
+			// These are captured at the top of theta cycle, and then referred to in quarters. If you assign them outside these callbacks, then you risk the network being reinitialized, and these pointing to old versions.
+			ca1 = ss.Net.LayerByName("CA1").(axon.AxonLayer).AsAxon()
+			ca3 = ss.Net.LayerByName("CA3").(axon.AxonLayer).AsAxon()
+			// ecin := ss.Net.LayerByName("ECin").(axon.AxonLayer).AsAxon()
+			ecout = ss.Net.LayerByName("ECout").(axon.AxonLayer).AsAxon()
+			ca1FmECin = ca1.RcvPrjns.SendName("ECin").(axon.AxonPrjn).AsAxon()
+			ca1FmCa3 = ca1.RcvPrjns.SendName("CA3").(axon.AxonPrjn).AsAxon()
+			ca3FmDg = ca3.RcvPrjns.SendName("DG").(axon.AxonPrjn).AsAxon()
+
+			// First Quarter: CA1 is driven by ECin, not by CA3 recall
+			// (which is not really active yet anyway)
+			ca1FmECin.PrjnScale.Abs = absGain
+			ca1FmCa3.PrjnScale.Abs = 0
+
+			dgwtscale = ca3FmDg.PrjnScale.Rel
+
+			//ca3FmDg.PrjnScale.Rel = dgwtscale - ss.Hip.MossyDel
+			ca3FmDg.PrjnScale.Rel = dgwtscale - 3 // turn off DG input to CA3 in first quarter // TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
+
+			if ss.Trainer.EvalMode == elog.Train {
+				ecout.SetType(emer.Target) // clamp a plus phase during testing todo: ask randy why this is the case
+			} else {
+				ecout.SetType(emer.Compare) // don't clamp
+			}
+			ecout.UpdateExtFlags() // call this after updating type
+
+			ss.Net.InitGScale() // update computed scaling factors
+
+		},
+		OnThetaEnd: func() {
+			ca3FmDg.PrjnScale.Rel = dgwtscale // restore
+			ca1FmCa3.PrjnScale.Abs = absGain
+		},
+		OnMillisecondEnd: func() {
+			if ss.Trainer.EvalMode != elog.Train {
+				ss.Log(elog.Test, elog.Cycle)
+			}
+		},
+		OnEveryPhaseEnd: func() {
+			if ss.GetViewUpdate() == axon.Phase {
+				ss.GUI.UpdateNetView()
+			}
+		},
+	})
 }

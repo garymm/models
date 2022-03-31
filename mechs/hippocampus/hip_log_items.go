@@ -133,6 +133,7 @@ func ConfigHipItems(ss *sim.Sim) {
 							for _, tso := range tstStatNms {
 								if tst+" "+tso == tn+" "+ts {
 									ctx.SetFloat64(tstStats.CellFloat(ts, ri))
+									break
 								}
 							}
 						}
