@@ -122,8 +122,8 @@ func (ss *Sim) loopTrial(stopScale axon.TimeScales) {
 	}
 }
 
-// TrainEpoch runs until the end of the Epoch, then updates logs.h
-func (ss *Sim) loopEpoch(stopScale axon.TimeScales) {
+// LoopEpoch runs until the end of the Epoch, then updates logs.h
+func (ss *Sim) LoopEpoch(stopScale axon.TimeScales) {
 	if (*ss.Trainer.CurEnv).Trial().Cur == 0 {
 		ss.Trainer.OnEpochStart()
 	}
@@ -184,7 +184,7 @@ func (ss *Sim) loopRun(stopScale axon.TimeScales) {
 	}
 	// TODO Put "|| ss.Trainer.RunStopEarly()" in conditional, verify
 	for ; (*ss.Trainer.CurEnv).Epoch().Cur < (*ss.Trainer.CurEnv).Epoch().Max; (*ss.Trainer.CurEnv).Epoch().Cur += 1 {
-		ss.loopEpoch(stopScale)
+		ss.LoopEpoch(stopScale)
 		ss.UpdateNetViewText(true)
 		if stopScale == axon.Epoch {
 			ss.GUI.StopNow = true
@@ -273,7 +273,7 @@ func (ss *Sim) TestEpoch() {
 	ss.Trainer.EvalMode = elog.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	ss.TestEnv.Init(ss.Run.Cur)
-	ss.loopEpoch(axon.TimeScalesN) // Do one epoch.
+	ss.LoopEpoch(axon.TimeScalesN) // Do one epoch.
 }
 
 // RunTestAll runs through the full set of testing items, has stop running = false at end -- for gui
