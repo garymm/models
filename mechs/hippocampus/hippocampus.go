@@ -561,17 +561,18 @@ func TestAllConditions(ss *sim.Sim) {
 	ss.Trainer.EvalMode = elog.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 
-	ss.TestEnv.AssignTable(string(TestAB))
-	ss.TestEnv.Init(ss.Run.Cur)
-	testEpochHip(ss)
-
 	ss.TestEnv.AssignTable(string(TestAC))
 	ss.TestEnv.Init(ss.Run.Cur)
 	testEpochHip(ss)
 
-	ss.TestEnv.AssignTable(string(TestLure))
+	ss.TestEnv.AssignTable(string(TestAB))
 	ss.TestEnv.Init(ss.Run.Cur)
 	testEpochHip(ss)
+
+	// TODO Uncomment
+	//ss.TestEnv.AssignTable(string(TestLure))
+	//ss.TestEnv.Init(ss.Run.Cur)
+	//testEpochHip(ss)
 
 	// Log only after all conditions have been tested.
 	ss.Log(ss.Trainer.EvalMode, elog.Epoch)

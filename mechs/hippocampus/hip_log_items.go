@@ -105,8 +105,11 @@ func ConfigHipItems(ss *sim.Sim) {
 	tstNms := []string{"AB", "AC"} // TODO Add in "Lure"
 	tstStatNms := []string{"Mem", "TrgOnWasOff", "TrgOffWasOn"}
 
-	for _, tn := range tstNms {
-		for _, ts := range tstStatNms {
+	for _, tni := range tstNms {
+		for _, tsi := range tstStatNms {
+			// These holder variables are needed because they are used in a closure below.
+			tn := tni
+			ts := tsi
 			plot := elog.DFalse
 			if ts == "Mem" {
 				plot = elog.DTrue
@@ -138,7 +141,7 @@ func ConfigHipItems(ss *sim.Sim) {
 							}
 						}
 
-						ctx.SetStatFloat("TrgOffWasOn")
+						//ctx.SetStatFloat("TrgOffWasOn") // TODO What?
 					},
 					//elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
 					//	ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name

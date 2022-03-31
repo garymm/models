@@ -55,7 +55,7 @@ func (envhip *EnvHip) InitTables(tableNames ...HipTableTypes) {
 
 func (envhip *EnvHip) AssignTable(name string) {
 	envhip.Table = etable.NewIdxView(envhip.EvalTables[HipTableTypes(name)])
-	TrainEnv.CurrentTableName = name
+	envhip.CurrentTableName = name
 }
 
 func (envhip *EnvHip) SetName(name string) {
@@ -204,8 +204,8 @@ func calcMem(ss *sim.Sim) float64 {
 //Move this to log items
 func updateNZeroAndFirstZero(ss *sim.Sim) {
 	mem := calcMem(ss)
-	if ss.Stats.Int("HipHipFirst") < 0 && mem == 1 {
-		ss.Stats.SetInt("HipHipFirst", ss.TrainEnv.Epoch().Cur)
+	if ss.Stats.Int("HipFirst") < 0 && mem == 1 {
+		ss.Stats.SetInt("HipFirst", ss.TrainEnv.Epoch().Cur)
 	}
 	if mem == 1 {
 		ss.Stats.SetInt("HipNZero", ss.Stats.Int("HipNZero")+1)
