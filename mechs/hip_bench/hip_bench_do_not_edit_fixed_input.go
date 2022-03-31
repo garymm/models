@@ -443,6 +443,7 @@ func (ss *Sim) ConfigNet(net *axon.Network) {
 		log.Println(err)
 		return
 	}
+	ss.InitRndSeed()
 	net.InitWts()
 }
 
@@ -476,7 +477,8 @@ func (ss *Sim) Init() {
 
 // NewRndSeed gets a n// InitRndSeed initializes the random seed based on current training run number
 func (ss *Sim) InitRndSeed() {
-	run := ss.StartRun + ss.TrainEnv.Run.Cur
+	//run := ss.StartRun + ss.TrainEnv.Run.Cur
+	run := ss.TrainEnv.Run.Cur //todo change back to keep original logic, doing this to match currnetl ogic
 	rand.Seed(ss.RndSeeds[run])
 }
 
@@ -835,6 +837,7 @@ func (ss *Sim) NewRun() {
 	ss.TrainEnv.Init(run)
 	ss.TestEnv.Init(run)
 	ss.Time.Reset()
+	ss.InitRndSeed()
 	ss.Net.InitWts()
 	ss.LoadPretrainedWts()
 	ss.InitStats()
