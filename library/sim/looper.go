@@ -96,7 +96,7 @@ func (ss *Sim) ApplyInputs(env Environment) {
 	}
 }
 
-func (ss *Sim) loopTrial(stopScale axon.TimeScales) {
+func (ss *Sim) LoopTrial(stopScale axon.TimeScales) {
 	if (*ss.Trainer.CurEnv).Trial().Cur == -1 {
 		// This is a hack, and it should be initialized at 0
 		(*ss.Trainer.CurEnv).Trial().Cur = 0
@@ -122,13 +122,13 @@ func (ss *Sim) loopTrial(stopScale axon.TimeScales) {
 	}
 }
 
-// LoopEpoch runs until the end of the Epoch, then updates logs.h
+// LoopEpoch runs until the end of the Epoch, then updates logs.
 func (ss *Sim) LoopEpoch(stopScale axon.TimeScales) {
 	if (*ss.Trainer.CurEnv).Trial().Cur == 0 {
 		ss.Trainer.OnEpochStart()
 	}
 	for ; (*ss.Trainer.CurEnv).Trial().Cur < (*ss.Trainer.CurEnv).Trial().Max; (*ss.Trainer.CurEnv).Trial().Cur += 1 {
-		ss.loopTrial(stopScale)
+		ss.LoopTrial(stopScale)
 		if stopScale == axon.Trial {
 			ss.GUI.StopNow = true
 			(*ss.Trainer.CurEnv).Trial().Cur += 1
@@ -255,7 +255,7 @@ func (ss *Sim) TestTrial() {
 	ss.Trainer.EvalMode = elog.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	// ss.TestEnv.Init(ss.Run.Cur) // TODO Should this happen?
-	ss.loopTrial(axon.TimeScalesN) // Do one trial. No need to advance Epoch or Run.
+	ss.LoopTrial(axon.TimeScalesN) // Do one trial. No need to advance Epoch or Run.
 }
 
 // TestAll runs through the full set of testing items for the current run.
