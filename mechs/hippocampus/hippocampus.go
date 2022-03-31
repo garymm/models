@@ -145,7 +145,7 @@ func Config(ss *HipSim) {
 	ConfigHipItems(&ss.Sim)
 	ss.ConfigLogs()
 	common.AddDefaultTrainCallbacks(&ss.Sim)
-	AddHipCallbacks(&ss.Sim)
+	AddHipCallbacks(ss)
 
 	conditionEnvs := TrainEnv.AddTaskSwitching(&ss.Sim)
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, *conditionEnvs)
@@ -572,7 +572,7 @@ func AddHipCallbacks(ss *HipSim) {
 			if ss.Trainer.EvalMode == elog.Train {
 				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
 					// Unlike some testing setups, we only do one epoch of test instead of a whole run.
-					TestAllConditions(ss)
+					TestAllConditions(&ss.Sim)
 					ss.Trainer.EvalMode = elog.Train // Important to set these back because TestEpoch sets them to Test.
 					ss.Trainer.CurEnv = &ss.TrainEnv
 				}
