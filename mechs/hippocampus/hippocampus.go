@@ -565,7 +565,7 @@ func TestAllConditions(ss *sim.Sim) {
 	ss.LoopEpoch(axon.TimeScalesN) // Do one epoch.
 }
 
-func AddHipCallbacks(ss *sim.Sim) {
+func AddHipCallbacks(ss *HipSim) {
 	// Testing
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnEpochEnd: func() {
@@ -580,7 +580,7 @@ func AddHipCallbacks(ss *sim.Sim) {
 		},
 	})
 
-	// These are assigned to actual values at the top of the theta cycle, below.
+	// These are assigned to actual values at the top of the theta cycle, below. Since we are using closure
 	var ca1 *axon.Layer
 	var ca3 *axon.Layer
 	//var ecin *axon.Layer
@@ -608,18 +608,18 @@ func AddHipCallbacks(ss *sim.Sim) {
 			if ss.Trainer.EvalMode == elog.Train {
 				ca3FmDg.PrjnScale.Rel = dgwtscale // restore after 1st quarter
 			} else {
-				ca3FmDg.PrjnScale.Rel = dgwtscale - 0 //TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
+				ca3FmDg.PrjnScale.Rel = dgwtscale - ss.Hip.MossyDelTest //TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
 				//ca3FmDg.PrjnScale.Rel = dgwtscale - ss.Hip.MossyDelTest // testing
 			}
 			ss.Net.InitGScale() // update computed scaling factors
 		},
-	}, sim.ThetaPhase{
+	}, {
 		Name:     "Q2",
 		Duration: 50,
 		PhaseEnd: func() {
 			ss.Net.ActSt2(&ss.Time)
 		},
-	}, sim.ThetaPhase{
+	}, {
 		Name:     "Q3",
 		Duration: 50,
 		PhaseEnd: func() { // Fourth Quarter: CA1 back to ECin drive only
