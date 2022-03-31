@@ -25,6 +25,10 @@ func (ss *Sim) ConfigLogsFromArgs() {
 		fnm := ss.LogFileName("run")
 		ss.Logs.SetLogFile(elog.Train, elog.Run, fnm)
 	}
+	if ss.CmdArgs.saveTrialLog {
+		fnm := ss.LogFileName("testtrial")
+		ss.Logs.SetLogFile(elog.Test, elog.Trial, fnm)
+	}
 }
 
 func (ss *Sim) ConfigLogs() {

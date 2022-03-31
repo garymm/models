@@ -22,13 +22,14 @@ type CmdArgs struct {
 	RndSeeds       []int64          `desc:"a list of random seeds to use for each run"`
 	NetData        *netview.NetData `desc:"net data for recording in nogui mode"`
 
-	saveEpcLog  bool
-	saveRunLog  bool
-	saveNetData bool
-	note        string
-	hyperFile   string
-	paramsFile  string
-	noRun       bool
+	saveEpcLog   bool
+	saveRunLog   bool
+	saveTrialLog bool // Test Trial
+	saveNetData  bool
+	note         string
+	hyperFile    string
+	paramsFile   string
+	noRun        bool
 
 	MaxRuns      int `desc:"maximum number of model runs to perform (starting from StartRun)"`
 	MaxEpcs      int `desc:"maximum number of epochs to run per model run"`
@@ -49,6 +50,7 @@ func (ss *Sim) ParseArgs() {
 	flag.BoolVar(&ss.CmdArgs.SaveWts, "wts", false, "if true, save final weights after each run")
 	flag.StringVar(&ss.CmdArgs.note, "note", "", "user note -- describe the run params etc")
 	flag.BoolVar(&ss.CmdArgs.saveEpcLog, "epclog", true, "if true, save train epoch log to file")
+	flag.BoolVar(&ss.CmdArgs.saveTrialLog, "triallog", true, "if true, save test trial log to file. May be large.")
 	flag.BoolVar(&ss.CmdArgs.saveRunLog, "runlog", true, "if true, save run log to file")
 	flag.BoolVar(&ss.CmdArgs.saveNetData, "netdata", false, "if true, save network activation etc data from testing trials, for later viewing in netview")
 	flag.BoolVar(&ss.CmdArgs.NoGui, "nogui", len(os.Args) > 1, "if not passing any other args and want to run nogui, use nogui")
