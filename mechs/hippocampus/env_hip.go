@@ -163,6 +163,10 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 		max := TrainEnv.Epoch().Max
 		cur := TrainEnv.Epoch().Cur
 
+		if TrainEnv.Epoch().Cur == 8 {
+			t := 0
+			t++
+		}
 		if TrainEnv.EvalTables[TrainAB] == TrainEnv.Table.Table {
 			if learned || cur == max/2 {
 				TrainEnv.AssignTable(string(TrainAC))
@@ -204,8 +208,8 @@ func calcMem(ss *sim.Sim) float64 {
 //Move this to log items
 func updateNZeroAndFirstZero(ss *sim.Sim) {
 	mem := calcMem(ss)
-	if ss.Stats.Int("HipFirst") < 0 && mem == 1 {
-		ss.Stats.SetInt("HipFirst", ss.TrainEnv.Epoch().Cur)
+	if ss.Stats.Int("HipFirstZero") < 0 && mem == 1 {
+		ss.Stats.SetInt("HipFirstZero", ss.TrainEnv.Epoch().Cur)
 	}
 	if mem == 1 {
 		ss.Stats.SetInt("HipNZero", ss.Stats.Int("HipNZero")+1)
