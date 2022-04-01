@@ -159,7 +159,7 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 
 		numberZero := ss.Stats.Int("HipNZero")
 		nzeroStop := ss.Stats.Int("NZeroStop")
-		learned := (numberZero > 0 && nzeroStop >= numberZero)
+		learned := (numberZero > 0 && numberZero >= nzeroStop)
 		max := TrainEnv.Epoch().Max
 		cur := TrainEnv.Epoch().Cur
 
@@ -197,10 +197,13 @@ func calcMem(ss *sim.Sim) float64 {
 	//this should be in trainenv, or used when adding log items,
 	isAB := TrainEnv.Table.Table == TrainEnv.EvalTables[TrainAB]
 	var mem float64
+
+	table := ss.Logs.Table(elog.Test, elog.Epoch)
+
 	if isAB {
-		mem = ss.Logs.Context.ItemFloat(elog.Test, elog.Epoch, "AB Mem")
+		mem = ss.Logs.Table(elog.Test, elog.Epoch).CellFloat("AB Mem", table.Rows-1)
 	} else {
-		mem = ss.Logs.Context.ItemFloat(elog.Test, elog.Epoch, "AC Mem")
+		mem = ss.Logs.Table(elog.Test, elog.Epoch).CellFloat("AC Mem", table.Rows-1)
 	}
 	return mem
 }
