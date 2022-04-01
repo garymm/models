@@ -549,7 +549,6 @@ func ReconfigPatsAndNet(ss *HipSim) {
 
 // testEpochHip is copied from looper.go's loopEpoch, except that it does not update the logs at the end, and it's only testing stuff, and it can't be interrupted.
 func testEpochHip(ss *sim.Sim) {
-	ss.Logs.ResetLog(elog.Test, elog.Trial)
 	ss.Trainer.OnEpochStart()
 	for ss.TestEnv.Trial().Cur = 0; ss.TestEnv.Trial().Cur < ss.TestEnv.Trial().Max; ss.TestEnv.Trial().Cur += 1 {
 		ss.LoopTrial(axon.Epoch)
@@ -561,6 +560,7 @@ func testEpochHip(ss *sim.Sim) {
 func TestAllConditions(ss *sim.Sim) {
 	ss.Trainer.EvalMode = elog.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
+	ss.Logs.ResetLog(elog.Test, elog.Trial)
 
 	ss.TestEnv.AssignTable(string(TestAB))
 	ss.TestEnv.Init(ss.Run.Cur)
@@ -570,10 +570,9 @@ func TestAllConditions(ss *sim.Sim) {
 	ss.TestEnv.Init(ss.Run.Cur)
 	testEpochHip(ss)
 
-	// TODO Uncomment
-	//ss.TestEnv.AssignTable(string(TestLure))
-	//ss.TestEnv.Init(ss.Run.Cur)
-	//testEpochHip(ss)
+	ss.TestEnv.AssignTable(string(TestLure))
+	ss.TestEnv.Init(ss.Run.Cur)
+	testEpochHip(ss)
 
 	// Log only after all conditions have been tested.
 	ss.Log(ss.Trainer.EvalMode, elog.Epoch)

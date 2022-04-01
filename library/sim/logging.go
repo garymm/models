@@ -73,8 +73,29 @@ func (ss *Sim) LogFileName(lognm string) string {
 	return ss.Net.Nm + "_" + ss.RunName() + "_" + lognm + ".tsv"
 }
 
-// Log is the main logging function, handles special things for different scopes
+// Log is the main logging function, handles special things for different scopes. It always logs to the end of the log.
 func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
+	dt := ss.Logs.Table(mode, time)
+	row := dt.Rows
+	if mode == elog.Test && time == elog.Epoch {
+		ss.LogTestErrors()
+	}
+
+	ss.Logs.LogRow(mode, time, row) // also logs to file, etc
+	if time == elog.Cycle {
+		ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
+	} else {
+		ss.GUI.UpdatePlot(mode, time)
+	}
+
+	switch {
+	case mode == elog.Train && time == elog.Run:
+		ss.LogRunStats()
+	}
+}
+
+// LogMiddle is like Log, but it doesn't always log to the end.
+func (ss *Sim) LogMiddle(mode elog.EvalModes, time elog.Times) {
 	dt := ss.Logs.Table(mode, time)
 	row := dt.Rows
 	switch {
