@@ -206,10 +206,6 @@ func calcMem(ss *sim.Sim) float64 {
 		mem = table.CellFloat("AC Mem", table.Rows-1)
 	}
 
-	if mem == 1 {
-		t := 0
-		t++
-	}
 	return mem
 }
 

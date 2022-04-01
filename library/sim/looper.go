@@ -125,6 +125,7 @@ func (ss *Sim) LoopTrial(stopScale axon.TimeScales) {
 // LoopEpoch runs until the end of the Epoch, then updates logs.
 func (ss *Sim) LoopEpoch(stopScale axon.TimeScales) {
 	if (*ss.Trainer.CurEnv).Trial().Cur == 0 {
+		ss.Logs.ResetLog(ss.Trainer.EvalMode, elog.Trial)
 		ss.Trainer.OnEpochStart()
 	}
 	for ; (*ss.Trainer.CurEnv).Trial().Cur < (*ss.Trainer.CurEnv).Trial().Max; (*ss.Trainer.CurEnv).Trial().Cur += 1 {
@@ -161,6 +162,7 @@ func (ss *Sim) NewRun() {
 	ss.InitStats()
 	ss.UpdateNetViewText(true)
 
+	// TODO Should this reset all non-run logs?
 	ss.Logs.ResetLog(elog.Train, elog.Epoch)
 	ss.Logs.ResetLog(elog.Test, elog.Epoch)
 	ss.CmdArgs.NeedsNewRun = false
