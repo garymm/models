@@ -201,9 +201,14 @@ func calcMem(ss *sim.Sim) float64 {
 	table := ss.Logs.Table(elog.Test, elog.Epoch)
 
 	if isAB {
-		mem = ss.Logs.Table(elog.Test, elog.Epoch).CellFloat("AB Mem", table.Rows-1)
+		mem = table.CellFloat("AB Mem", table.Rows-1)
 	} else {
-		mem = ss.Logs.Table(elog.Test, elog.Epoch).CellFloat("AC Mem", table.Rows-1)
+		mem = table.CellFloat("AC Mem", table.Rows-1)
+	}
+
+	if mem == 1 {
+		t := 0
+		t++
 	}
 	return mem
 }
