@@ -34,7 +34,28 @@ def get_hypers():
     return params
 
 
+def get_val_from_logs(logs_name: str, variable_name: str, index: int):
+    return pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")[variable_name].values[index]
+
+
+# def get_average_val_from_logs(logs_name: str, variable_name: str):
+#     for i in range(0 if USE_AVERAGE_VALUE else len(log) - 1, len(log)):
+
+
+# TODO This function could be cleaned up a bit. It's got some special cases.
 def get_score_from_logs(logs_name: str):
+    if VARIABLE_TO_OPTIMIZE == "hippo":
+        ab_mems = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")["#ABEndMem"]
+        time_to_success = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")["|ACSuccessEpoch"]
+        score_sum = 0.0
+        score_count = 0
+        log_len = len(ab_mems)
+        for i in range(0 if USE_AVERAGE_VALUE else log_len - 1, log_len):
+            # Use time_to_success as a tie-breaker.
+            score_sum += ab_mems.value[i] + 0.01 * time_to_success.value[i]
+            score_count += 1
+        return float(score_sum / score_count)
+
     score_sum = 0.0
     score_count = 0
     log = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")[VARIABLE_TO_OPTIMIZE]
@@ -42,7 +63,7 @@ def get_score_from_logs(logs_name: str):
     first_zero = pd.read_csv('logs/{}_{}_run.tsv'.format(MECHNAME, logs_name), sep="\t")["|FirstZero"].values[-1]
     for i in range(0 if USE_AVERAGE_VALUE else len(log) - 1, len(log)):
         score = log.values[i]
-        # I don't know where the # or | comes from.
+        # | means integer, $ means string, and # means float
         if VARIABLE_TO_OPTIMIZE in ["#LastZero", "|LastZero"] and score == -1 and first_zero > 0:
             # TODO This is a bit of a hack and it would be nice if it were parameterized somehow.
             score = first_zero * 4  # Fallback to FirstZero if LastZero isn't achieved.

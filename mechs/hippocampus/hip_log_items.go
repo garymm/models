@@ -92,9 +92,16 @@ func ConfigHipItems(ss *sim.Sim) {
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
 			elog.Scope(elog.Test, elog.Trial): func(ctx *elog.Context) {
-				testName := "AB"
+				testName := "UNKNOWN"
+				// These need to match up with tstNms below.
+				if ss.TestEnv.Desc() == "TestAB" {
+					testName = "AB"
+				}
 				if ss.TestEnv.Desc() == "TestAC" {
 					testName = "AC"
+				}
+				if ss.TestEnv.Desc() == "TestLure" {
+					testName = "Lure"
 				}
 				// Handle other cases here.
 				ctx.SetString(testName)
@@ -115,7 +122,7 @@ func ConfigHipItems(ss *sim.Sim) {
 				plot = elog.DTrue
 			}
 			ss.Logs.AddItem(&elog.Item{
-				Name:   tn + " " + ts,
+				Name:   tn + "_" + ts,
 				Type:   etensor.FLOAT64,
 				Plot:   plot,
 				FixMax: elog.DTrue,
@@ -140,15 +147,38 @@ func ConfigHipItems(ss *sim.Sim) {
 								}
 							}
 						}
-
-						//ctx.SetStatFloat("TrgOffWasOn") // TODO What?
 					},
-					//elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
-					//	ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
-					//},
 				}})
 		}
 	}
 
-	//ss.Logs.Log(elog.Test,elog.Epoch).CellFloat("AB Mem")
+	// Run level aggregates
+	ss.Logs.AddItem(&elog.Item{
+		Name: "ABEndMem",
+		Type: etensor.FLOAT64,
+		Plot: elog.DTrue,
+		Write: elog.WriteMap{
+			elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
+				ix := ctx.Logs.IdxViewScope(elog.Scope(elog.Test, elog.Epoch))
+				lastAbMem := ix.Table.CellFloat("AB_Mem", ix.Table.Rows-1) //.Col(ix.Table.ColIdx("AB_Mem"))
+				//for am : abmems.
+				// TODO Get AB Mem at last epoch
+				ctx.SetFloat64(lastAbMem)
+			},
+		}})
+
+	ss.Logs.AddItem(&elog.Item{
+		// TODO Could be named ACSuccessEpoch, but name is used for SetAgg
+		Name: "ACSuccessEpoch",
+		Type: etensor.INT64,
+		Plot: elog.DTrue,
+		Write: elog.WriteMap{
+			elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
+				// TODO Get num of epoch at stop
+				//ctx.SetFloat32(0)
+				//ctx.SetAgg(elog.Test, elog.Epoch, agg.AggMax)
+				maxo := ctx.SetAggItemScope(elog.Scope(elog.Test, elog.Epoch), "Epoch", agg.AggMax)
+				print(maxo) // DO NOT SUBMIT
+			},
+		}})
 }

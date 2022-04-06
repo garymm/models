@@ -570,9 +570,10 @@ func TestAllConditions(ss *sim.Sim) {
 	ss.TestEnv.Init(ss.Run.Cur)
 	testEpochHip(ss)
 
-	ss.TestEnv.AssignTable(string(TestLure))
-	ss.TestEnv.Init(ss.Run.Cur)
-	testEpochHip(ss)
+	// TODO Commented out because it's slow and unnecessary.
+	//ss.TestEnv.AssignTable(string(TestLure))
+	//ss.TestEnv.Init(ss.Run.Cur)
+	//testEpochHip(ss)
 
 	// Log only after all conditions have been tested.
 	ss.Log(ss.Trainer.EvalMode, elog.Epoch)
