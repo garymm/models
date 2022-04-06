@@ -52,7 +52,7 @@ def get_score_from_logs(logs_name: str):
         log_len = len(ab_mems)
         for i in range(0 if USE_AVERAGE_VALUE else log_len - 1, log_len):
             # Use time_to_success as a tie-breaker.
-            score_sum += ab_mems.value[i] + 0.01 * time_to_success.value[i]
+            score_sum += ab_mems.value[i] - 0.01 * time_to_success.value[i]
             score_count += 1
         return float(score_sum / score_count)
 
