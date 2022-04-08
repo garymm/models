@@ -249,6 +249,8 @@ def main():
         better_direction_sign=better_direction_sign, is_wandb_logging_enabled=optimization.WANDLOGGING, initial_search_radius=0.5, resample_frequency=-1
     )
 
+    assert len(params_space_by_name) > 0
+
     bones = BONES(bone_params, params_space_by_name)
     bones.set_search_center(initial_params)
     if optimization.WANDLOGGING:

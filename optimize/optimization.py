@@ -77,7 +77,7 @@ def get_score_from_logs(logs_name: str):
 
 def enumerate_parameters_to_modify(params: list):
     params_relations = []
-    assert len(params) == 1
+    #assert len(params) == 1
     index = 0
     for name in params[0]["Sheets"]:
         for idx in range(len(params[0]["Sheets"][name])):

@@ -66,6 +66,8 @@ func ConfigParams(ss *sim.Sim) {
 						"Layer.Act.Decay.Act":      "1.0",   // 1.0 both is best by far!
 						"Layer.Act.Decay.Glong":    "1.0",
 						"Layer.Inhib.Pool.Bg":      "0.0",
+					}, Hypers: params.Hypers{
+						"Layer.Act.Gbar.L": {"StdDev": "0.1"},
 					}},
 				{Sel: ".EC", Desc: "all EC layers: only pools, no layer-level",
 					Params: params.Params{
@@ -111,11 +113,15 @@ func ConfigParams(ss *sim.Sim) {
 				{Sel: ".EcCa1Prjn", Desc: "encoder projections",
 					Params: params.Params{
 						"Prjn.Learn.Lrate.Base": "0.04", // 0.04 for Axon -- 0.01 for EcCa1
+					}, Hypers: params.Hypers{
+						"Prjn.Learn.Lrate.Base": {"StdDev": "0.02"},
 					}},
 				{Sel: ".HippoCHL", Desc: "hippo CHL projections",
 					Params: params.Params{
 						"Prjn.CHL.Hebb":         "0.05",
 						"Prjn.Learn.Lrate.Base": "0.02", // .2 def
+					}, Hypers: params.Hypers{
+						"Prjn.Learn.Lrate.Base": {"StdDev": "0.04", "Min": "0"},
 					}},
 				{Sel: ".PPath", Desc: "perforant path, new Dg error-driven EcCa1Prjn prjns",
 					Params: params.Params{
