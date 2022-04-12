@@ -91,8 +91,9 @@ func ConfigParams(ss *sim.Sim) {
 			"NetSize": &params.Sheet{
 				{Sel: ".Hidden", Desc: "all hidden layers",
 					Params: params.Params{
-						"Layer.X": "10", //todo layer size correspondence between areas that are connected upstream parameter - get there when we get there
-						"Layer.Y": "10",
+						"Layer.X":         "10", //todo layer size correspondence between areas that are connected upstream parameter - get there when we get there
+						"Layer.Y":         "10",
+						"NumHiddenLayers": "2", //todo not implemented
 					},
 					Hypers: params.Hypers{
 						//"Layer.X": {"StdDev": "0.3", "Min": "2", "Type": "Int"},

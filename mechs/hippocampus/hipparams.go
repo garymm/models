@@ -121,7 +121,7 @@ func ConfigParams(ss *sim.Sim) {
 						"Prjn.CHL.Hebb":         "0.05",
 						"Prjn.Learn.Lrate.Base": "0.02", // .2 def
 					}, Hypers: params.Hypers{
-						"Prjn.Learn.Lrate.Base": {"StdDev": "0.04", "Min": "0"},
+						"Prjn.Learn.Lrate.Base": {"StdDev": "0.01", "Min": "0"},
 					}},
 				{Sel: ".PPath", Desc: "perforant path, new Dg error-driven EcCa1Prjn prjns",
 					Params: params.Params{

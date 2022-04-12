@@ -29,12 +29,12 @@ type CmdArgs struct {
 	note         string
 	hyperFile    string
 	paramsFile   string
-	noRun        bool
 
-	MaxRuns      int `desc:"maximum number of model runs to perform (starting from StartRun)"`
-	MaxEpcs      int `desc:"maximum number of epochs to run per model run"`
-	StartRun     int `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
-	PreTrainEpcs int `desc:"number of epochs to run for pretraining"`
+	NoRun        bool `desc:"If true, don't run at all.'"`
+	MaxRuns      int  `desc:"maximum number of model runs to perform (starting from StartRun)"`
+	MaxEpcs      int  `desc:"maximum number of epochs to run per model run"`
+	StartRun     int  `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
+	PreTrainEpcs int  `desc:"number of epochs to run for pretraining"`
 }
 
 // ParseArgs updates the Sim object with command line arguments.
@@ -61,7 +61,8 @@ func (ss *Sim) ParseArgs() {
 	if ss.CmdArgs.hyperFile != "" {
 		file, _ := json.MarshalIndent(ss.Params.Params, "", "  ")
 		_ = ioutil.WriteFile(ss.CmdArgs.hyperFile, file, 0644)
-		ss.CmdArgs.noRun = true
+		ss.CmdArgs.NoRun = true
+		ss.CmdArgs.NoGui = true
 		return
 	}
 
@@ -114,7 +115,7 @@ func (ss *Sim) ApplyHyperFromCMD(path string) {
 
 // RunFromArgs uses command line arguments to run the model.
 func (ss *Sim) RunFromArgs() {
-	if ss.CmdArgs.noRun {
+	if ss.CmdArgs.NoRun {
 		return
 	}
 	ss.Init()

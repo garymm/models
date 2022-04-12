@@ -31,8 +31,8 @@ import (
 
 var ProgramName = "Hippocampus"
 
-var TestEnv = EnvHip{IsTest: true}
-var TrainEnv = EnvHip{}
+var TestEnvHip = EnvHip{IsTest: true}
+var TrainEnvHip = EnvHip{}
 
 // TrialStats computes the trial-level statistics and adds them to the epoch accumulators if
 // accum is true.  Note that we're accumulating stats here on the Sim side so the
@@ -83,8 +83,10 @@ func main() {
 	Config(&TheSim)
 
 	if TheSim.CmdArgs.NoGui {
-		PreTrain(&TheSim.Sim)
-		TheSim.RunFromArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
+		if !TheSim.CmdArgs.NoRun {
+			PreTrain(&TheSim.Sim)
+		}
+		TheSim.RunFromArgs()
 	} else {
 		gimain.Main(func() { // this starts gui -- requires valid OpenGL display connection (e.g., X11)
 			window := TheSim.ConfigGui(ProgramName, "Hippocampus AB-AC", `This demonstrates a basic Hippocampus model in Axon. See <a href="https://github.com/emer/emergent">emergent on GitHub</a>.</p>`)
@@ -106,21 +108,21 @@ func OpenPat(dt *etable.Table, fname, name, desc string) {
 }
 
 func OpenFixedPatterns(ss *HipSim) {
-	OpenPat(TrainEnv.EvalTables[TrainAB], "hippoinputs/trainab.tsv", "TrainAB", "")
-	OpenPat(TrainEnv.EvalTables[TrainAC], "hippoinputs/trainac.tsv", "TrainAC", "")
-	OpenPat(TrainEnv.EvalTables[TrainAll], "hippoinputs/trainall.tsv", "TrainAll", "")
+	OpenPat(TrainEnvHip.EvalTables[TrainAB], "hippoinputs/trainab.tsv", "TrainAB", "")
+	OpenPat(TrainEnvHip.EvalTables[TrainAC], "hippoinputs/trainac.tsv", "TrainAC", "")
+	OpenPat(TrainEnvHip.EvalTables[TrainAll], "hippoinputs/trainall.tsv", "TrainAll", "")
 
-	OpenPat(TestEnv.EvalTables[TestAB], "hippoinputs/testab.tsv", "TestAB", "")
-	OpenPat(TestEnv.EvalTables[TestAC], "hippoinputs/testac.tsv", "TestAC", "")
-	OpenPat(TestEnv.EvalTables[TestLure], "hippoinputs/testlure.tsv", "TestLure", "")
+	OpenPat(TestEnvHip.EvalTables[TestAB], "hippoinputs/testab.tsv", "TestAB", "")
+	OpenPat(TestEnvHip.EvalTables[TestAC], "hippoinputs/testac.tsv", "TestAC", "")
+	OpenPat(TestEnvHip.EvalTables[TestLure], "hippoinputs/testlure.tsv", "TestLure", "")
 
 }
 
 // Config configures all the elements using the standard functions
 func Config(ss *HipSim) {
 	// These need to be initialized before ConfigPats
-	TrainEnv.InitTables(TrainAB, TrainAC, PretrainLure, TrainAll)
-	TestEnv.InitTables(TestAB, TestAC, TestLure)
+	TrainEnvHip.InitTables(TrainAB, TrainAC, PretrainLure, TrainAll)
+	TestEnvHip.InitTables(TestAB, TestAC, TestLure)
 
 	ConfigPats(ss)
 	OpenFixedPatterns(ss) //todo ths is for debugging, shoudl be removed later
@@ -147,7 +149,7 @@ func Config(ss *HipSim) {
 	common.AddDefaultTrainCallbacks(&ss.Sim)
 	AddHipCallbacks(ss)
 
-	conditionEnvs := TrainEnv.AddTaskSwitching(&ss.Sim)
+	conditionEnvs := TrainEnvHip.AddTaskSwitching(&ss.Sim)
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, *conditionEnvs)
 }
 
@@ -208,9 +210,9 @@ func ConfigGui(ss *HipSim) {
 //// 		Configs
 
 func ConfigEnv(ss *HipSim) {
-	ss.TestEnv = &TestEnv
-	ss.TrainEnv = &TrainEnv
-	TestEnv.TrainEnv = &TrainEnv
+	ss.TestEnv = &TestEnvHip
+	ss.TrainEnv = &TrainEnvHip
+	TestEnvHip.TrainEnv = &TrainEnvHip
 	ss.CmdArgs.PreTrainEpcs = 10    //from hip sim
 	ss.Stats.SetInt("NZeroStop", 1) //TODO move this, should be a command line args
 	ss.TrialStatsFunc = TrialStats
@@ -218,26 +220,26 @@ func ConfigEnv(ss *HipSim) {
 	// TODO PCA seems to hang in internal Dlatrd function for hippocampus.
 	ss.PCAInterval = -1
 
-	TrainEnv.Nm = "TrainEnv"
-	TrainEnv.Dsc = "training params and state"
+	TrainEnvHip.Nm = "TrainEnv"
+	TrainEnvHip.Dsc = "training params and state"
 
-	TrainEnv.Table = etable.NewIdxView(TrainEnv.EvalTables[TrainAB])
-	TrainEnv.CurrentTableName = string(TrainAB)
+	TrainEnvHip.Table = etable.NewIdxView(TrainEnvHip.EvalTables[TrainAB])
+	TrainEnvHip.CurrentTableName = string(TrainAB)
 	// to simulate training items in order, uncomment this line:
 	// ss.TrainEnv.Sequential = true
-	TrainEnv.SetSequential(true) //todo this should be removed, this is done to compare between original and old
-	TrainEnv.Validate()
+	TrainEnvHip.SetSequential(true) //todo this should be removed, this is done to compare between original and old
+	TrainEnvHip.Validate()
 	ss.Run.Max = ss.CmdArgs.MaxRuns
 	ss.Run.Cur = ss.CmdArgs.StartRun
-	TrainEnv.Epoch().Max = ss.CmdArgs.MaxEpcs
+	TrainEnvHip.Epoch().Max = ss.CmdArgs.MaxEpcs
 
 	// MaxEpcs is consulted for early stopping in TrainTrial and is split between AB and AC
 
-	TestEnv.Nm = "TestEnv"
-	TestEnv.Dsc = "testing params and state"
-	TestEnv.Table = etable.NewIdxView(TestEnv.EvalTables[TestAB])
-	TestEnv.CurrentTableName = string(TestAB)
-	TestEnv.SetSequential(true)
+	TestEnvHip.Nm = "TestEnv"
+	TestEnvHip.Dsc = "testing params and state"
+	TestEnvHip.Table = etable.NewIdxView(TestEnvHip.EvalTables[TestAB])
+	TestEnvHip.CurrentTableName = string(TestAB)
+	TestEnvHip.SetSequential(true)
 	ss.TestEnv.Validate()
 
 	ss.TrainEnv.Init(ss.CmdArgs.StartRun)
@@ -249,8 +251,8 @@ func ConfigEnv(ss *HipSim) {
 //ConfigPats used to configure patterns
 func ConfigPats(ss *HipSim) {
 
-	trainEnv := &TrainEnv
-	testEnv := &TestEnv
+	trainEnv := &TrainEnvHip
+	testEnv := &TestEnvHip
 	hp := &ss.Hip
 	ecY := hp.ECSize.Y
 	ecX := hp.ECSize.X

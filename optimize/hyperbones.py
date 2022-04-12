@@ -57,7 +57,7 @@ def create_bones_suggested_params(params, suggestions, trial_name: str):
                                                info["values"]["Hypers"][info["paramname"]])
         info["values"]["Params"][info["paramname"]] = str(value_to_assign)
     # This creates a version of Params that has stripped out everything that didn't have Hypers
-    updated_parameters = (optimization.create_hyperonly(cparams, trial_name))
+    updated_parameters = optimization.create_hyperonly(cparams, trial_name)
     # print(updated_parameters)
     return updated_parameters
 
@@ -244,7 +244,7 @@ def main():
     params_space_by_name = prep_params_dict["paramspace_conditions"]
 
     better_direction_sign = -1 if optimization.MINIMIZE else 1
-    print("BETTER DIRECTION: " + str(better_direction_sign))
+    #print("BETTER DIRECTION: " + str(better_direction_sign))
     bone_params = BONESParams(
         better_direction_sign=better_direction_sign, is_wandb_logging_enabled=optimization.WANDLOGGING, initial_search_radius=0.5, resample_frequency=-1
     )

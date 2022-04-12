@@ -43,7 +43,7 @@ func PreTrain(ss *sim.Sim) {
 	ss.GUI.Stopped()
 }
 
-// PreTrainTrial runs one trial of pretraining using TrainEnv
+// PreTrainTrial runs one trial of pretraining using ss.TrainEnv
 // returns true if done with pretraining
 func PreTrainTrial(ss *sim.Sim) bool {
 	//if ss.NeedsNewRun {

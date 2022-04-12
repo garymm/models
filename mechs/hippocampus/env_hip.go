@@ -154,22 +154,22 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 		if ss.Trainer.EvalMode == elog.Train {
 			//For clarity, this is calculating Nzero and First zero in regards to testing AC and testing AB,
 			//the reason is that at end of training epoch we at least one epoch of testing
-			updateNZeroAndFirstZero(ss)
+			updateNZeroAndFirstZero(ss, envhip)
 		}
 
 		numberZero := ss.Stats.Int("HipNZero")
 		nzeroStop := ss.Stats.Int("NZeroStop")
 		learned := (numberZero > 0 && numberZero >= nzeroStop)
-		max := TrainEnv.Epoch().Max
-		cur := TrainEnv.Epoch().Cur
+		max := envhip.Epoch().Max
+		cur := envhip.Epoch().Cur
 
-		if TrainEnv.Epoch().Cur == 8 {
+		if envhip.Epoch().Cur == 8 {
 			t := 0
 			t++
 		}
-		if TrainEnv.EvalTables[TrainAB] == TrainEnv.Table.Table {
+		if envhip.EvalTables[TrainAB] == envhip.Table.Table {
 			if learned || cur == max/2 {
-				TrainEnv.AssignTable(string(TrainAC))
+				ss.TrainEnv.AssignTable(string(TrainAC))
 				ss.Stats.SetInt("HipNZero", 0)
 			}
 		}
@@ -180,7 +180,7 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 		nzeroStop := ss.Stats.Int("NZeroStop")
 		learned := (numberZero > 0 && numberZero >= nzeroStop)
 
-		if TrainEnv.EvalTables[TrainAC] == TrainEnv.Table.Table {
+		if envhip.EvalTables[TrainAC] == envhip.Table.Table {
 			if learned {
 				return true
 			}
@@ -192,10 +192,10 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 	return &taskSwitching
 }
 
-func calcMem(ss *sim.Sim) float64 {
+func calcMem(ss *sim.Sim, trainEnv *EnvHip) float64 {
 	// base zero on testing performance! -
 	//this should be in trainenv, or used when adding log items,
-	isAB := TrainEnv.Table.Table == TrainEnv.EvalTables[TrainAB]
+	isAB := trainEnv.Table.Table == trainEnv.EvalTables[TrainAB]
 	var mem float64
 
 	table := ss.Logs.Table(elog.Test, elog.Epoch)
@@ -210,8 +210,8 @@ func calcMem(ss *sim.Sim) float64 {
 }
 
 //Move this to log items
-func updateNZeroAndFirstZero(ss *sim.Sim) {
-	mem := calcMem(ss)
+func updateNZeroAndFirstZero(ss *sim.Sim, trainEnv *EnvHip) {
+	mem := calcMem(ss, trainEnv)
 	if ss.Stats.Int("HipFirstZero") < 0 && mem == 1 {
 		ss.Stats.SetInt("HipFirstZero", ss.TrainEnv.Epoch().Cur)
 	}

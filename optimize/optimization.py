@@ -21,7 +21,7 @@ GO_ARGS = ""
 
 
 def get_hypers():
-    hyper_file = "hyperparamsExample.json" #this
+    hyper_file = "hyperparams_tmp.json" #this
     # Run go with -hyperFile cmd arg to save them to file
     #print("GETTING HYPERPARAMETERS")
     run_model("-hyperFile=" + hyper_file)
@@ -99,7 +99,7 @@ def create_hyperonly(params, logs_name: str):
         "Desc": "Parameters suggested by optimizer",
         "Sheets": {}
     }
-    assert len(params) == 1
+    # assert len(params) == 1
     for name in params[0]["Sheets"]:
         duplicate["Sheets"][name] = []
         for idx in range(len(params[0]["Sheets"][name])):
@@ -122,7 +122,8 @@ def run_model(args):
         gocommand = "/usr/local/go/bin/go"
     elif str(os.popen("test -f /usr/local/opt/go/libexec/bin/go && echo mac").read()).strip() == "mac":
         gocommand = "/usr/local/opt/go/libexec/bin/go"
-    commando = gocommand + " run mechs/{}/*[^test].go ".format(EXECUTABLE_PATH) + args + " " + GO_ARGS
+    # Make sure to exclude test files!
+    commando = gocommand + " run `ls mechs/{}/*.go | grep -v _test` ".format(EXECUTABLE_PATH) + args + " " + GO_ARGS
     print("Running this command: " + commando)
     # -params=Searching_6 -paramsFile=hyperparamsSearching_6.json -nogui=true -epclog=true -runs=2 -epochs=150 -randomize=true
     os.system(commando)
