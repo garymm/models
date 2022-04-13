@@ -125,14 +125,14 @@ func Config(ss *HipSim) {
 	TestEnvHip.InitTables(TestAB, TestAC, TestLure)
 
 	ConfigPats(ss)
-	OpenFixedPatterns(ss) //todo ths is for debugging, shoudl be removed later
+	//OpenFixedPatterns(ss) //todo ths is for debugging, shoudl be removed later
 
 	ss.Initialization = func() {
 		ss.InitRndSeed()
 		ReconfigPatsAndNet(ss)
 		ConfigEnv(ss) // re-config env just in case a different set of patterns was
 		// selected or patterns have been modified etc
-		OpenFixedPatterns(ss) //todo should be removed, htis is for debugging purposes
+		//OpenFixedPatterns(ss) //todo should be removed, htis is for debugging purposes
 	}
 
 	ConfigParams(&ss.Sim)
