@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"github.com/emer/emergent/etime"
 
 	"github.com/emer/axon/axon"
 
@@ -15,19 +16,19 @@ func (ss *Sim) ConfigLogsFromArgs() {
 	elog.LogDir = "logs"
 	if ss.CmdArgs.saveEpcLog {
 		fnm := ss.LogFileName("epc")
-		ss.Logs.SetLogFile(elog.Train, elog.Epoch, fnm)
+		ss.Logs.SetLogFile(etime.Train, etime.Epoch, fnm)
 
 		//Save test as well as train epoch logs
 		testfnm := ss.LogFileName("testepc")
-		ss.Logs.SetLogFile(elog.Test, elog.Epoch, testfnm)
+		ss.Logs.SetLogFile(etime.Test, etime.Epoch, testfnm)
 	}
 	if ss.CmdArgs.saveRunLog {
 		fnm := ss.LogFileName("run")
-		ss.Logs.SetLogFile(elog.Train, elog.Run, fnm)
+		ss.Logs.SetLogFile(etime.Train, etime.Run, fnm)
 	}
 	if ss.CmdArgs.saveTrialLog {
 		fnm := ss.LogFileName("testtrial")
-		ss.Logs.SetLogFile(elog.Test, elog.Trial, fnm)
+		ss.Logs.SetLogFile(etime.Test, etime.Trial, fnm)
 	}
 }
 
@@ -35,10 +36,10 @@ func (ss *Sim) ConfigLogs() {
 	ss.Logs.CreateTables()
 	ss.Logs.SetContext(&ss.Stats, ss.Net)
 	// don't plot certain combinations we don't use
-	ss.Logs.NoPlot(elog.Train, elog.Cycle)
-	ss.Logs.NoPlot(elog.Test, elog.Run)
+	ss.Logs.NoPlot(etime.Train, etime.Cycle)
+	ss.Logs.NoPlot(etime.Test, etime.Run)
 	// note: Analyze not plotted by default
-	ss.Logs.SetMeta(elog.Train, elog.Run, "LegendCol", "Params")
+	ss.Logs.SetMeta(etime.Train, etime.Run, "LegendCol", "Params")
 	ss.Stats.ConfigRasters(ss.Net, 200, ss.Net.LayersByClass())
 	ss.ConfigLogsFromArgs() // This must occur after logs are configged.
 }
@@ -74,55 +75,55 @@ func (ss *Sim) LogFileName(lognm string) string {
 }
 
 // Log is the main logging function, handles special things for different scopes. It always logs to the end of the log.
-func (ss *Sim) Log(mode elog.EvalModes, time elog.Times) {
+func (ss *Sim) Log(mode etime.Modes, time etime.Times) {
 	dt := ss.Logs.Table(mode, time)
 	row := dt.Rows
-	if mode == elog.Test && time == elog.Epoch {
+	if mode == etime.Test && time == etime.Epoch {
 		ss.LogTestErrors()
 	}
 
 	ss.Logs.LogRow(mode, time, row) // also logs to file, etc
-	if time == elog.Cycle {
-		ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
+	if time == etime.Cycle {
+		ss.GUI.UpdateCyclePlot(etime.Test, ss.Time.Cycle)
 	} else {
 		ss.GUI.UpdatePlot(mode, time)
 	}
 
 	switch {
-	case mode == elog.Train && time == elog.Run:
+	case mode == etime.Train && time == etime.Run:
 		ss.LogRunStats()
 	}
 }
 
 // LogMiddle is like Log, but it doesn't always log to the end.
-func (ss *Sim) LogMiddle(mode elog.EvalModes, time elog.Times) {
+func (ss *Sim) LogMiddle(mode etime.Modes, time etime.Times) {
 	dt := ss.Logs.Table(mode, time)
 	row := dt.Rows
 	switch {
-	case mode == elog.Test && time == elog.Epoch:
+	case mode == etime.Test && time == etime.Epoch:
 		ss.LogTestErrors()
-	case time == elog.Cycle:
+	case time == etime.Cycle:
 		row = ss.Time.Cycle
-	case time == elog.Trial:
+	case time == etime.Trial:
 		row = (*ss.Trainer.CurEnv).Trial().Cur
 	}
 
 	ss.Logs.LogRow(mode, time, row) // also logs to file, etc
-	if time == elog.Cycle {
-		ss.GUI.UpdateCyclePlot(elog.Test, ss.Time.Cycle)
+	if time == etime.Cycle {
+		ss.GUI.UpdateCyclePlot(etime.Test, ss.Time.Cycle)
 	} else {
 		ss.GUI.UpdatePlot(mode, time)
 	}
 
 	switch {
-	case mode == elog.Train && time == elog.Run:
+	case mode == etime.Train && time == etime.Run:
 		ss.LogRunStats()
 	}
 }
 
 // LogTestErrors records all errors made across TestTrials, at Test Epoch scope
 func (ss *Sim) LogTestErrors() {
-	sk := elog.Scope(elog.Test, elog.Trial)
+	sk := etime.Scope(etime.Test, etime.Trial)
 	lt := ss.Logs.TableDetailsScope(sk)
 	ix, _ := lt.NamedIdxView("TestErrors")
 	ix.Filter(func(et *etable.Table, row int) bool {
@@ -138,7 +139,7 @@ func (ss *Sim) LogTestErrors() {
 
 // LogRunStats records stats across all runs, at Train Run scope
 func (ss *Sim) LogRunStats() {
-	sk := elog.Scope(elog.Train, elog.Run)
+	sk := etime.Scope(etime.Train, etime.Run)
 	lt := ss.Logs.TableDetailsScope(sk)
 	ix, _ := lt.NamedIdxView("RunStats")
 
@@ -151,8 +152,8 @@ func (ss *Sim) LogRunStats() {
 // PCAStats computes PCA statistics on recorded hidden activation patterns
 // from Analyze, Trial log data
 func (ss *Sim) PCAStats() {
-	ss.Stats.PCAStats(ss.Logs.IdxView(elog.Analyze, elog.Trial), "ActM", ss.Net.LayersByClass("Hidden"))
-	ss.Logs.ResetLog(elog.Analyze, elog.Trial)
+	ss.Stats.PCAStats(ss.Logs.IdxView(etime.Analyze, etime.Trial), "ActM", ss.Net.LayersByClass("Hidden"))
+	ss.Logs.ResetLog(etime.Analyze, etime.Trial)
 }
 
 // RasterRec updates spike raster record for given cycle
@@ -211,7 +212,7 @@ func (ss *Sim) MemStats(train bool) {
 		} else {
 			ss.Stats.SetFloat("Mem", 0)
 		}
-	} else { // test
+	} else {          // test
 		if cmpN > 0 { // should be
 			trgOnWasOffCmp /= cmpN
 			if trgOnWasOffCmp < ss.Stats.Float("MemThr") && trgOffWasOn < ss.Stats.Float("MemThr") {

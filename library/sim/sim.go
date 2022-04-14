@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/emer/emergent/etime"
 	"math/rand"
 	"time"
 
@@ -98,7 +99,7 @@ func (ss *Sim) InitRndSeed() {
 
 func (ss *Sim) GetViewUpdate() axon.TimeScales {
 	viewUpdt := ss.TrainUpdt
-	if ss.Trainer.EvalMode != elog.Train {
+	if ss.Trainer.EvalMode != etime.Train {
 		viewUpdt = ss.TestUpdt
 	}
 	return viewUpdt
@@ -114,7 +115,7 @@ func (ss *Sim) NewRndSeed() {
 }
 
 func (ss *Sim) CurrentEnvironment() Environment {
-	if ss.Trainer.EvalMode == elog.Train {
+	if ss.Trainer.EvalMode == etime.Train {
 		return ss.TrainEnv
 	} else {
 		return ss.TestEnv

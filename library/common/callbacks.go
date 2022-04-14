@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
-	"github.com/emer/emergent/elog"
+	"github.com/emer/emergent/etime"
 	"github.com/goki/gi/gi"
 )
 
@@ -30,13 +30,13 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 			// counters are being dealt with.
 
 			// update prior weight changes at start, so any DWt values remain visible at end
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				// Apply delta weight.
 				ss.Net.WtFmDWt(&ss.Time)
 			}
 		},
 		OnThetaEnd: func() {
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				// Compute delta weight.
 				ss.Net.DWt(&ss.Time)
 			}
@@ -46,7 +46,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 	// Learning Rate Schedule
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnEpochEnd: func() {
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				LrateSched(ss, ss.TrainEnv.Epoch().Cur)
 			}
 		},
@@ -55,7 +55,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 	// PCA Stats
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnEpochEnd: func() {
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				// Should run on first epoch, needs to run before Log.
 				if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
 					ss.PCAStats()
@@ -63,9 +63,9 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 			}
 		},
 		OnTrialEnd: func() {
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				if (ss.PCAInterval > 0) && (ss.TrainEnv.Epoch().Cur%ss.PCAInterval == 0) {
-					ss.Log(elog.Analyze, elog.Trial)
+					ss.Log(etime.Analyze, etime.Trial)
 				}
 			}
 		},
@@ -90,7 +90,7 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 			// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
 
 			viewUpdt = ss.TrainUpdt
-			if ss.Trainer.EvalMode == elog.Test {
+			if ss.Trainer.EvalMode == etime.Test {
 				viewUpdt = ss.TestUpdt
 			}
 			if viewUpdt == axon.Phase {
@@ -129,7 +129,7 @@ func AddPlusAndMinusPhases(ss *sim.Sim) {
 		Duration: 50,
 		PhaseStart: func() {
 			ss.Time.PlusPhase = true
-			ss.UpdateNetViewText(ss.Trainer.EvalMode == elog.Train)
+			ss.UpdateNetViewText(ss.Trainer.EvalMode == etime.Train)
 		},
 		PhaseEnd: func() {
 			ss.Net.PlusPhase(&ss.Time)
@@ -151,10 +151,10 @@ func AddSimpleCallbacks(ss *sim.Sim) {
 	// Testing
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnEpochEnd: func() {
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
 					ss.TestAll()
-					ss.Trainer.EvalMode = elog.Train // Important to set these back because TestAll sets them to Test.
+					ss.Trainer.EvalMode = etime.Train // Important to set these back because TestAll sets them to Test.
 					ss.Trainer.CurEnv = &ss.TrainEnv
 				}
 			}

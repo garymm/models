@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
+	"github.com/emer/emergent/etime"
 
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/axon/axon"
-	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
 )
@@ -56,7 +56,7 @@ func PreTrainTrial(ss *sim.Sim) bool {
 	// if epoch counter has changed
 	epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
 	if chg {
-		ss.Logs.Log(elog.Train, elog.Epoch)
+		ss.Logs.Log(etime.Train, etime.Epoch)
 		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 			ss.UpdateView(true)
 		}
@@ -69,7 +69,7 @@ func PreTrainTrial(ss *sim.Sim) bool {
 	ss.ApplyInputs(ss.TrainEnv)
 	PreThetaCyc(ss, true)       // special!
 	ss.TrialStatsFunc(ss, true) // accumulate
-	ss.Logs.Log(elog.Train, elog.Trial)
+	ss.Logs.Log(etime.Train, etime.Trial)
 	return false
 }
 
@@ -120,7 +120,7 @@ func PreThetaCyc(ss *sim.Sim, train bool) {
 		for cyc := 0; cyc < maxCyc; cyc++ {
 			ss.Net.Cycle(&ss.Time)
 			if !train {
-				ss.Logs.Log(elog.Test, elog.Cycle)
+				ss.Logs.Log(etime.Test, etime.Cycle)
 			}
 			ss.Time.CycleInc()
 
@@ -151,5 +151,5 @@ func PreThetaCyc(ss *sim.Sim, train bool) {
 		ss.UpdateView(train)
 	}
 
-	ss.GUI.Plot(elog.Test, elog.Cycle)
+	ss.GUI.Plot(etime.Test, etime.Cycle)
 }

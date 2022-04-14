@@ -617,7 +617,7 @@ package main
 //		for cyc := 0; cyc < maxCyc; cyc++ {
 //			ss.Net.Cycle(&ss.Time)
 //			if !train {
-//				//ss.HipSim.Log(elog.Test, elog.Cycle)
+//				//ss.HipSim.Log(etime.Test, etime.Cycle)
 //				ss.LogTstCyc(ss.TstCycLog, ss.Time.Cycle)
 //			}
 //			ss.Time.CycleInc()
@@ -720,7 +720,7 @@ package main
 //			ss.Net.Cycle(&ss.Time)
 //			if !train {
 //				ss.LogTstCyc(ss.TstCycLog, ss.Time.Cycle)
-//				//ss.HipSim.Log(elog.Test, elog.Cycle)
+//				//ss.HipSim.Log(etime.Test, etime.Cycle)
 //			}
 //			ss.Time.CycleInc()
 //
@@ -787,7 +787,7 @@ package main
 //	epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
 //	if chg {
 //		ss.LogTrnEpc(ss.TrnEpcLog)
-//		//ss.HipSim.Log(elog.Train, elog.Epoch)
+//		//ss.HipSim.Log(etime.Train, etime.Epoch)
 //		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
 //			ss.UpdateView(true)
 //		}
@@ -815,7 +815,7 @@ package main
 //	ss.ThetaCyc(true) // train
 //
 //	ss.TrialStats(true) // accumulate
-//	ss.HipSim.Log(elog.Train, elog.Trial)
+//	ss.HipSim.Log(etime.Train, etime.Trial)
 //	ss.LogTrnTrl(ss.TrnTrlLog)
 //}
 //
@@ -852,7 +852,7 @@ package main
 //// RunEnd is called at the end of a run -- save weights, record final log, etc here
 //func (ss *Sim) RunEnd() {
 //	ss.LogRun(ss.RunLog)
-//	//ss.HipSim.Log(elog.Train, elog.Run) //Log After Each Run
+//	//ss.HipSim.Log(etime.Train, etime.Run) //Log After Each Run
 //	if ss.SaveWts {
 //		fnm := ss.WeightsFileName()
 //		fmt.Printf("Saving Weights to: %v\n", fnm)

@@ -1,6 +1,6 @@
 package sim
 
-import "github.com/emer/emergent/elog"
+import "github.com/emer/emergent/etime"
 
 // TODO Use these maybe
 type ThetaPhase struct {
@@ -34,8 +34,8 @@ type TrainingCallbacks struct {
 }
 
 type Trainer struct {
-	EvalMode  elog.EvalModes `desc:"The current training mode."`
-	CurEnv    *Environment   `desc:"The current training environment. This should be synced with EvalMode."`
+	EvalMode  etime.Modes  `desc:"The current training mode."`
+	CurEnv    *Environment `desc:"The current training environment. This should be synced with EvalMode."`
 	Callbacks []TrainingCallbacks
 	Phases    []ThetaPhase
 }

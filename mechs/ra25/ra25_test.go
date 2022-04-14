@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Astera-org/models/library/sim"
-	"github.com/emer/emergent/elog"
+	"github.com/emer/emergent/etime"
 	"github.com/emer/etable/etable"
 	"os"
 	"testing"
@@ -42,7 +42,7 @@ func TestModelTraining(t *testing.T) {
 	os.Args = append(os.Args, "-epochs=100")
 	Config(&TheSim)
 	TheSim.RunFromArgs()
-	runlog := TheSim.Logs.Table(elog.Train, elog.Run)
+	runlog := TheSim.Logs.Table(etime.Train, etime.Run)
 	println(fmt.Sprintf("FirstZero: %.0f\tLastZero: %.0f", runlog.CellFloat("FirstZero", 0), runlog.CellFloat("LastZero", 0)))
 	if runlog.CellFloat("FirstZero", 0) < 0 {
 		t.Errorf("No FirstZero!")

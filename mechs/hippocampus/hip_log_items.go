@@ -49,11 +49,11 @@ func ConfigHipItems(ss *sim.Sim) {
 		FixMin: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+			elog.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
 				ctx.SetStatFloat("Mem")
 			},
-			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
-				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			elog.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, etime.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
 	ss.Logs.AddItem(&elog.Item{
@@ -64,11 +64,11 @@ func ConfigHipItems(ss *sim.Sim) {
 		FixMin: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+			elog.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
 				ctx.SetStatFloat("TrgOnWasOff")
 			},
-			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
-				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			elog.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, etime.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
 	ss.Logs.AddItem(&elog.Item{
@@ -79,11 +79,11 @@ func ConfigHipItems(ss *sim.Sim) {
 		FixMin: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(elog.AllModes, elog.Trial): func(ctx *elog.Context) {
+			elog.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
 				ctx.SetStatFloat("TrgOffWasOn")
 			},
-			elog.Scope(elog.AllModes, elog.Epoch): func(ctx *elog.Context) {
-				ctx.SetAgg(ctx.Mode, elog.Trial, agg.AggMean) // TODO how is this referencing Mem name
+			elog.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
+				ctx.SetAgg(ctx.Mode, etime.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
 	ss.Logs.AddItem(&elog.Item{
@@ -91,7 +91,7 @@ func ConfigHipItems(ss *sim.Sim) {
 		Type: etensor.STRING,
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
-			elog.Scope(elog.Test, elog.Trial): func(ctx *elog.Context) {
+			elog.Scope(etime.Test, etime.Trial): func(ctx *elog.Context) {
 				testName := "UNKNOWN"
 				// These need to match up with tstNms below.
 				if ss.TestEnv.Desc() == "TestAB" {
@@ -129,8 +129,8 @@ func ConfigHipItems(ss *sim.Sim) {
 				FixMin: elog.DTrue,
 				Range:  minmax.F64{Max: 1},
 				Write: elog.WriteMap{
-					elog.Scope(elog.Test, elog.Epoch): func(ctx *elog.Context) {
-						trl := ss.Logs.Table(elog.Test, elog.Trial)
+					elog.Scope(etime.Test, etime.Epoch): func(ctx *elog.Context) {
+						trl := ss.Logs.Table(etime.Test, etime.Trial)
 						trix := etable.NewIdxView(trl)
 						spl := split.GroupBy(trix, []string{"TestNm"})
 						for _, ts := range tstStatNms {
@@ -158,8 +158,8 @@ func ConfigHipItems(ss *sim.Sim) {
 		Type: etensor.FLOAT64,
 		Plot: elog.DTrue,
 		Write: elog.WriteMap{
-			elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
-				ix := ctx.Logs.IdxViewScope(elog.Scope(elog.Test, elog.Epoch))
+			elog.Scope(etime.Train, etime.Run): func(ctx *elog.Context) {
+				ix := ctx.Logs.IdxViewScope(elog.Scope(etime.Test, etime.Epoch))
 				lastAbMem := ix.Table.CellFloat("AB_Mem", ix.Table.Rows-1) //.Col(ix.Table.ColIdx("AB_Mem"))
 				//for am : abmems.
 				// TODO Get AB Mem at last epoch
@@ -173,11 +173,11 @@ func ConfigHipItems(ss *sim.Sim) {
 		Type: etensor.INT64,
 		Plot: elog.DTrue,
 		Write: elog.WriteMap{
-			elog.Scope(elog.Train, elog.Run): func(ctx *elog.Context) {
+			elog.Scope(etime.Train, etime.Run): func(ctx *elog.Context) {
 				// TODO Get num of epoch at stop
 				//ctx.SetFloat32(0)
-				//ctx.SetAgg(elog.Test, elog.Epoch, agg.AggMax)
-				maxo := ctx.SetAggItemScope(elog.Scope(elog.Test, elog.Epoch), "Epoch", agg.AggMax)
+				//ctx.SetAgg(etime.Test, etime.Epoch, agg.AggMax)
+				maxo := ctx.SetAggItemScope(elog.Scope(etime.Test, etime.Epoch), "Epoch", agg.AggMax)
 				print(maxo) // DO NOT SUBMIT
 			},
 		}})

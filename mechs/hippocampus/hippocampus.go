@@ -16,7 +16,6 @@ import (
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/hip"
 	"github.com/emer/emergent/egui"
-	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/patgen"
 	"github.com/emer/emergent/prjn"
@@ -560,9 +559,9 @@ func testEpochHip(ss *sim.Sim) {
 
 // TestAllConditions does a single epoch of testing.
 func TestAllConditions(ss *sim.Sim) {
-	ss.Trainer.EvalMode = elog.Test
+	ss.Trainer.EvalMode = etime.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
-	ss.Logs.ResetLog(elog.Test, elog.Trial)
+	ss.Logs.ResetLog(etime.Test, etime.Trial)
 
 	ss.TestEnv.AssignTable(string(TestAB))
 	ss.TestEnv.Init(ss.Run.Cur)
@@ -578,18 +577,18 @@ func TestAllConditions(ss *sim.Sim) {
 	//testEpochHip(ss)
 
 	// Log only after all conditions have been tested.
-	ss.Log(ss.Trainer.EvalMode, elog.Epoch)
+	ss.Log(ss.Trainer.EvalMode, etime.Epoch)
 }
 
 func AddHipCallbacks(ss *HipSim) {
 	// Testing
 	ss.Trainer.Callbacks = append(ss.Trainer.Callbacks, sim.TrainingCallbacks{
 		OnEpochEnd: func() {
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				if (ss.TestInterval > 0) && ((ss.TrainEnv.Epoch().Cur+1)%ss.TestInterval == 0) {
 					// Unlike some testing setups, we only do one epoch of test instead of a whole run.
 					TestAllConditions(&ss.Sim)
-					ss.Trainer.EvalMode = elog.Train // Important to set these back because TestEpoch sets them to Test.
+					ss.Trainer.EvalMode = etime.Train // Important to set these back because TestEpoch sets them to Test.
 					ss.Trainer.CurEnv = &ss.TrainEnv
 				}
 			}
@@ -621,7 +620,7 @@ func AddHipCallbacks(ss *HipSim) {
 			ss.Net.ActSt1(&ss.Time)
 			ca1FmECin.PrjnScale.Abs = 0
 			ca1FmCa3.PrjnScale.Abs = absGain
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				ca3FmDg.PrjnScale.Rel = dgwtscale // restore after 1st quarter
 			} else {
 				ca3FmDg.PrjnScale.Rel = dgwtscale - ss.Hip.MossyDelTest //TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
@@ -639,7 +638,7 @@ func AddHipCallbacks(ss *HipSim) {
 		Name:     "Q3",
 		Duration: 50,
 		PhaseEnd: func() { // Fourth Quarter: CA1 back to ECin drive only
-			train := ss.Trainer.EvalMode == elog.Train
+			train := ss.Trainer.EvalMode == etime.Train
 			if train { // clamp ECout from ECin
 				ca1FmECin.PrjnScale.Abs = absGain
 				ca1FmCa3.PrjnScale.Abs = 0
@@ -681,7 +680,7 @@ func AddHipCallbacks(ss *HipSim) {
 			//ca3FmDg.PrjnScale.Rel = dgwtscale - ss.Hip.MossyDel
 			ca3FmDg.PrjnScale.Rel = dgwtscale - 3 // turn off DG input to CA3 in first quarter // TODO 3 Should be replaced with HipSim.MossyDel, and that brings up doubts about our overall approach to HipSim
 
-			if ss.Trainer.EvalMode == elog.Train {
+			if ss.Trainer.EvalMode == etime.Train {
 				ecout.SetType(emer.Target) // clamp a plus phase during testing todo: ask randy why this is the case
 			} else {
 				ecout.SetType(emer.Compare) // don't clamp
@@ -696,8 +695,8 @@ func AddHipCallbacks(ss *HipSim) {
 			ca1FmCa3.PrjnScale.Abs = absGain
 		},
 		OnMillisecondEnd: func() {
-			if ss.Trainer.EvalMode != elog.Train {
-				ss.Log(elog.Test, elog.Cycle)
+			if ss.Trainer.EvalMode != etime.Train {
+				ss.Log(etime.Test, etime.Cycle)
 			}
 		},
 		OnEveryPhaseEnd: func() {

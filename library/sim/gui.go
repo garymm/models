@@ -2,10 +2,10 @@ package sim
 
 import (
 	"fmt"
+	"github.com/emer/emergent/etime"
 
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/egui"
-	"github.com/emer/emergent/elog"
 	"github.com/goki/gi/gi"
 	"github.com/goki/ki/ki"
 	"github.com/goki/mat32"
@@ -21,6 +21,7 @@ func GuiRun(TheSim *Sim, window *gi.Window) {
 func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	ss.GUI.MakeWindow(ss, appname, title, about)
 	ss.GUI.CycleUpdateInterval = 10
+	ss.GUI.AddNetView("NetView")
 	ss.GUI.NetView.SetNet(ss.Net) // TODO ask Randy what this is doing
 
 	ss.GUI.NetView.Scene().Camera.Pose.Pos.Set(0, 1, 2.75) // more "head on" than default which is more "top down"
@@ -182,8 +183,8 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Tooltip: "Reset the accumulated log of all Runs, which are tagged with the ParamSet used",
 		Active:  egui.ActiveAlways,
 		Func: func() {
-			ss.Logs.ResetLog(elog.Train, elog.Run)
-			ss.GUI.UpdatePlot(elog.Train, elog.Run)
+			ss.Logs.ResetLog(etime.Train, etime.Run)
+			ss.GUI.UpdatePlot(etime.Train, etime.Run)
 		},
 	})
 	////////////////////////////////////////////////

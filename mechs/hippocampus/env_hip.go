@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/Astera-org/models/library/sim"
-	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/env"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -151,7 +150,7 @@ func (envhip *EnvHip) AddTaskSwitching(ss *sim.Sim) *sim.TrainingCallbacks {
 	taskSwitching := sim.TrainingCallbacks{}
 	//This occurs after testall on a different onepochend
 	taskSwitching.OnEpochEnd = func() {
-		if ss.Trainer.EvalMode == elog.Train {
+		if ss.Trainer.EvalMode == etime.Train {
 			//For clarity, this is calculating Nzero and First zero in regards to testing AC and testing AB,
 			//the reason is that at end of training epoch we at least one epoch of testing
 			updateNZeroAndFirstZero(ss, envhip)
@@ -198,7 +197,7 @@ func calcMem(ss *sim.Sim, trainEnv *EnvHip) float64 {
 	isAB := trainEnv.Table.Table == trainEnv.EvalTables[TrainAB]
 	var mem float64
 
-	table := ss.Logs.Table(elog.Test, elog.Epoch)
+	table := ss.Logs.Table(etime.Test, etime.Epoch)
 
 	if isAB {
 		mem = table.CellFloat("AB Mem", table.Rows-1)
