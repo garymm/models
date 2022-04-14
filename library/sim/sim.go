@@ -1,17 +1,18 @@
 package sim
 
 import (
-	"github.com/emer/emergent/etime"
-	"math/rand"
-	"time"
-
 	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/egui"
 	"github.com/emer/emergent/elog"
 	"github.com/emer/emergent/emer"
 	"github.com/emer/emergent/env"
+	"github.com/emer/emergent/envlp"
 	"github.com/emer/emergent/estats"
+	"github.com/emer/emergent/etime"
+	"github.com/emer/emergent/looper"
 	"github.com/emer/etable/etable"
+	"math/rand"
+	"time"
 )
 
 // Sim encapsulates the entire simulation model, and we define all the
@@ -28,6 +29,7 @@ type Sim struct {
 	Pats    *etable.Table `view:"no-inline" desc:"the training patterns to use"`
 	Stats   estats.Stats  `desc:"contains computed statistic values"`
 	Logs    elog.Logs     `desc:"Contains all the logs and information about the logs.'"`
+	Loops   looper.Set    `desc:"contains looper control loops for running sim"`
 	GUI     egui.GUI      `view:"-" desc:"manages all the gui elements"`
 	CmdArgs CmdArgs       `desc:"Arguments passed in through the command line"`
 
@@ -39,12 +41,16 @@ type Sim struct {
 	TrainEnv Environment `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	TestEnv  Environment `desc:"Testing environment -- manages iterating over testing"`
 
-	Trainer Trainer `view:"-" desc:"Handles basic network logic."`
+	Envs      envlp.Envs       `desc:"Environments"`
+	TrainEnv2 envlp.FixedTable `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
+	TestEnv2  envlp.FixedTable `desc:"Testing environment -- manages iterating over testing"`
+	Trainer   Trainer          `view:"-" desc:"Handles basic network logic."`
 
 	Time axon.Time `view:"-" desc:"axon timing parameters and state"`
 
 	// TODO Move to GUI
-	ViewOn    bool            `desc:"whether to update the network view while running"`
+	ViewOn bool `desc:"whether to update the network view while running"`
+
 	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 
 	TestUpdt axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
@@ -55,6 +61,11 @@ type Sim struct {
 
 	// Used by Hippocampus model
 	PreTrainWts []byte `view:"-" desc:"pretrained weights file"`
+}
+
+// Env returns the relevant environment based on Time Mode
+func (ss *Sim) Env() envlp.Env {
+	return ss.Envs[ss.Time.Mode]
 }
 
 // New creates new blank elements and initializes defaults
