@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/emer/emergent/etime"
 
-	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/egui"
 	"github.com/goki/gi/gi"
 	"github.com/goki/ki/ki"
@@ -51,7 +50,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
-				go ss.Train(axon.TimeScalesN) // Train until end of all Runs
+				go ss.Train(etime.TimesN) // Train until end of all Runs
 			}
 		},
 	})
@@ -70,7 +69,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Func: func() {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
-				ss.Train(axon.Trial)
+				ss.Train(etime.Trial)
 				ss.UpdateNetViewText(true)
 				ss.GUI.IsRunning = false
 				ss.GUI.UpdateWindow()
@@ -84,7 +83,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 		Func: func() {
 			if !ss.GUI.IsRunning {
 				ss.GUI.IsRunning = true
-				ss.Train(axon.Cycle)
+				ss.Train(etime.Cycle)
 				ss.UpdateNetViewText(true)
 				ss.GUI.IsRunning = false
 				ss.GUI.UpdateWindow()
@@ -100,7 +99,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
 				ss.GUI.StopNow = false
-				go ss.Train(axon.Epoch)
+				go ss.Train(etime.Epoch)
 			}
 		},
 	})
@@ -113,7 +112,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 				ss.GUI.IsRunning = true
 				ss.GUI.ToolBar.UpdateActions()
 				ss.GUI.StopNow = false
-				go ss.Train(axon.Run)
+				go ss.Train(etime.Run)
 			}
 		},
 	})
@@ -237,20 +236,20 @@ func (ss *Sim) UpdateView(train bool) {
 }
 
 // UpdateViewTime based on differetn time scales change the values accoridngly
-func (ss *Sim) UpdateViewTime(viewUpdt axon.TimeScales) {
+func (ss *Sim) UpdateViewTime(viewUpdt etime.Times) {
 	// If the NetView is flickering and you don't like it, use ss.Time.Cycle+1 here. Network activity is actually reset at zero.
 	switch viewUpdt {
-	case axon.Cycle:
+	case etime.Cycle:
 		ss.GUI.UpdateNetView()
-	case axon.FastSpike:
+	case etime.FastSpike:
 		if ss.Time.Cycle%10 == 0 {
 			ss.GUI.UpdateNetView()
 		}
-	case axon.GammaCycle:
+	case etime.GammaCycle:
 		if ss.Time.Cycle%25 == 0 {
 			ss.GUI.UpdateNetView()
 		}
-	case axon.AlphaCycle:
+	case etime.AlphaCycle:
 		if (ss.Time.Cycle+1)%100 == 0 {
 			ss.GUI.UpdateNetView()
 		}

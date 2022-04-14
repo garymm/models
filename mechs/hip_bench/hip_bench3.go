@@ -139,8 +139,8 @@ package main
 //	TestEnv      env.FixedTable           `desc:"Testing environment -- manages iterating over testing"`
 //	Time         axon.Time                `desc:"axon timing parameters and state"`
 //	ViewOn       bool                     `desc:"whether to update the network view while running"`
-//	TrainUpdt    axon.TimeScales          `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
-//	TestUpdt     axon.TimeScales          `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
+//	TrainUpdt    etime.Times          `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
+//	TestUpdt     etime.Times          `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 //	TestInterval int                      `desc:"how often to run through all the test patterns, in terms of training epochs -- can use 0 or -1 for no testing"`
 //	MemThr       float64                  `desc:"threshold to use for memory test -- if error proportion is below this number, it is scored as a correct trial"`
 //
@@ -499,7 +499,7 @@ package main
 //	}
 //}
 //
-//func (ss *Sim) UpdateViewTime(train bool, viewUpdt axon.TimeScales) {
+//func (ss *Sim) UpdateViewTime(train bool, viewUpdt etime.Times) {
 //	switch viewUpdt {
 //	case axon.Cycle:
 //		ss.UpdateView(train)

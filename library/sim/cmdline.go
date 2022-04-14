@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/emer/axon/axon"
+	"github.com/emer/emergent/etime"
 	"io/ioutil"
 	"os"
 
@@ -124,7 +124,7 @@ func (ss *Sim) RunFromArgs() {
 	ss.Run.Set(ss.CmdArgs.StartRun)
 	ss.Run.Max = ss.CmdArgs.StartRun + ss.CmdArgs.MaxRuns
 	ss.NewRun()
-	ss.Train(axon.TimeScalesN) // Train all Runs
+	ss.Train(etime.TimesN) // Train all Runs
 
 	ss.Logs.CloseLogFiles()
 

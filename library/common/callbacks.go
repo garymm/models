@@ -3,7 +3,6 @@ package common
 import (
 	"fmt"
 	"github.com/Astera-org/models/library/sim"
-	"github.com/emer/axon/axon"
 	"github.com/emer/emergent/etime"
 	"github.com/goki/gi/gi"
 )
@@ -84,7 +83,7 @@ func AddDefaultTrainCallbacks(ss *sim.Sim) {
 }
 
 func AddDefaultGUICallbacks(ss *sim.Sim) {
-	var viewUpdt axon.TimeScales // Reset at the top of theta cycle.
+	var viewUpdt etime.Times // Reset at the top of theta cycle.
 	viewUpdtCallbacks := sim.TrainingCallbacks{
 		OnThetaStart: func() {
 			// ss.Win.PollEvents() // this can be used instead of running in a separate goroutine
@@ -93,7 +92,7 @@ func AddDefaultGUICallbacks(ss *sim.Sim) {
 			if ss.Trainer.EvalMode == etime.Test {
 				viewUpdt = ss.TestUpdt
 			}
-			if viewUpdt == axon.Phase {
+			if viewUpdt == etime.Phase {
 				ss.GUI.UpdateNetView()
 			}
 		},

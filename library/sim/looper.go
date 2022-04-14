@@ -20,12 +20,12 @@ import (
 // using ApplyExt method on relevant layers (see TrainTrial, TestTrial).
 // If train is true, then learning DWt or WtFmDWt calls are made.
 // Handles netview updating within scope, and calls TrainStats()
-func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
+func (ss *Sim) ThetaCyc(stopScale etime.Times) {
 	train := ss.Trainer.EvalMode == etime.Train
 
 	if ss.Time.Cycle == 0 {
 		ss.Net.NewState()
-		ss.Time.NewState(train)
+		ss.Time.NewState(etime.Train.String())
 		ss.Trainer.OnThetaStart()
 	}
 
@@ -49,7 +49,7 @@ func (ss *Sim) ThetaCyc(stopScale axon.TimeScales) {
 
 			ss.Trainer.OnMillisecondEnd()
 
-			if stopScale == axon.Cycle {
+			if stopScale == etime.Cycle {
 				ss.GUI.StopNow = true
 				ss.Time.CycleInc()
 			}
@@ -96,7 +96,7 @@ func (ss *Sim) ApplyInputs(env Environment) {
 	}
 }
 
-func (ss *Sim) LoopTrial(stopScale axon.TimeScales) {
+func (ss *Sim) LoopTrial(stopScale etime.Times) {
 	if (*ss.Trainer.CurEnv).Trial().Cur == -1 {
 		// This is a hack, and it should be initialized at 0
 		(*ss.Trainer.CurEnv).Trial().Cur = 0
@@ -123,14 +123,14 @@ func (ss *Sim) LoopTrial(stopScale axon.TimeScales) {
 }
 
 // LoopEpoch runs until the end of the Epoch, then updates logs.
-func (ss *Sim) LoopEpoch(stopScale axon.TimeScales) {
+func (ss *Sim) LoopEpoch(stopScale etime.Times) {
 	if (*ss.Trainer.CurEnv).Trial().Cur == 0 {
 		ss.Logs.ResetLog(ss.Trainer.EvalMode, etime.Trial)
 		ss.Trainer.OnEpochStart()
 	}
 	for ; (*ss.Trainer.CurEnv).Trial().Cur < (*ss.Trainer.CurEnv).Trial().Max; (*ss.Trainer.CurEnv).Trial().Cur += 1 {
 		ss.LoopTrial(stopScale)
-		if stopScale == axon.Trial {
+		if stopScale == etime.Trial {
 			ss.GUI.StopNow = true
 			(*ss.Trainer.CurEnv).Trial().Cur += 1
 		}
@@ -175,7 +175,7 @@ func (ss *Sim) RunEnd() {
 	ss.Trainer.OnRunEnd()
 }
 
-func (ss *Sim) loopRun(stopScale axon.TimeScales) {
+func (ss *Sim) loopRun(stopScale etime.Times) {
 	if (*ss.Trainer.CurEnv).Epoch().Cur <= 0 && (*ss.Trainer.CurEnv).Trial().Cur <= 0 && ss.Time.Cycle <= 0 {
 		if ss.Trainer.EvalMode == etime.Train {
 			ss.NewRun()
@@ -189,7 +189,7 @@ func (ss *Sim) loopRun(stopScale axon.TimeScales) {
 	for ; (*ss.Trainer.CurEnv).Epoch().Cur < (*ss.Trainer.CurEnv).Epoch().Max; (*ss.Trainer.CurEnv).Epoch().Cur += 1 {
 		ss.LoopEpoch(stopScale)
 		ss.UpdateNetViewText(true)
-		if stopScale == axon.Epoch {
+		if stopScale == etime.Epoch {
 			ss.GUI.StopNow = true
 			(*ss.Trainer.CurEnv).Epoch().Cur += 1
 		}
@@ -209,13 +209,13 @@ func (ss *Sim) loopRun(stopScale axon.TimeScales) {
 
 // Train trains until the end of runs, unless stopped early by the GUI. Will stop after the end of one unit of time if indicated by stopScale.
 // TODO Create a TimeScales for never stop.
-func (ss *Sim) Train(stopScale axon.TimeScales) {
+func (ss *Sim) Train(stopScale etime.Times) {
 	ss.Trainer.EvalMode = etime.Train
 	ss.Trainer.CurEnv = &ss.TrainEnv
 	// Note that Run, Epoch, and Trial are not initialized at zero to allow Train to restart where it left off.
 	for ; ss.Run.Cur < ss.Run.Max; ss.Run.Cur += 1 {
 		ss.loopRun(stopScale) // This might set StopNow to true
-		if stopScale == axon.Run {
+		if stopScale == etime.Run {
 			ss.GUI.StopNow = true
 			ss.Run.Cur += 1
 		}
@@ -249,7 +249,7 @@ func (ss *Sim) TestItem(idx int) {
 	cur := TestEnv.Trial().Cur
 	TestEnv.Trial().Cur = idx
 	ss.ApplyInputs(ss.TestEnv)
-	ss.ThetaCyc(axon.TimeScalesN)
+	ss.ThetaCyc(etime.TimesN)
 	TestEnv.Trial().Cur = cur
 }
 
@@ -258,7 +258,7 @@ func (ss *Sim) TestTrial() {
 	ss.Trainer.EvalMode = etime.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	// ss.TestEnv.Init(ss.Run.Cur) // TODO Should this happen?
-	ss.LoopTrial(axon.TimeScalesN) // Do one trial. No need to advance Epoch or Run.
+	ss.LoopTrial(etime.TimesN) // Do one trial. No need to advance Epoch or Run.
 }
 
 // TestAll runs through the full set of testing items for the current run.
@@ -268,7 +268,7 @@ func (ss *Sim) TestAll() {
 	ss.Trainer.EvalMode = etime.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	ss.TestEnv.Init(ss.Run.Cur)
-	ss.loopRun(axon.TimeScalesN) // Do a full run of epochs.
+	ss.loopRun(etime.TimesN) // Do a full run of epochs.
 }
 
 // TestEpoch does a single epoch of testing.
@@ -276,7 +276,7 @@ func (ss *Sim) TestEpoch() {
 	ss.Trainer.EvalMode = etime.Test
 	ss.Trainer.CurEnv = &ss.TestEnv
 	ss.TestEnv.Init(ss.Run.Cur)
-	ss.LoopEpoch(axon.TimeScalesN) // Do one epoch.
+	ss.LoopEpoch(etime.TimesN) // Do one epoch.
 }
 
 // RunTestAll runs through the full set of testing items, has stop running = false at end -- for gui
