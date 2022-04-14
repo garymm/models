@@ -257,8 +257,8 @@ type Sim struct {
 	TestEnv        LEDEnv                        `desc:"Testing environment -- LED testing"`
 	Time           axon.Time                     `desc:"axon timing parameters and state"`
 	ViewOn         bool                          `desc:"whether to update the network view while running"`
-	TrainUpdt      axon.TimeScales               `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
-	TestUpdt       axon.TimeScales               `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
+	TrainUpdt      etime.Times                   `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
+	TestUpdt       etime.Times                   `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 	LayStatNms     []string                      `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
 	ActRFNms       []string                      `desc:"names of layers to compute activation rfields on"`
 	SpikeRasters   map[string]*etensor.Float32   `desc:"spike raster data for different layers"`
@@ -515,7 +515,7 @@ func (ss *Sim) UpdateView(train bool) {
 	}
 }
 
-func (ss *Sim) UpdateViewTime(train bool, viewUpdt axon.TimeScales) {
+func (ss *Sim) UpdateViewTime(train bool, viewUpdt etime.Times) {
 	switch viewUpdt {
 	case axon.Cycle:
 		ss.UpdateView(train)

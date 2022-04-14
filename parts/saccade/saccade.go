@@ -75,53 +75,53 @@ const LogPrec = 4
 // as arguments to methods, and provides the core GUI interface (note the view tags
 // for the fields which provide hints to how things should be displayed).
 type Sim struct {
-	Net              *deep.Network   `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
-	LIPDrive0        bool            `desc:"set drivers on in tick 0"`
-	V1Pulv           bool            `desc:"if true, connect v1 pulvinar layer"`
-	TrnTrlLog        *etable.Table   `view:"no-inline" desc:"training trial-level log data"`
-	TrnTrlLogAll     *etable.Table   `view:"no-inline" desc:"all training trial-level log data (aggregated from MPI)"`
-	TrnTrlRepLog     *etable.Table   `view:"no-inline" desc:"training trial-level reps log data"`
-	TrnTrlRepLogAll  *etable.Table   `view:"no-inline" desc:"training trial-level reps log data"`
-	CatLayActs       *etable.Table   `view:"no-inline" desc:"super layer activations per category / object"`
-	CatLayActsDest   *etable.Table   `view:"no-inline" desc:"MPI dest super layer activations per category / object"`
-	TrnEpcLog        *etable.Table   `view:"no-inline" desc:"training epoch-level log data"`
-	TstEpcLog        *etable.Table   `view:"no-inline" desc:"testing epoch-level log data"`
-	TstTrlLog        *etable.Table   `view:"no-inline" desc:"testing trial-level log data"`
-	TstTrlLogAll     *etable.Table   `view:"no-inline" desc:"all testing trial-level log data (aggregated from MPI)"`
-	ActRFs           actrf.RFs       `view:"no-inline" desc:"activation-based receptive fields"`
-	RunLog           *etable.Table   `view:"no-inline" desc:"summary log of each run"`
-	RunStats         *etable.Table   `view:"no-inline" desc:"aggregate stats on all runs"`
-	MinusCycles      int             `desc:"number of minus-phase cycles"`
-	PlusCycles       int             `desc:"number of plus-phase cycles"`
-	SubPools         bool            `desc:"if true, organize layers and connectivity with 2x2 sub-pools within each topological pool"`
-	ErrLrMod         axon.LrateMod   `view:"inline" desc:"learning rate modulation as function of error"`
-	Params           params.Sets     `view:"no-inline" desc:"full collection of param sets"`
-	ParamSet         string          `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set"`
-	Tag              string          `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	Prjn4x4Skp2      *prjn.PoolTile  `view:"Standard feedforward topographic projection, recv = 1/2 send size"`
-	Prjn4x4Skp2Recip *prjn.PoolTile  `view:"Reciprocal"`
-	Prjn2x2Skp2      *prjn.PoolTile  `view:"sparser skip 2 -- no overlap"`
-	Prjn2x2Skp2Recip *prjn.PoolTile  `view:"Reciprocal"`
-	Prjn3x3Skp1      *prjn.PoolTile  `view:"Standard same-to-same size topographic projection"`
-	Prjn5x5Skp1      *prjn.PoolTile  `view:"Standard same-to-same size topographic projection"`
-	PrjnSigTopo      *prjn.PoolTile  `view:"sigmoidal topographic projection used in LIP saccade remapping layers"`
-	PrjnGaussTopo    *prjn.PoolTile  `view:"gaussian topographic projection used in LIP saccade remapping layers"`
-	StartRun         int             `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
-	MaxRuns          int             `desc:"maximum number of model runs to perform (starting from StartRun)"`
-	MaxEpcs          int             `desc:"maximum number of epochs to run per model run"`
-	MaxTrls          int             `desc:"maximum number of training trials per epoch (each trial is MaxTicks ticks)"`
-	MaxTicks         int             `desc:"max number of ticks, for logs, stats"`
-	NZeroStop        int             `desc:"if a positive number, training will stop after this many epochs with zero SSE"`
-	RepsInterval     int             `desc:"how often to analyze the representations"`
-	TrainEnv         SacEnv          `desc:"Training environment -- 3D Object training"`
-	TestEnv          SacEnv          `desc:"Testing environment -- testing 3D Objects"`
-	Time             axon.Time       `desc:"axon timing parameters and state"`
-	ViewOn           bool            `desc:"whether to update the network view while running"`
-	TrainUpdt        axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
-	TestUpdt         axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
-	LayStatNms       []string        `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
-	ActRFNms         []string        `desc:"names of layers to compute activation rfields on"`
-	HidTrlCosDiff    []float64       `view:"-" desc:"trial-level cosine differnces"`
+	Net              *deep.Network  `view:"no-inline" desc:"the network -- click to view / edit parameters for layers, prjns, etc"`
+	LIPDrive0        bool           `desc:"set drivers on in tick 0"`
+	V1Pulv           bool           `desc:"if true, connect v1 pulvinar layer"`
+	TrnTrlLog        *etable.Table  `view:"no-inline" desc:"training trial-level log data"`
+	TrnTrlLogAll     *etable.Table  `view:"no-inline" desc:"all training trial-level log data (aggregated from MPI)"`
+	TrnTrlRepLog     *etable.Table  `view:"no-inline" desc:"training trial-level reps log data"`
+	TrnTrlRepLogAll  *etable.Table  `view:"no-inline" desc:"training trial-level reps log data"`
+	CatLayActs       *etable.Table  `view:"no-inline" desc:"super layer activations per category / object"`
+	CatLayActsDest   *etable.Table  `view:"no-inline" desc:"MPI dest super layer activations per category / object"`
+	TrnEpcLog        *etable.Table  `view:"no-inline" desc:"training epoch-level log data"`
+	TstEpcLog        *etable.Table  `view:"no-inline" desc:"testing epoch-level log data"`
+	TstTrlLog        *etable.Table  `view:"no-inline" desc:"testing trial-level log data"`
+	TstTrlLogAll     *etable.Table  `view:"no-inline" desc:"all testing trial-level log data (aggregated from MPI)"`
+	ActRFs           actrf.RFs      `view:"no-inline" desc:"activation-based receptive fields"`
+	RunLog           *etable.Table  `view:"no-inline" desc:"summary log of each run"`
+	RunStats         *etable.Table  `view:"no-inline" desc:"aggregate stats on all runs"`
+	MinusCycles      int            `desc:"number of minus-phase cycles"`
+	PlusCycles       int            `desc:"number of plus-phase cycles"`
+	SubPools         bool           `desc:"if true, organize layers and connectivity with 2x2 sub-pools within each topological pool"`
+	ErrLrMod         axon.LrateMod  `view:"inline" desc:"learning rate modulation as function of error"`
+	Params           params.Sets    `view:"no-inline" desc:"full collection of param sets"`
+	ParamSet         string         `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set"`
+	Tag              string         `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
+	Prjn4x4Skp2      *prjn.PoolTile `view:"Standard feedforward topographic projection, recv = 1/2 send size"`
+	Prjn4x4Skp2Recip *prjn.PoolTile `view:"Reciprocal"`
+	Prjn2x2Skp2      *prjn.PoolTile `view:"sparser skip 2 -- no overlap"`
+	Prjn2x2Skp2Recip *prjn.PoolTile `view:"Reciprocal"`
+	Prjn3x3Skp1      *prjn.PoolTile `view:"Standard same-to-same size topographic projection"`
+	Prjn5x5Skp1      *prjn.PoolTile `view:"Standard same-to-same size topographic projection"`
+	PrjnSigTopo      *prjn.PoolTile `view:"sigmoidal topographic projection used in LIP saccade remapping layers"`
+	PrjnGaussTopo    *prjn.PoolTile `view:"gaussian topographic projection used in LIP saccade remapping layers"`
+	StartRun         int            `desc:"starting run number -- typically 0 but can be set in command args for parallel runs on a cluster"`
+	MaxRuns          int            `desc:"maximum number of model runs to perform (starting from StartRun)"`
+	MaxEpcs          int            `desc:"maximum number of epochs to run per model run"`
+	MaxTrls          int            `desc:"maximum number of training trials per epoch (each trial is MaxTicks ticks)"`
+	MaxTicks         int            `desc:"max number of ticks, for logs, stats"`
+	NZeroStop        int            `desc:"if a positive number, training will stop after this many epochs with zero SSE"`
+	RepsInterval     int            `desc:"how often to analyze the representations"`
+	TrainEnv         SacEnv         `desc:"Training environment -- 3D Object training"`
+	TestEnv          SacEnv         `desc:"Testing environment -- testing 3D Objects"`
+	Time             axon.Time      `desc:"axon timing parameters and state"`
+	ViewOn           bool           `desc:"whether to update the network view while running"`
+	TrainUpdt        etime.Times    `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
+	TestUpdt         etime.Times    `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
+	LayStatNms       []string       `desc:"names of layers to collect more detailed stats on (avg act, etc)"`
+	ActRFNms         []string       `desc:"names of layers to compute activation rfields on"`
+	HidTrlCosDiff    []float64      `view:"-" desc:"trial-level cosine differnces"`
 
 	// statistics: note use float64 as that is best for etable.Table
 	PulvLays       []string  `view:"-" desc:"pulvinar layers -- for stats"`
@@ -547,7 +547,7 @@ func (ss *Sim) UpdateView(train bool) {
 	}
 }
 
-func (ss *Sim) UpdateViewTime(train bool, viewUpdt axon.TimeScales) {
+func (ss *Sim) UpdateViewTime(train bool, viewUpdt etime.Times) {
 	switch viewUpdt {
 	case axon.Cycle:
 		ss.UpdateView(train)

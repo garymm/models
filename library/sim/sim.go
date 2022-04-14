@@ -49,11 +49,10 @@ type Sim struct {
 	Time axon.Time `view:"-" desc:"axon timing parameters and state"`
 
 	// TODO Move to GUI
-	ViewOn bool `desc:"whether to update the network view while running"`
+	ViewOn    bool        `desc:"whether to update the network view while running"`
+	TrainUpdt etime.Times `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
 
-	TrainUpdt axon.TimeScales `desc:"at what time scale to update the display during training?  Anything longer than Epoch updates at Epoch in this model"`
-
-	TestUpdt axon.TimeScales `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
+	TestUpdt etime.Times `desc:"at what time scale to update the display during testing?  Anything longer than Epoch updates at Epoch in this model"`
 
 	// Callbacks
 	TrialStatsFunc func(ss *Sim, accum bool) `view:"-" desc:"a function that calculates trial stats"`
@@ -75,8 +74,8 @@ func (ss *Sim) New() {
 	ss.Stats.Init()
 	ss.Run.Scale = env.Run
 	ss.ViewOn = true
-	ss.TrainUpdt = axon.AlphaCycle
-	ss.TestUpdt = axon.Cycle
+	ss.TrainUpdt = etime.AlphaCycle
+	ss.TestUpdt = etime.Cycle
 	ss.TestInterval = 500 // TODO this should be a value we update or save, seems to log every epoch
 	ss.PCAInterval = 10
 	ss.Time.Defaults()
@@ -108,7 +107,7 @@ func (ss *Sim) InitRndSeed() {
 	rand.Seed(ss.CmdArgs.RndSeeds[run])
 }
 
-func (ss *Sim) GetViewUpdate() axon.TimeScales {
+func (ss *Sim) GetViewUpdate() etime.Times {
 	viewUpdt := ss.TrainUpdt
 	if ss.Trainer.EvalMode != etime.Train {
 		viewUpdt = ss.TestUpdt
