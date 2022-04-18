@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/emergent/elog"
+	"github.com/emer/emergent/etime"
 	"github.com/emer/etable/agg"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
@@ -49,10 +50,10 @@ func ConfigHipItems(ss *sim.Sim) {
 		FixMin: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
+			etime.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
 				ctx.SetStatFloat("Mem")
 			},
-			elog.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
+			etime.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, etime.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
@@ -64,10 +65,10 @@ func ConfigHipItems(ss *sim.Sim) {
 		FixMin: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
+			etime.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
 				ctx.SetStatFloat("TrgOnWasOff")
 			},
-			elog.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
+			etime.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, etime.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
@@ -79,10 +80,10 @@ func ConfigHipItems(ss *sim.Sim) {
 		FixMin: elog.DTrue,
 		Range:  minmax.F64{Max: 1},
 		Write: elog.WriteMap{
-			elog.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
+			etime.Scope(etime.AllModes, etime.Trial): func(ctx *elog.Context) {
 				ctx.SetStatFloat("TrgOffWasOn")
 			},
-			elog.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
+			etime.Scope(etime.AllModes, etime.Epoch): func(ctx *elog.Context) {
 				ctx.SetAgg(ctx.Mode, etime.Trial, agg.AggMean) // TODO how is this referencing Mem name
 			},
 		}})
@@ -91,7 +92,7 @@ func ConfigHipItems(ss *sim.Sim) {
 		Type: etensor.STRING,
 		Plot: elog.DFalse,
 		Write: elog.WriteMap{
-			elog.Scope(etime.Test, etime.Trial): func(ctx *elog.Context) {
+			etime.Scope(etime.Test, etime.Trial): func(ctx *elog.Context) {
 				testName := "UNKNOWN"
 				// These need to match up with tstNms below.
 				if ss.TestEnv.Desc() == "TestAB" {
@@ -129,7 +130,7 @@ func ConfigHipItems(ss *sim.Sim) {
 				FixMin: elog.DTrue,
 				Range:  minmax.F64{Max: 1},
 				Write: elog.WriteMap{
-					elog.Scope(etime.Test, etime.Epoch): func(ctx *elog.Context) {
+					etime.Scope(etime.Test, etime.Epoch): func(ctx *elog.Context) {
 						trl := ss.Logs.Table(etime.Test, etime.Trial)
 						trix := etable.NewIdxView(trl)
 						spl := split.GroupBy(trix, []string{"TestNm"})
@@ -158,8 +159,8 @@ func ConfigHipItems(ss *sim.Sim) {
 		Type: etensor.FLOAT64,
 		Plot: elog.DTrue,
 		Write: elog.WriteMap{
-			elog.Scope(etime.Train, etime.Run): func(ctx *elog.Context) {
-				ix := ctx.Logs.IdxViewScope(elog.Scope(etime.Test, etime.Epoch))
+			etime.Scope(etime.Train, etime.Run): func(ctx *elog.Context) {
+				ix := ctx.Logs.IdxViewScope(etime.Scope(etime.Test, etime.Epoch))
 				lastAbMem := ix.Table.CellFloat("AB_Mem", ix.Table.Rows-1) //.Col(ix.Table.ColIdx("AB_Mem"))
 				//for am : abmems.
 				// TODO Get AB Mem at last epoch
@@ -173,11 +174,11 @@ func ConfigHipItems(ss *sim.Sim) {
 		Type: etensor.INT64,
 		Plot: elog.DTrue,
 		Write: elog.WriteMap{
-			elog.Scope(etime.Train, etime.Run): func(ctx *elog.Context) {
+			etime.Scope(etime.Train, etime.Run): func(ctx *elog.Context) {
 				// TODO Get num of epoch at stop
 				//ctx.SetFloat32(0)
 				//ctx.SetAgg(etime.Test, etime.Epoch, agg.AggMax)
-				maxo := ctx.SetAggItemScope(elog.Scope(etime.Test, etime.Epoch), "Epoch", agg.AggMax)
+				maxo := ctx.SetAggItemScope(etime.Scope(etime.Test, etime.Epoch), "Epoch", agg.AggMax)
 				print(maxo) // DO NOT SUBMIT
 			},
 		}})
