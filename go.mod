@@ -2,9 +2,9 @@ module github.com/Astera-org/models
 
 go 1.17
 
-replace github.com/emer/axon => ../axon
-
-replace github.com/emer/emergent => ../emergent
+//replace github.com/emer/axon => ../axon
+//
+//replace github.com/emer/emergent => ../emergent
 
 require (
 	github.com/anthonynsimon/bild v0.13.0
