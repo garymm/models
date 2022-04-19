@@ -57,7 +57,7 @@ func PreTrainTrial(ss *sim.Sim) bool {
 	epc, _, chg := ss.TrainEnv.Counter(env.Epoch)
 	if chg {
 		ss.Logs.Log(etime.Train, etime.Epoch)
-		if ss.ViewOn && ss.TrainUpdt > axon.AlphaCycle {
+		if ss.ViewOn && ss.TrainUpdt > etime.AlphaCycle {
 			ss.UpdateView(true)
 		}
 		if epc >= ss.CmdArgs.PreTrainEpcs { // done with training..
@@ -114,7 +114,7 @@ func PreThetaCyc(ss *sim.Sim, train bool) {
 	cycPerQtr := []int{100, 50, 50, 50} // 100, 50, 50, 50 notably better
 
 	ss.Net.NewState()
-	ss.Time.NewState(train)
+	ss.Time.NewState(etime.Train.String())
 	for qtr := 0; qtr < 4; qtr++ {
 		maxCyc := cycPerQtr[qtr]
 		for cyc := 0; cyc < maxCyc; cyc++ {
@@ -147,7 +147,7 @@ func PreThetaCyc(ss *sim.Sim, train bool) {
 	if train {
 		ss.Net.DWt(&ss.Time)
 	}
-	if viewUpdt == axon.Phase || viewUpdt == axon.AlphaCycle || viewUpdt == axon.ThetaCycle {
+	if viewUpdt == etime.Phase || viewUpdt == etime.AlphaCycle || viewUpdt == etime.ThetaCycle {
 		ss.UpdateView(train)
 	}
 

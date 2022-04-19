@@ -122,7 +122,7 @@ func (ss *Sim) ConfigLogItems() {
 		Write: elog.WriteMap{
 			etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) { //ctxMode implies whatever current mode, do trial log for that, instead of making it specific
 				pcterr := ctx.SetAggItem(ctx.Mode, etime.Trial, "Err", agg.AggMean)
-				epc := ctx.Stats.Int("Epoch")
+				epc := ss.CurrentEnvironment().Epoch().Cur
 				if ss.Stats.Int("FirstZero") < 0 && pcterr == 0 {
 					ss.Stats.SetInt("FirstZero", epc)
 				}
@@ -340,37 +340,38 @@ func (ss *Sim) ConfigLogItems() {
 				etime.Scope(etime.Analyze, etime.Trial): func(ctx *elog.Context) {
 					ctx.SetLayerTensor(clnm, "ActM")
 				}}})
-		ss.Logs.AddItem(&elog.Item{
-			Name: clnm + "_PCA_NStrong", //These are explicitely defined in stats, maybe make enums MOAR enums?
-			Type: etensor.FLOAT64,
-			Plot: elog.DFalse,
-			Write: elog.WriteMap{
-				etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
-					ctx.SetStatFloat(ctx.Item.Name)
-				}}})
-		ss.Logs.AddItem(&elog.Item{
-			Name: clnm + "_PCA_Top5",
-			Type: etensor.FLOAT64,
-			Plot: elog.DFalse,
-			Write: elog.WriteMap{
-				etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
-					ctx.SetStatFloat(ctx.Item.Name)
-				}}})
-		ss.Logs.AddItem(&elog.Item{
-			Name: clnm + "_PCA_Next5",
-			Type: etensor.FLOAT64,
-			Plot: elog.DFalse,
-			Write: elog.WriteMap{
-				etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
-					ctx.SetStatFloat(ctx.Item.Name)
-				}}})
-		ss.Logs.AddItem(&elog.Item{
-			Name: clnm + "_PCA_Rest",
-			Type: etensor.FLOAT64,
-			Plot: elog.DFalse,
-			Write: elog.WriteMap{
-				etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
-					ctx.SetStatFloat(ctx.Item.Name)
-				}}})
+		// TODO PCA seems to hang. See comment in hippocampus.go
+		//ss.Logs.AddItem(&elog.Item{
+		//	Name: clnm + "_PCA_NStrong", //These are explicitely defined in stats, maybe make enums MOAR enums?
+		//	Type: etensor.FLOAT64,
+		//	Plot: elog.DFalse,
+		//	Write: elog.WriteMap{
+		//		etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
+		//			ctx.SetStatFloat(ctx.Item.Name)
+		//		}}})
+		//ss.Logs.AddItem(&elog.Item{
+		//	Name: clnm + "_PCA_Top5",
+		//	Type: etensor.FLOAT64,
+		//	Plot: elog.DFalse,
+		//	Write: elog.WriteMap{
+		//		etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
+		//			ctx.SetStatFloat(ctx.Item.Name)
+		//		}}})
+		//ss.Logs.AddItem(&elog.Item{
+		//	Name: clnm + "_PCA_Next5",
+		//	Type: etensor.FLOAT64,
+		//	Plot: elog.DFalse,
+		//	Write: elog.WriteMap{
+		//		etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
+		//			ctx.SetStatFloat(ctx.Item.Name)
+		//		}}})
+		//ss.Logs.AddItem(&elog.Item{
+		//	Name: clnm + "_PCA_Rest",
+		//	Type: etensor.FLOAT64,
+		//	Plot: elog.DFalse,
+		//	Write: elog.WriteMap{
+		//		etime.Scope(etime.Train, etime.Epoch): func(ctx *elog.Context) {
+		//			ctx.SetStatFloat(ctx.Item.Name)
+		//		}}})
 	}
 }

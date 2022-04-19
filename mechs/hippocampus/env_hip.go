@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/Astera-org/models/library/sim"
 	"github.com/emer/emergent/env"
+	"github.com/emer/emergent/etime"
 	"github.com/emer/etable/etable"
 	"github.com/emer/etable/etensor"
 )
