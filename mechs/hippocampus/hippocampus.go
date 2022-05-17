@@ -17,6 +17,7 @@ import (
 	"github.com/emer/axon/hip"
 	"github.com/emer/emergent/egui"
 	"github.com/emer/emergent/emer"
+	"github.com/emer/emergent/etime"
 	"github.com/emer/emergent/patgen"
 	"github.com/emer/emergent/prjn"
 	"github.com/emer/emergent/relpos"
@@ -83,7 +84,8 @@ func main() {
 
 	if TheSim.CmdArgs.NoGui {
 		if !TheSim.CmdArgs.NoRun {
-			PreTrain(&TheSim.Sim)
+			// TODO This might not be the behavior we want! PreTrain needs to be refactored, though.
+			//PreTrain(&TheSim.Sim)
 		}
 		TheSim.RunFromArgs()
 	} else {
@@ -126,13 +128,13 @@ func Config(ss *HipSim) {
 	ConfigPats(ss)
 	//OpenFixedPatterns(ss) //todo ths is for debugging, shoudl be removed later
 
-	ss.Initialization = func() {
-		ss.InitRndSeed()
-		ReconfigPatsAndNet(ss)
-		ConfigEnv(ss) // re-config env just in case a different set of patterns was
-		// selected or patterns have been modified etc
-		//OpenFixedPatterns(ss) //todo should be removed, htis is for debugging purposes
-	}
+	//ss.Initialization = func() { // TODO Why? Was this necessary? Reconfiguring stuff messes it up.
+	//	ss.InitRndSeed()
+	//	ReconfigPatsAndNet(ss)
+	//	ConfigEnv(ss) // re-config env just in case a different set of patterns was
+	//	// selected or patterns have been modified etc
+	//	//OpenFixedPatterns(ss) //todo should be removed, htis is for debugging purposes
+	//}
 
 	ConfigParams(&ss.Sim)
 	// Parse arguments before configuring the network and env, in case parameters are set.
@@ -552,7 +554,7 @@ func ReconfigPatsAndNet(ss *HipSim) {
 func testEpochHip(ss *sim.Sim) {
 	ss.Trainer.OnEpochStart()
 	for ss.TestEnv.Trial().Cur = 0; ss.TestEnv.Trial().Cur < ss.TestEnv.Trial().Max; ss.TestEnv.Trial().Cur += 1 {
-		ss.LoopTrial(axon.Epoch)
+		ss.LoopTrial(etime.Epoch)
 	}
 	ss.Trainer.OnEpochEnd()
 }
@@ -700,7 +702,7 @@ func AddHipCallbacks(ss *HipSim) {
 			}
 		},
 		OnEveryPhaseEnd: func() {
-			if ss.GetViewUpdate() == axon.Phase {
+			if ss.GetViewUpdate() == etime.Phase {
 				ss.GUI.UpdateNetView()
 			}
 		},

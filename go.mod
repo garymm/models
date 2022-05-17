@@ -2,12 +2,16 @@ module github.com/Astera-org/models
 
 go 1.17
 
+//replace github.com/emer/axon => ../axon
+//
+//replace github.com/emer/emergent => ../emergent
+
 require (
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/emer/axon v1.3.26
-	github.com/emer/emergent v1.2.1
+	github.com/emer/emergent v1.2.2
 	github.com/emer/empi v1.0.12
-	github.com/emer/etable v1.0.44
+	github.com/emer/etable v1.0.45
 	github.com/emer/leabra v1.1.48
 	github.com/emer/vision v1.1.15
 	github.com/goki/gi v1.2.17

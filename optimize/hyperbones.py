@@ -224,7 +224,7 @@ def run_bones_parallel(bones_obj, params):
         executor.submit(observer, bones_obj, locky)
         for i in range(optimization.NUM_TRIALS):
             print("Starting to execute: " + str(i))
-            executor.submit(single_bones_trial, bones_obj, params, locky, i)
+            future = executor.submit(single_bones_trial, bones_obj, params, locky, i)
 
     best = sorted(all_observations, key=lambda a: a[0])[0]
     return best[1], best[0]
