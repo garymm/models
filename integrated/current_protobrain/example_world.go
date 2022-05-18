@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/emer/emergent/agent"
 	"github.com/emer/emergent/patgen"
 	"github.com/emer/etable/etensor"
 )
@@ -17,26 +18,46 @@ type ExampleWorld struct {
 	observations     map[string]*etensor.Float32
 }
 
+// Observe Returns a tensor for the named modality. E.g. “x” or “vision” or “reward”
+func (world *ExampleWorld) Observe(name string) etensor.Tensor {
+	//constantly rnadomize this input, i know it says Act, but it is treated as an input, confusing?, need to V2wdp, etc
+	//to do, make less sparse input
+	world.observations["Act"] = etensor.NewFloat32(world.observationShape["Act"], nil, nil)
+	return world.observations[name]
+}
+
+// StepWorld steps the index of the current pattern.
+func (world *ExampleWorld) StepWorld(actions map[string]agent.Action, agentDone bool) (worldDone bool, debug string) {
+
+	return false, ""
+}
+
 //Display displays the environmnet
 func (world *ExampleWorld) Display() {
 	fmt.Println("This world state")
 }
 
 // Init Initializes or reinitialize the world, todo, change from being hardcoded for emery
-func (world *ExampleWorld) Init(details string) {
-	fmt.Println("Init Dworld: " + details)
+func (world *ExampleWorld) InitWorld(details map[string]string) (actionSpace map[string]agent.SpaceSpec, observationSpace map[string]agent.SpaceSpec) {
 
 	world.observationShape = make(map[string][]int)
 	world.observations = make(map[string]*etensor.Float32)
 
-	world.observationShape["VL"] = []int{5, 5}
-	world.observationShape["Act"] = []int{5, 5}
+	world.observationShape["VL"] = []int{5, 5}  //hard coded in, this is the Ground Truth/Target state
+	world.observationShape["Act"] = []int{5, 5} //hard coded in
+
+	fivebyfive := agent.SpaceSpec{
+		ContinuousShape: []int{5, 5},
+		Min:             0,
+		Max:             1,
+	}
 
 	world.observations["VL"] = etensor.NewFloat32(world.observationShape["VL"], nil, nil)
 	//world.observations["Act"] = etensor.NewFloat32(world.observationShape["Act"], nil, nil)
 
 	patgen.PermutedBinaryRows(world.observations["VL"], 1, 1, 0)
-	//patgen.PermutedBinaryRows(world.observations["Act"], 3, 1, 0)
+
+	return map[string]agent.SpaceSpec{"VL": fivebyfive, "Output": fivebyfive}, nil
 
 }
 
@@ -54,23 +75,6 @@ func (world *ExampleWorld) DecodeAndTakeAction(action string, vt *etensor.Float3
 	fmt.Println("\n Expected Output")
 	fmt.Printf(world.observations["VL"].String())
 	return "Taking in info from model and moving forward"
-}
-
-// StepN Updates n timesteps (e.g. milliseconds)
-func (world *ExampleWorld) StepN(n int) {}
-
-// Step 1
-func (world *ExampleWorld) Step() {
-	fmt.Println("I'm taking a step")
-
-}
-
-// Observe Returns a tensor for the named modality. E.g. “x” or “vision” or “reward”
-func (world *ExampleWorld) Observe(name string) etensor.Tensor {
-	//constantly rnadomize this input, i know it says Act, but it is treated as an input, confusing?, need to V2wdp, etc
-	//to do, make less sparse input
-	world.observations["Act"] = etensor.NewFloat32(world.observationShape["Act"], nil, nil)
-	return world.observations[name]
 }
 
 func (world *ExampleWorld) ObserveWithShape(name string, shape []int) etensor.Tensor {

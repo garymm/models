@@ -164,7 +164,7 @@ func (ss *Sim) Config() {
 }
 
 func (ss *Sim) ConfigEnv() {
-	ss.OnlyEnv.Init("Everything is working, we're done")
+	ss.OnlyEnv.InitWorld(nil)
 }
 
 func (ss *Sim) ConfigNet() *deep.Network {
@@ -195,7 +195,7 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	plusPhase := &manager.GetLoop(etime.Train, etime.Cycle).Events[1]
 	plusPhase.OnEvent.Add("Sim:PlusPhase:SendActionsThenStep", func() {
 		ss.SendAction(ss.Net, &ss.OnlyEnv) //todo shouldn't this be called at the END of the plus phase?
-		ss.OnlyEnv.Step()
+		ss.OnlyEnv.StepWorld(nil, false)
 		// Check the action at the beginning of the Plus phase, before the teaching signal is introduced.
 		//axon.SendActionAndStep(ss.Net.AsAxon(), ss.WorldEnv)
 	})
@@ -250,7 +250,8 @@ func (ss *Sim) SendAction(net *deep.Network, ev WorldInterface) { // TODO(refact
 func (ss *Sim) NewRun() { // TODO(refactor): looper call
 	//run := ss.OnlyEnv.GetCounter(etime.Run).Cur
 	ss.PctCortex = 0
-	ss.OnlyEnv.Init("DefineSimVariables Run") //TODO: meaningful init info that should be passed
+	ss.OnlyEnv.InitWorld(nil)
+	//ss.OnlyEnv.Init("DefineSimVariables Run") //TODO: meaningful init info that should be passed
 
 	ss.Time.Reset()
 	ss.Net.InitWts()
