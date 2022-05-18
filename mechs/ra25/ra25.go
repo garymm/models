@@ -50,7 +50,7 @@ package main
 //func main() {
 //	// TheSim is the overall state for this simulation
 //	var TheSim sim.Sim
-//	TheSim.New()
+//	TheSim.DefineSimVariables()
 //
 //	Config(&TheSim)
 //

@@ -2103,7 +2103,7 @@ func (ss *Sim) ConfigGui() *gi.Window {
 
 	tbar.AddSeparator("misc")
 
-	tbar.AddAction(gi.ActOpts{Label: "New Seed", Icon: "new", Tooltip: "Generate a new initial random seed to get different results.  By default, Init re-establishes the same initial seed every time."}, win.This(),
+	tbar.AddAction(gi.ActOpts{Label: "DefineSimVariables Seed", Icon: "new", Tooltip: "Generate a new initial random seed to get different results.  By default, Init re-establishes the same initial seed every time."}, win.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			ss.NewRndSeed()
 		})

@@ -44,7 +44,7 @@ package main
 //)
 //
 //func main() {
-//	TheSim.New()
+//	TheSim.DefineSimVariables()
 //	TheSim.Config()
 //	if len(os.Args) > 1 {
 //		TheSim.CmdArgs() // simple assumption is that any args = no gui -- could add explicit arg if you want
@@ -206,8 +206,8 @@ package main
 //// TheSim is the overall state for this simulation
 //var TheSim Sim
 //
-//// New creates new blank elements and initializes defaults
-//func (ss *Sim) New() {
+//// DefineSimVariables creates new blank elements and initializes defaults
+//func (ss *Sim) DefineSimVariables() {
 //	ss.Net = &axon.Network{}
 //	ss.PoolVocab = patgen.Vocab{}
 //	ss.TrainAB = &etable.Table{}
@@ -2309,7 +2309,7 @@ package main
 //
 //	tbar.AddSeparator("misc")
 //
-//	tbar.AddAction(gi.ActOpts{Label: "New Seed", Icon: "new", Tooltip: "Generate a new initial random seed to get different results.  By default, Init re-establishes the same initial seed every time."}, win.This(),
+//	tbar.AddAction(gi.ActOpts{Label: "DefineSimVariables Seed", Icon: "new", Tooltip: "Generate a new initial random seed to get different results.  By default, Init re-establishes the same initial seed every time."}, win.This(),
 //		func(recv, send ki.Ki, sig int64, data interface{}) {
 //			ss.NewRndSeed()
 //		})

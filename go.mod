@@ -2,14 +2,14 @@ module github.com/Astera-org/models
 
 go 1.17
 
-//replace github.com/emer/axon => ../axon
-//
-//replace github.com/emer/emergent => ../emergent
+replace github.com/emer/axon => ../axon
+
+replace github.com/emer/emergent => ../emergent
 
 require (
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/emer/axon v1.3.26
-	github.com/emer/emergent v1.2.2
+	github.com/emer/emergent v1.2.3
 	github.com/emer/empi v1.0.12
 	github.com/emer/etable v1.0.45
 	github.com/emer/leabra v1.1.48
@@ -23,6 +23,7 @@ require (
 )
 
 require (
+	github.com/Astera-org/worlds v0.0.0-20220513203205-17959e9bff37 // indirect
 	github.com/BurntSushi/freetype-go v0.0.0-20160129220410-b763ddbfe298 // indirect
 	github.com/BurntSushi/graphics-go v0.0.0-20160129215708-b43f31a4a966 // indirect
 	github.com/BurntSushi/xgb v0.0.0-20210121224620-deaf085860bc // indirect
@@ -32,6 +33,7 @@ require (
 	github.com/akutz/sortfold v0.2.1 // indirect
 	github.com/alecthomas/chroma v0.9.4 // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20211022090848-03faa67fb219 // indirect
+	github.com/apache/thrift v0.16.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20200825124411-48ed595a09d2 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
