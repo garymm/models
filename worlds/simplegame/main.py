@@ -3,7 +3,7 @@ import random
 
 from pynput.keyboard import Key, Listener
 
-mapsize: int = 20
+mapsize: int = 200
 
 
 class Tile:
