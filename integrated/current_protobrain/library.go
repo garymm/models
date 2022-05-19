@@ -32,42 +32,6 @@ func NewRndSeed(randomSeed *int64) { // TODO(refactor): to library
 	*randomSeed = time.Now().UnixNano()
 }
 
-// ApplyInputs applies input patterns from given envirbonment.
-// It is good practice to have this be a separate method with appropriate
-// args so that it can be used for various different contexts
-// (training, testing, etc).
-func ApplyInputs(net *deep.Network, en WorldInterface, states, layers []string) { // TODO(refactor): library code
-	net.InitExt() // clear any existing inputs -- not strictly necessary if always
-	for i, lnm := range layers {
-		lyi := net.LayerByName(lnm)
-		if lyi == nil {
-			continue
-		}
-		ly := lyi.(axon.AxonLayer).AsAxon()
-		pats := en.ObserveWithShape(states[i], lyi.Shape().Shp)
-		lyi.Shape().Strides()
-		if pats != nil {
-			ly.ApplyExt(pats)
-		}
-	}
-}
-
-func ApplyInputsWithStrideAndShape(net *deep.Network, en WorldInterface, states, layers []string) { // TODO(refactor): library code
-	net.InitExt() // clear any existing inputs -- not strictly necessary if always
-	for i, lnm := range layers {
-		lyi := net.LayerByName(lnm)
-		if lyi == nil {
-			continue
-		}
-		ly := lyi.(axon.AxonLayer).AsAxon()
-		pats := en.ObserveWithShapeStride(states[i], lyi.Shape().Shp, lyi.Shape().Strides())
-		lyi.Shape().Strides()
-		if pats != nil {
-			ly.ApplyExt(pats)
-		}
-	}
-}
-
 // SaveWeights saves the network weights -- when called with giv.CallMethod
 // it will auto-prompt for filename
 func SaveWeights(fileName string, net *deep.Network) { // TODO(refactor): library code

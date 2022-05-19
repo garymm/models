@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/deep"
+	"github.com/emer/emergent/agent"
 	"github.com/emer/emergent/egui"
 	"github.com/emer/emergent/etime"
 	"github.com/emer/emergent/evec"
@@ -55,8 +56,10 @@ type Sim struct { // TODO(refactor): Remove a lot of this stuff
 	Loops    *looper.Manager `view:"no-inline" desc:"contains looper control loops for running sim"`
 	Time     axon.Time       `desc:"axon timing parameters and state"`
 	LoopTime string          `desc:"Printout of the current time."`
+	GUI      egui.GUI        `view:"-" desc:"manages all the gui elements"`
 
-	GUI egui.GUI `view:"-" desc:"manages all the gui elements"`
+	ActionMapping      map[string]agent.SpaceSpec `view:"-" desc:"shape and structure of actions agent can take"`
+	ObservationMapping map[string]agent.SpaceSpec `view:"-" desc:"shape and structure of observations agent can take"`
 
 	PctCortex        float64        `desc:"proportion of action driven by the cortex vs. hard-coded reflexive subcortical"`
 	PctCortexMax     float64        `desc:"maximum PctCortex, when running on the schedule"`
@@ -150,8 +153,12 @@ func (ss *Sim) DefineSimVariables() { // TODO(refactor): Remove a lot
 	ss.Inters = []string{"Energy", "Hydra", "BumpPain", "FoodRew", "WaterRew"}
 	ss.PatSize = evec.Vec2i{X: 5, Y: 5}
 
+	actionobsMapping := (&NetCharacteristics{}).Init()
+	ss.ActionMapping = actionobsMapping.ActionMapping
+	ss.ObservationMapping = actionobsMapping.ObservationMapping
 	// This has to be called after those variables are defined, because they're used in here.
 	DefineNetworkCharacteristics(ss) //todo this sohuld be removed and made locally in config network
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,10 +201,7 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 
 	plusPhase := &manager.GetLoop(etime.Train, etime.Cycle).Events[1]
 	plusPhase.OnEvent.Add("Sim:PlusPhase:SendActionsThenStep", func() {
-		ss.SendAction(ss.Net, &ss.OnlyEnv) //todo shouldn't this be called at the END of the plus phase?
-		ss.OnlyEnv.StepWorld(nil, false)
-		// Check the action at the beginning of the Plus phase, before the teaching signal is introduced.
-		//axon.SendActionAndStep(ss.Net.AsAxon(), ss.WorldEnv)
+		axon.SendActionAndStep(ss.Net.AsAxon(), &ss.OnlyEnv)
 	})
 
 	mode := etime.Train // For closures
@@ -208,14 +212,12 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	})
 
 	stack.Loops[etime.Trial].OnStart.Add("Sim:Trial:Observe", func() {
-		ApplyEnvRelevantInputs(ss.Net, &ss.OnlyEnv)
-		//axon.ApplyInputs(ss.Net.AsAxon(), ss.WorldEnv, "Input", func(spec agent.SpaceSpec) etensor.Tensor {
-		//	return ss.WorldEnv.Observe("Input")
-		//})
-		// Although output is applied here, it won't actually be clamped until PlusPhase is called, because it's a layer of type Target.
-		//axon.ApplyInputs(ss.Net.AsAxon(), ss.WorldEnv, "Output", func(spec agent.SpaceSpec) etensor.Tensor {
-		//	return ss.WorldEnv.Observe("Output")
-		//})
+		for name, _ := range ss.ObservationMapping {
+			axon.ApplyInputs(ss.Net.AsAxon(), &ss.OnlyEnv, name, func(spec agent.SpaceSpec) etensor.Tensor {
+				return ss.OnlyEnv.Observe(name)
+			})
+		}
+
 	})
 
 	manager.GetLoop(etime.Train, etime.Run).OnStart.Add("Sim:NewRun", ss.NewRun)
@@ -234,15 +236,6 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	})
 
 	return manager
-}
-
-// SendAction takes action for this step, using either decoded cortical
-// or reflexive subcortical action from env.
-func (ss *Sim) SendAction(net *deep.Network, ev WorldInterface) { // TODO(refactor): call this in looper
-	ly := net.LayerByName("VL").(axon.AxonLayer).AsAxon()
-	vt := ValsTsr(&ss.ValsTsrs, "VL")
-	ly.UnitValsTensor(vt, "ActM")
-	ev.DecodeAndTakeAction("action", vt)
 }
 
 // NewRun intializes a new run of the model, using the OnlyEnv.GetCounter(etime.Run) counter
