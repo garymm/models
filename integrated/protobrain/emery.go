@@ -29,8 +29,8 @@ func main() {
 		StructForView:             &sim,
 		Looper:                    sim.Loops,
 		Network:                   sim.Net.EmerNet,
-		AppName:                   "Attempted refactor of Fworld",
-		AppTitle:                  "Fworld with refactored code",
+		AppName:                   "Protobrain solves FWorld",
+		AppTitle:                  "Protobrain",
 		AppAbout:                  `Learn to mimic patterns coming from a teacher signal in a flat grid world.`,
 		AddNetworkLoggingCallback: axon.AddCommonLogItemsForOutputLayers,
 		DoLogging:                 true,
@@ -77,7 +77,7 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	})
 
 	stack.Loops[etime.Trial].OnStart.Add("Sim:Trial:Observe", func() {
-		// If not using an AgentProxyWithWorldCache, the full list of observations is returned from StepWorld().
+		// TODO Iterate over all input layers instead.
 		for name, _ := range ss.WorldEnv.(*agent.AgentProxyWithWorldCache).CachedObservations {
 			axon.ApplyInputs(ss.Net.AsAxon(), ss.WorldEnv, name, func(spec agent.SpaceSpec) etensor.Tensor {
 				return ss.WorldEnv.Observe(name)
@@ -87,7 +87,6 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	})
 
 	manager.GetLoop(etime.Train, etime.Run).OnStart.Add("Sim:NewRun", ss.NewRun)
-	//manager.GetLoop(etime.Train, etime.Run).OnStart.Add("Sim:NewPatterns", func() { ss.WorldEnv.InitWorld(nil) })
 	axon.AddDefaultLoopSimLogic(manager, &ss.Time, ss.Net.AsAxon())
 
 	// Initialize and print loop structure, then add to Sim
@@ -98,7 +97,6 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 		loss := ss.Net.LayerByName("VL").(axon.AxonLayer).AsAxon().PctUnitErr()
 		s := fmt.Sprintf("%f", loss)
 		fmt.Println("the pctuniterror is " + s)
-		//simple error calculation
 	})
 
 	return manager
