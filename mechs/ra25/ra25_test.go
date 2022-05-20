@@ -12,7 +12,7 @@ import (
 // Commented out because the args parsing within Config can only be called once in a tests file.
 //func TestConfigNet(t *testing.T) {
 //	simo := sim.Sim{}
-//	simo.New()
+//	simo.DefineSimVariables()
 //	simo.CmdArgs.NoGui = true
 //	Config(&simo)
 //	neto := axon.Network{}

@@ -188,7 +188,7 @@ func (ss *Sim) ConfigGui(appname, title, about string) *gi.Window {
 	})
 	////////////////////////////////////////////////
 	ss.GUI.ToolBar.AddSeparator("misc")
-	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "New Seed",
+	ss.GUI.AddToolbarItem(egui.ToolbarItem{Label: "DefineSimVariables Seed",
 		Icon:    "new",
 		Tooltip: "Generate a new initial random seed to get different results.  By default, Init re-establishes the same initial seed every time.",
 		Active:  egui.ActiveAlways,
