@@ -4,12 +4,14 @@ go 1.17
 
 replace github.com/emer/axon => ../axon
 
+replace github.com/Astera-org/worlds => ../worlds
+
 replace github.com/emer/emergent => ../emergent
 
 require (
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/emer/axon v1.3.26
-	github.com/emer/emergent v1.2.3
+	github.com/emer/axon v1.3.29
+	github.com/emer/emergent v1.2.5
 	github.com/emer/empi v1.0.12
 	github.com/emer/etable v1.0.45
 	github.com/emer/leabra v1.1.48
@@ -22,8 +24,9 @@ require (
 	golang.org/x/tools v0.1.9 // indirect
 )
 
+require github.com/Astera-org/worlds v0.0.2
+
 require (
-	github.com/Astera-org/worlds v0.0.0-20220513203205-17959e9bff37 // indirect
 	github.com/BurntSushi/freetype-go v0.0.0-20160129220410-b763ddbfe298 // indirect
 	github.com/BurntSushi/graphics-go v0.0.0-20160129215708-b43f31a4a966 // indirect
 	github.com/BurntSushi/xgb v0.0.0-20210121224620-deaf085860bc // indirect

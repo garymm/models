@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Astera-org/worlds/network_agent"
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/deep"
 	"github.com/emer/emergent/agent"
@@ -41,7 +42,11 @@ func main() {
 		AddNetworkLoggingCallback: axon.AddCommonLogItemsForOutputLayers,
 	}
 	userInterface.AddDefaultLogging()
-	userInterface.CreateAndRunGui() // CreateAndRunGui blocks, so don't put any code after this.
+	userInterface.CreateAndRunGuiWithAdditionalConfig(func() {
+		handler := network_agent.AgentHandler{Agent: &sim.WorldMailbox} // Use this to serve over the network.
+		userInterface.AddServerButton(handler.GetServerFunc(sim.Loops))
+	}) // CreateAndRunGui blocks, so don't put any code after this.
+
 }
 
 // see params_def.go for default params
@@ -61,28 +66,28 @@ type Sim struct { // TODO(refactor): Remove a lot of this stuff
 	ActionMapping      map[string]agent.SpaceSpec `view:"-" desc:"shape and structure of actions agent can take"`
 	ObservationMapping map[string]agent.SpaceSpec `view:"-" desc:"shape and structure of observations agent can take"`
 
-	PctCortex        float64        `desc:"proportion of action driven by the cortex vs. hard-coded reflexive subcortical"`
-	PctCortexMax     float64        `desc:"maximum PctCortex, when running on the schedule"`
-	TrnErrStats      *etable.Table  `view:"no-inline" desc:"stats on train trials where errors were made"`
-	TrnAggStats      *etable.Table  `view:"no-inline" desc:"stats on all train trials"`
-	MinusCycles      int            `desc:"number of minus-phase cycles"`
-	PlusCycles       int            `desc:"number of plus-phase cycles"`
-	ErrLrMod         axon.LrateMod  `view:"inline" desc:"learning rate modulation as function of error"`
-	Params           params.Sets    `view:"no-inline" desc:"full collection of param sets"`
-	ParamSet         string         `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set"`
-	Tag              string         `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
-	Prjn4x4Skp2      *prjn.PoolTile `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn"`
-	Prjn4x4Skp2Recip *prjn.PoolTile `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn, recip"`
-	Prjn4x3Skp2      *prjn.PoolTile `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn"`
-	Prjn4x3Skp2Recip *prjn.PoolTile `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn, recip"`
-	Prjn3x3Skp1      *prjn.PoolTile `view:"no-inline" desc:"feedforward 3x3 skip 1 topo prjn"`
-	Prjn4x4Skp4      *prjn.PoolTile `view:"no-inline" desc:"feedforward 4x4 skip 4 topo prjn"`
-	Prjn4x4Skp4Recip *prjn.PoolTile `view:"no-inline" desc:"feedforward 4x4 skip 4 topo prjn, recip"`
-	MaxRuns          int            `desc:"maximum number of model runs to perform"`
-	MaxEpcs          int            `desc:"maximum number of epochs to run per model run"`
-	TestEpcs         int            `desc:"number of epochs of testing to run, cumulative after MaxEpcs of training"`
-	OnlyEnv          ExampleWorld   `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
-	TestInterval     int            `desc:"how often to run through all the test patterns, in terms of training epochs"`
+	PctCortex        float64                        `desc:"proportion of action driven by the cortex vs. hard-coded reflexive subcortical"`
+	PctCortexMax     float64                        `desc:"maximum PctCortex, when running on the schedule"`
+	TrnErrStats      *etable.Table                  `view:"no-inline" desc:"stats on train trials where errors were made"`
+	TrnAggStats      *etable.Table                  `view:"no-inline" desc:"stats on all train trials"`
+	MinusCycles      int                            `desc:"number of minus-phase cycles"`
+	PlusCycles       int                            `desc:"number of plus-phase cycles"`
+	ErrLrMod         axon.LrateMod                  `view:"inline" desc:"learning rate modulation as function of error"`
+	Params           params.Sets                    `view:"no-inline" desc:"full collection of param sets"`
+	ParamSet         string                         `desc:"which set of *additional* parameters to use -- always applies Base and optionaly this next if set"`
+	Tag              string                         `desc:"extra tag string to add to any file names output from sim (e.g., weights files, log files, params for run)"`
+	Prjn4x4Skp2      *prjn.PoolTile                 `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn"`
+	Prjn4x4Skp2Recip *prjn.PoolTile                 `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn, recip"`
+	Prjn4x3Skp2      *prjn.PoolTile                 `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn"`
+	Prjn4x3Skp2Recip *prjn.PoolTile                 `view:"no-inline" desc:"feedforward 4x4 skip 2 topo prjn, recip"`
+	Prjn3x3Skp1      *prjn.PoolTile                 `view:"no-inline" desc:"feedforward 3x3 skip 1 topo prjn"`
+	Prjn4x4Skp4      *prjn.PoolTile                 `view:"no-inline" desc:"feedforward 4x4 skip 4 topo prjn"`
+	Prjn4x4Skp4Recip *prjn.PoolTile                 `view:"no-inline" desc:"feedforward 4x4 skip 4 topo prjn, recip"`
+	MaxRuns          int                            `desc:"maximum number of model runs to perform"`
+	MaxEpcs          int                            `desc:"maximum number of epochs to run per model run"`
+	TestEpcs         int                            `desc:"number of epochs of testing to run, cumulative after MaxEpcs of training"`
+	WorldMailbox     agent.AgentProxyWithWorldCache `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
+	TestInterval     int                            `desc:"how often to run through all the test patterns, in terms of training epochs"`
 
 	// statistics: note use float64 as that is best for etable.Table
 	RFMaps        map[string]*etensor.Float32 `view:"no-inline" desc:"maps for plotting activation-based receptive fields"`
@@ -153,9 +158,6 @@ func (ss *Sim) DefineSimVariables() { // TODO(refactor): Remove a lot
 	ss.Inters = []string{"Energy", "Hydra", "BumpPain", "FoodRew", "WaterRew"}
 	ss.PatSize = evec.Vec2i{X: 5, Y: 5}
 
-	actionobsMapping := (&NetCharacteristics{}).Init()
-	ss.ActionMapping = actionobsMapping.ActionMapping
-	ss.ObservationMapping = actionobsMapping.ObservationMapping
 	// This has to be called after those variables are defined, because they're used in here.
 	DefineNetworkCharacteristics(ss) //todo this sohuld be removed and made locally in config network
 
@@ -171,7 +173,7 @@ func (ss *Sim) Config() {
 }
 
 func (ss *Sim) ConfigEnv() {
-	ss.OnlyEnv.InitWorld(nil)
+	ss.WorldMailbox.InitWorld(nil)
 }
 
 func (ss *Sim) ConfigNet() *deep.Network {
@@ -201,7 +203,7 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 
 	plusPhase := &manager.GetLoop(etime.Train, etime.Cycle).Events[1]
 	plusPhase.OnEvent.Add("Sim:PlusPhase:SendActionsThenStep", func() {
-		axon.SendActionAndStep(ss.Net.AsAxon(), &ss.OnlyEnv)
+		axon.SendActionAndStep(ss.Net.AsAxon(), &ss.WorldMailbox)
 	})
 
 	mode := etime.Train // For closures
@@ -212,9 +214,9 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	})
 
 	stack.Loops[etime.Trial].OnStart.Add("Sim:Trial:Observe", func() {
-		for name, _ := range ss.ObservationMapping {
-			axon.ApplyInputs(ss.Net.AsAxon(), &ss.OnlyEnv, name, func(spec agent.SpaceSpec) etensor.Tensor {
-				return ss.OnlyEnv.Observe(name)
+		for name, _ := range ss.WorldMailbox.CachedObservations {
+			axon.ApplyInputs(ss.Net.AsAxon(), &ss.WorldMailbox, name, func(spec agent.SpaceSpec) etensor.Tensor {
+				return ss.WorldMailbox.Observe(name)
 			})
 		}
 
@@ -238,13 +240,13 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	return manager
 }
 
-// NewRun intializes a new run of the model, using the OnlyEnv.GetCounter(etime.Run) counter
+// NewRun intializes a new run of the model, using the WorldMailbox.GetCounter(etime.Run) counter
 // for the new run value
 func (ss *Sim) NewRun() { // TODO(refactor): looper call
-	//run := ss.OnlyEnv.GetCounter(etime.Run).Cur
+	//run := ss.WorldMailbox.GetCounter(etime.Run).Cur
 	ss.PctCortex = 0
-	ss.OnlyEnv.InitWorld(nil)
-	//ss.OnlyEnv.Init("DefineSimVariables Run") //TODO: meaningful init info that should be passed
+	ss.WorldMailbox.InitWorld(nil)
+	//ss.WorldMailbox.Init("DefineSimVariables Run") //TODO: meaningful init info that should be passed
 
 	ss.Time.Reset()
 	ss.Net.InitWts()

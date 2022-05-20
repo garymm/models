@@ -37,6 +37,7 @@ func main() {
 		AppAbout:                  `A simple agent that can handle an arbitrary world.`,
 		AddNetworkLoggingCallback: axon.AddCommonLogItemsForOutputLayers,
 	}
+
 	userInterface.AddDefaultLogging()
 	userInterface.CreateAndRunGuiWithAdditionalConfig(func() {
 		handler := network_agent.AgentHandler{Agent: sim.WorldEnv.(*agent.AgentProxyWithWorldCache)} // Use this to serve over the network.
