@@ -24,9 +24,10 @@ import (
 
 func main() {
 	var sim Sim
-	sim.WorldEnv = sim.ConfigEnv()
 	sim.Net = sim.ConfigNet()
 	sim.Loops = sim.ConfigLoops()
+	world, serverFunc := network_agent.GetWorldAndServerFunc(sim.Loops)
+	sim.WorldEnv = world
 
 	userInterface := egui.UserInterface{
 		StructForView:             &sim,
@@ -36,13 +37,12 @@ func main() {
 		AppTitle:                  "Simple Agent",
 		AppAbout:                  `A simple agent that can handle an arbitrary world.`,
 		AddNetworkLoggingCallback: axon.AddCommonLogItemsForOutputLayers,
+		DoLogging:                 true,
+		HaveGui:                   true,
+		StartAsServer:             true,
+		ServerFunc:                serverFunc,
 	}
-
-	userInterface.AddDefaultLogging()
-	userInterface.CreateAndRunGuiWithAdditionalConfig(func() {
-		handler := network_agent.AgentHandler{Agent: sim.WorldEnv.(*agent.AgentProxyWithWorldCache)} // Use this to serve over the network.
-		userInterface.AddServerButton(handler.GetServerFunc(sim.Loops))
-	}) // CreateAndRunGui blocks, so don't put any code after this.
+	userInterface.Start() // Start blocks, so don't put any code after this.
 }
 
 // Sim encapsulates working data for the simulation model, keeping all relevant state information organized and available without having to pass everything around.
@@ -52,10 +52,6 @@ type Sim struct {
 	WorldEnv agent.WorldInterface `desc:"Training environment -- contains everything about iterating over input / output patterns over training"`
 	Time     axon.Time            `desc:"axon timing parameters and state"`
 	LoopTime string               `desc:"Printout of the current time."`
-}
-
-func (ss *Sim) ConfigEnv() agent.WorldInterface {
-	return &agent.AgentProxyWithWorldCache{}
 }
 
 func (ss *Sim) ConfigNet() *deep.Network {
