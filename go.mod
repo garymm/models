@@ -5,7 +5,7 @@ go 1.17
 
 require (
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/emer/axon v1.3.29
+	github.com/emer/axon v1.3.31
 	github.com/emer/emergent v1.2.7
 	github.com/emer/empi v1.0.12
 	github.com/emer/etable v1.0.45

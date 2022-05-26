@@ -107,6 +107,8 @@ github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFP
 github.com/edsrzf/mmap-go v1.0.0/go.mod h1:YO35OhQPt3KJa3ryjFM5Bs14WD66h8eGKpfaBNrHW5M=
 github.com/emer/axon v1.3.29 h1:LPFetcVj5obZgYkR66z85aCOnB06P7X7cPH221cVkJU=
 github.com/emer/axon v1.3.29/go.mod h1:H7DNYoqrYT591HVjYxVdCxpDIWGQW0xsUETHgjJCEE4=
+github.com/emer/axon v1.3.31 h1:8SCJszJI4bNPvDc6cGksQjFeLhr5sLZleNj9XWuN7pA=
+github.com/emer/axon v1.3.31/go.mod h1:FvZsbVKgQiohowr+gkv9Rs8gPuBZ1RU1n1u1gdccoVE=
 github.com/emer/emergent v1.2.5 h1:CjyMZkBs1yl4veUXt4hmfMCYNUIMkliZATJnkTSayHI=
 github.com/emer/emergent v1.2.5/go.mod h1:LvOMlTYpG5QTnA0Ep/jk83NJQrjmedNDOAroMv6/B58=
 github.com/emer/emergent v1.2.7 h1:QKWTTGUy7Y+OWHvaepII2TmPIeZklLuPh09u5a86bVg=
