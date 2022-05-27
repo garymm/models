@@ -2,7 +2,6 @@ module github.com/Astera-org/models
 
 go 1.17
 
-
 require (
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/emer/axon v1.3.31
@@ -19,7 +18,10 @@ require (
 	golang.org/x/tools v0.1.9 // indirect
 )
 
-require github.com/Astera-org/worlds v0.0.3
+require (
+	github.com/Astera-org/worlds v0.0.3
+	github.com/BurntSushi/toml v0.3.1
+)
 
 require (
 	github.com/BurntSushi/freetype-go v0.0.0-20160129220410-b763ddbfe298 // indirect
