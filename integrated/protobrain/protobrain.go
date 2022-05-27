@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/Astera-org/worlds/network_agent"
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/deep"
@@ -16,9 +17,15 @@ import (
 	"github.com/emer/etable/etensor"
 )
 
-// Protobrain demonstrates a network model that has elements of cortical visual perception and a rudimentary action system. It is not reward motivated, and instead it learns to approximate a behavior heuristic. It is intended to be used with the world found in github.com/Astera-org/worlds/integrated/example_worlds.
+// Protobrain demonstrates a network model that has elements of cortical visual perception and a rudimentary action system.
+// It is not reward motivated, and instead it learns to approximate a behavior heuristic. It is intended to be used with
+// the world found in github.com/Astera-org/worlds/integrated/example_worlds.
+
+var gConfig Config
 
 func main() {
+	gConfig.Load() // LATER specify the .cfg as a cmd line arg
+
 	var sim Sim
 	sim.Net = sim.ConfigNet()
 	sim.Loops = sim.ConfigLoops()
@@ -34,7 +41,7 @@ func main() {
 		AppAbout:                  `Learn to mimic patterns coming from a teacher signal in a flat grid world.`,
 		AddNetworkLoggingCallback: axon.AddCommonLogItemsForOutputLayers,
 		DoLogging:                 true,
-		HaveGui:                   true,
+		HaveGui:                   gConfig.GUI,
 		StartAsServer:             true,
 		ServerFunc:                serverFunc,
 	}
