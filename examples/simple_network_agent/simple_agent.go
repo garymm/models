@@ -19,7 +19,10 @@ import (
 	"log"
 )
 
-// This file demonstrates the creation of a simple axon network connected to a simple world in a different file and potentially a different process. Although it is intended as a framework for creating an intelligent agent and embedding it in a challenging world, it does not actually implement any meaningful sort of intelligence, as the network receives no teaching signal of any kind. In addition to creating a simple environment and a simple network, it creates a looper.Manager to control the flow of time across Runs, Epochs, and Trials. It creates a GUI to control it.
+// This file demonstrates the creation of a simple axon model connected to a simple world in a different file and potentially a different process. 
+// Although it is intended as a framework for creating an intelligent agent and embedding it in a challenging world, it does not actually implement 
+// any meaningful sort of intelligence, as the model receives no teaching signal of any kind. In addition to creating a simple environment and a 
+// simple model, it creates a looper.Manager to control the flow of time across Runs, Epochs, and Trials. It creates a GUI to control it.
 // Although this model does not learn or use a real environment, you may find it useful as a template for creating something more.
 
 func main() {
