@@ -6,7 +6,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/Astera-org/worlds/network_agent"
 	"github.com/emer/axon/axon"
 	"github.com/emer/axon/deep"
 	"github.com/emer/emergent/agent"
@@ -19,33 +18,28 @@ import (
 	"log"
 )
 
-// This file demonstrates the creation of a simple axon model connected to a simple world in a different file and potentially a different process. 
-// Although it is intended as a framework for creating an intelligent agent and embedding it in a challenging world, it does not actually implement 
-// any meaningful sort of intelligence, as the model receives no teaching signal of any kind. In addition to creating a simple environment and a 
-// simple model, it creates a looper.Manager to control the flow of time across Runs, Epochs, and Trials. It creates a GUI to control it.
-// Although this model does not learn or use a real environment, you may find it useful as a template for creating something more.
+// This file demonstrates how to do supervised learning with a simple axon network and a simple task. It creates an "RA 25 Env", which stands for "Random Associator 25 (5x5)", which provides random 5x5 patterns for the network to learn.
+// In addition to creating a simple environment and a simple network, it creates a looper.Manager to control the flow of time across Runs, Epochs, and Trials. It creates a GUI to control it.
+
+var numPatterns = 30 // How many random patterns. Each pattern is one trial per epoch.
 
 func main() {
 	var sim Sim
+	sim.WorldEnv = sim.ConfigEnv()
 	sim.Net = sim.ConfigNet()
 	sim.Loops = sim.ConfigLoops()
-	world, serverFunc := network_agent.GetWorldAndServerFunc(sim.Loops)
-	sim.WorldEnv = world
 
 	userInterface := egui.UserInterface{
 		StructForView:             &sim,
 		Looper:                    sim.Loops,
 		Network:                   sim.Net.EmerNet,
-		AppName:                   "Agent",
-		AppTitle:                  "Simple Agent",
-		AppAbout:                  `A simple agent that can handle an arbitrary world.`,
+		AppName:                   "Simple Supervised",
+		AppTitle:                  "Random Associator for Supervised Task",
+		AppAbout:                  `Learn to memorize random pattern pairs presented as input/output.`,
 		AddNetworkLoggingCallback: axon.AddCommonLogItemsForOutputLayers,
-		DoLogging:                 true,
-		HaveGui:                   true,
-		StartAsServer:             true,
-		ServerFunc:                serverFunc,
 	}
-	userInterface.Start() // Start blocks, so don't put any code after this.
+	userInterface.AddDefaultLogging()
+	userInterface.CreateAndRunGui() // CreateAndRunGui blocks, so don't put any code after this.
 }
 
 // Sim encapsulates working data for the simulation model, keeping all relevant state information organized and available without having to pass everything around.
@@ -57,10 +51,14 @@ type Sim struct {
 	LoopTime string               `desc:"Printout of the current time."`
 }
 
+func (ss *Sim) ConfigEnv() agent.WorldInterface {
+	return &Ra25Env{PatternSize: 5, NumPatterns: numPatterns}
+}
+
 func (ss *Sim) ConfigNet() *deep.Network {
 	// A simple network for demonstration purposes.
 	net := &deep.Network{}
-	net.InitName(net, "Emery")
+	net.InitName(net, "RA25")
 	inp := net.AddLayer2D("Input", 5, 5, emer.Input)
 	hid1 := net.AddLayer2D("Hidden1", 10, 10, emer.Hidden)
 	hid2 := net.AddLayer2D("Hidden2", 10, 10, emer.Hidden)
@@ -89,7 +87,7 @@ func (ss *Sim) NewRun() {
 func (ss *Sim) ConfigLoops() *looper.Manager {
 	manager := looper.Manager{}.Init()
 	manager.Stacks[etime.Train] = &looper.Stack{}
-	manager.Stacks[etime.Train].Init().AddTime(etime.Run, 1).AddTime(etime.Epoch, 100).AddTime(etime.Trial, 100).AddTime(etime.Cycle, 200)
+	manager.Stacks[etime.Train].Init().AddTime(etime.Run, 1).AddTime(etime.Epoch, 100).AddTime(etime.Trial, numPatterns).AddTime(etime.Cycle, 200)
 
 	axon.AddPlusAndMinusPhases(manager, &ss.Time, ss.Net.AsAxon())
 	plusPhase := &manager.GetLoop(etime.Train, etime.Cycle).Events[1]
@@ -107,12 +105,16 @@ func (ss *Sim) ConfigLoops() *looper.Manager {
 	})
 	stack.Loops[etime.Trial].OnStart.Add("Sim:Trial:Observe", func() {
 		axon.ApplyInputs(ss.Net.AsAxon(), ss.WorldEnv, "Input", func(spec agent.SpaceSpec) etensor.Tensor {
-			// Use ObserveWithShape on the AgentProxyWithWorldCache which just returns a random vector of the correct size.
 			return ss.WorldEnv.Observe("Input")
+		})
+		// Although output is applied here, it won't actually be clamped until PlusPhase is called, because it's a layer of type Target.
+		axon.ApplyInputs(ss.Net.AsAxon(), ss.WorldEnv, "Output", func(spec agent.SpaceSpec) etensor.Tensor {
+			return ss.WorldEnv.Observe("Output")
 		})
 	})
 
 	manager.GetLoop(etime.Train, etime.Run).OnStart.Add("Sim:NewRun", ss.NewRun)
+	manager.GetLoop(etime.Train, etime.Run).OnStart.Add("Sim:NewPatterns", func() { ss.WorldEnv.InitWorld(nil) })
 	axon.AddDefaultLoopSimLogic(manager, &ss.Time, ss.Net.AsAxon())
 
 	// Initialize and print loop structure, then add to Sim

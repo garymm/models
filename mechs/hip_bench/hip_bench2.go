@@ -44,11 +44,11 @@ package main
 ////ToDO Stays here, main()
 //func main() {
 //	var TrueSim HipSim
-//	TrueSim.New()
+//	TrueSim.DefineSimVariables()
 //	TrainEnv.InitTables(TrainAB, TrainBC, TrainAll) //Might remove, deal with logging first
 //	TrueSim.TrainEnv = &TrainEnv
 //
-//	TheSim.New()
+//	TheSim.DefineSimVariables()
 //	TheSim.HipSim = &TrueSim //Added in to slowly modify internal workins
 //	TheSim.Config()
 //
@@ -204,8 +204,8 @@ package main
 //var TheSim Sim
 //
 //// Todo move to new Sim.go hipsim
-//// New creates new blank elements and initializes defaults
-//func (ss *Sim) New() {
+//// DefineSimVariables creates new blank elements and initializes defaults
+//func (ss *Sim) DefineSimVariables() {
 //	ss.Net = &axon.Network{}
 //	ss.PoolVocab = patgen.Vocab{}
 //	ss.TrainAB = &etable.Table{}
@@ -1886,7 +1886,7 @@ package main
 //
 //	tbar.AddSeparator("misc")
 //
-//	tbar.AddAction(gi.ActOpts{Label: "New Seed", Icon: "new", Tooltip: "Generate a new initial random seed to get different results.  By default, Init re-establishes the same initial seed every time."}, win.This(),
+//	tbar.AddAction(gi.ActOpts{Label: "DefineSimVariables Seed", Icon: "new", Tooltip: "Generate a new initial random seed to get different results.  By default, Init re-establishes the same initial seed every time."}, win.This(),
 //		func(recv, send ki.Ki, sig int64, data interface{}) {
 //			ss.NewRndSeed()
 //		})
